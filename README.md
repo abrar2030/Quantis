@@ -94,11 +94,6 @@ python models/aws_deploy.py --model-path s3://models/tft_model.pt
 ## 📄 License  
 MIT License - See [LICENSE](./LICENSE) for details
 
-## 📧 Contact  
-- Technical Support: support@deepinsight.ai  
-- Security Issues: security@deepinsight.ai  
-- Partnerships: partners@deepinsight.ai  
-
 ## 🏭 Enterprise Features  
 - **Multi-Tenant Architecture**: Isolated workspaces for teams  
 - **GDPR Compliance**: Automated PII detection & masking  
