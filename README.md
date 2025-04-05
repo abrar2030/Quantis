@@ -51,8 +51,8 @@ graph TD
 ## ⚙️ Installation  
 ```bash
 # Clone repository  
-git clone https://github.com/your-org/deepinsight.git  
-cd deepinsight  
+git clone https://github.com/abrar2030/Quantis.git
+cd Quantis  
 
 # Install dependencies  
 conda env create -f environment.yml  
