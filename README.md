@@ -1,6 +1,5 @@
 # DeepInsight Analytics Engine  
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
-[![CI/CD](https://github.com/your-org/deepinsight/actions/workflows/deploy.yml/badge.svg)](https://github.com/your-org/deepinsight/actions)  
 
 ## 🧠 Overview  
 DeepInsight is an enterprise-grade temporal analytics platform combining cutting-edge deep learning with MLOps automation. Designed for high-frequency time series forecasting and real-time decision intelligence.
