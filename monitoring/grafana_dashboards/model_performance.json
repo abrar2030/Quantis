@@ -1,0 +1,19 @@
+{  
+  "dashboard": {  
+    "title": "Model Performance",  
+    "panels": [  
+      {  
+        "title": "Data Drift",  
+        "type": "graph",  
+        "targets": [{"expr": "data_drift"}],  
+        "gridPos": {"h": 8, "w": 12}  
+      },  
+      {  
+        "title": "GPU Utilization",  
+        "type": "stat",  
+        "targets": [{"expr": "nvidia_gpu_duty_cycle"}],  
+        "gridPos": {"h": 6, "w": 12}  
+      }  
+    ]  
+  }  
+}  
