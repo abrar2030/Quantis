@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1a73e8" />
+    <meta
+      name="description"
+      content="Quantis - Advanced Time Series Forecasting Platform"
+    />
+    <link rel="apple-touch-icon" href="logo192.png" />
+    <link rel="manifest" href="manifest.json" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    />
+    <link 
+      rel="stylesheet" 
+      href="https://cdn.jsdelivr.net/npm/@mui/material@5.13.0/dist/css/material.min.css"
+    />
+    <title>Quantis | Time Series Forecasting</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: #f5f5f5;
+      }
+      
+      .app {
+        display: flex;
+        min-height: 100vh;
+      }
+      
+      .sidebar {
+        width: 240px;
+        background-color: #ffffff;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 16px;
+      }
+      
+      .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+        margin-bottom: 16px;
+      }
+      
+      .sidebar-title {
+        font-weight: 600;
+        font-size: 20px;
+        color: #1a73e8;
+      }
+      
+      .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      
+      .menu-item:hover {
+        background-color: rgba(26, 115, 232, 0.1);
+      }
+      
+      .menu-item.active {
+        background-color: rgba(26, 115, 232, 0.2);
+        border-right: 3px solid #1a73e8;
+      }
+      
+      .menu-item.active .menu-text {
+        color: #1a73e8;
+        font-weight: 500;
+      }
+      
+      .menu-icon {
+        margin-right: 12px;
+        color: #5f6368;
+      }
+      
+      .menu-item.active .menu-icon {
+        color: #1a73e8;
+      }
+      
+      .menu-text {
+        color: #3c4043;
+      }
+      
+      .main-content {
+        flex-grow: 1;
+        padding: 24px;
+        overflow-y: auto;
+      }
+      
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+      
+      .page-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #202124;
+      }
+      
+      .card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        margin-bottom: 24px;
+      }
+      
+      .card-title {
+        font-size: 18px;
+        font-weight: 500;
+        color: #202124;
+        margin-bottom: 16px;
+      }
+      
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      
+      .stat-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        transition: transform 0.3s, box-shadow 0.3s;
+      }
+      
+      .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1), 0px 8px 16px rgba(0, 0, 0, 0.1);
+      }
+      
+      .stat-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      
+      .stat-title {
+        color: #5f6368;
+        font-weight: 500;
+      }
+      
+      .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(26, 115, 232, 0.1);
+        color: #1a73e8;
+      }
+      
+      .stat-value {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      
+      .stat-change {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+      }
+      
+      .positive {
+        color: #34a853;
+      }
+      
+      .negative {
+        color: #ea4335;
+      }
+      
+      .chart-container {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        margin-top: 16px;
+      }
+      
+      .chart-placeholder {
+        color: #5f6368;
+        text-align: center;
+      }
+      
+      @media (max-width: 768px) {
+        .sidebar {
+          display: none;
+        }
+        
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title">Quantis</div>
+        </div>
+        <div class="menu-item active">
+          <div class="menu-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+              <path d="M0 0h24v24H0z" fill="none"/>
+              <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+            </svg>
+          </div>
+          <div class="menu-text">Dashboard</div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+              <path d="M0 0h24v24H0z" fill="none"/>
+              <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+            </svg>
+          </div>
+          <div class="menu-text">Predictions</div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+              <path d="M0 0h24v24H0z" fill="none"/>
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+            </svg>
+          </div>
+          <div class="menu-text">Model Metrics</div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+              <path d="M0 0h24v24H0z" fill="none"/>
+              <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+            </svg>
+          </div>
+          <div class="menu-text">Settings</div>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="header">
+          <h1 class="page-title">Dashboard</h1>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-title">Accuracy</div>
+              <div class="stat-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+                  <path d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value">92.7%</div>
+            <div class="stat-change positive">
+              <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor">
+                <path d="M0 0h24v24H0z" fill="none"/>
+                <path d="M7 14l5-5 5 5z"/>
+              </svg>
+              +2.1% vs last month
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-title">Predictions</div>
+              <div class="stat-icon" style="background-color: rgba(52, 168, 83, 0.1); color: #34a853;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+                  <path d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value">1,284</div>
+            <div class="stat-change positive">
+              <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor">
+                <path d="M0 0h24v24H0z" fill="none"/>
+                <path d="M7 14l5-5 5 5z"/>
+              </svg>
+              +12.5% vs last month
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-title">RMSE</div>
+              <div class="stat-icon" style="background-color: rgba(234, 67, 53, 0.1); color: #ea4335;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+                  <path d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M7 10l5 5 5-5z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value">0.042</div>
+            <div class="stat-change positive">
+              <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor">
+                <path d="M0 0h24v24H0z" fill="none"/>
+                <path d="M7 14l5-5 5 5z"/>
+              </svg>
+              -0.8% vs last month
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-title">Drift</div>
+              <div class="stat-icon" style="background-color: rgba(251, 188, 4, 0.1); color: #fbbc04;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor">
+                  <path d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M7 10l5 5 5-5z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value">0.031</div>
+            <div class="stat-change negative">
+              <svg xmlns="http://www.w3.org/2000/svg" height="16" viewBox="0 0 24 24" width="16" fill="currentColor">
+                <path d="M0 0h24v24H0z" fill="none"/>
+                <path d="M7 10l5 5 5-5z"/>
+              </svg>
+              +0.4% vs last month
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-title">Prediction Performance</div>
+          <div class="chart-container">
+            <div class="chart-placeholder">
+              <p>Line Chart: Comparison of predicted vs actual values</p>
+              <p style="font-size: 12px; margin-top: 8px;">This would display a line chart in the actual application</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-title">Feature Importance</div>
+          <div class="chart-container">
+            <div class="chart-placeholder">
+              <p>Bar Chart: Top 5 influential features</p>
+              <p style="font-size: 12px; margin-top: 8px;">This would display a bar chart in the actual application</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      // This would be replaced with actual React code in the full application
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('Quantis Dashboard loaded');
+      });
+    </script>
+  </body>
+</html>
