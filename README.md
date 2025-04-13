@@ -2,6 +2,8 @@
 
 Quantis is an advanced time series forecasting platform that provides machine learning-based predictions and analytics.
 
+> **Note**: This Project is currently under active development. Features and functionalities are being added and improved continuously to enhance user experience.
+
 ## Project Structure
 
 ```
