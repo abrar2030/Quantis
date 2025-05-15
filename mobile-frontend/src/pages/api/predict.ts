@@ -1,13 +1,12 @@
-```typescript
 // This file will proxy requests to the backend API OR return a mock response for testing.
 // It helps avoid CORS issues during development and abstracts the backend URL
 
 import { NextApiRequest, NextApiResponse } from 'next';
 
-// --- MOCKING FOR TESTING --- 
+// --- MOCKING FOR TESTING ---
 // Set this to true to use mock data instead of trying to reach a backend
 const USE_MOCK_DATA = true;
-// --- END MOCKING --- 
+// --- END MOCKING ---
 
 // Define the backend API URL. Read from environment variable or use a default.
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:8000';
@@ -16,7 +15,7 @@ const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://local
 const getMockPrediction = (features: number[]) => {
   // Simple logic: return array if more than 2 features, else single number
   const isSequence = features.length > 2;
-  const prediction = isSequence 
+  const prediction = isSequence
     ? features.map((f, i) => parseFloat((f * 1.1 + i * 0.5 + Math.random() * 2).toFixed(2)))
     : parseFloat((features.reduce((a, b) => a + b, 0) * 1.2 + Math.random()).toFixed(2));
   const confidence = parseFloat((0.8 + Math.random() * 0.19).toFixed(4)); // Random confidence between 0.8 and 0.99
@@ -48,11 +47,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
      console.warn('Missing X-API-Key header, but proceeding with mock data.');
   }
 
-  // --- MOCK RESPONSE --- 
+  // --- MOCK RESPONSE ---
   if (USE_MOCK_DATA) {
     console.log('Using mock data for prediction request.');
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500)); 
+    await new Promise(resolve => setTimeout(resolve, 500));
     const mockResponse = getMockPrediction(features as number[]);
     return res.status(200).json(mockResponse);
   }

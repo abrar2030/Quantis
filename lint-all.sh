@@ -81,11 +81,14 @@ PYTHON_DIRECTORIES=(
 )
 
 JS_DIRECTORIES=(
-  "frontend/src"
-  "frontend/src/components"
-  "frontend/src/components/charts"
-  "frontend/src/context"
-  "frontend/src/pages"
+  "web-frontend/src"
+  "web-frontend/src/components"
+  "web-frontend/src/components/charts"
+  "web-frontend/src/context"
+  "web-frontend/src/pages"
+  "mobile-frontend/src"
+  "mobile-frontend/src/components"
+  # Add other mobile-frontend subdirectories if they exist and need linting
 )
 
 YAML_DIRECTORIES=(

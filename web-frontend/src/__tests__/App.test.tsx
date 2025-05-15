@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import App from '../App';
@@ -13,14 +19,14 @@ const createTestStore = () => {
         isAuthenticated: false,
         user: null,
         loading: false,
-        error: null
+        error: null,
       },
       predictions: {
         data: [],
         loading: false,
-        error: null
-      }
-    }
+        error: null,
+      },
+    },
   });
 };
 
@@ -48,14 +54,14 @@ describe('App Component', () => {
           isAuthenticated: true,
           user: { id: 1, email: 'test@example.com' },
           loading: false,
-          error: null
+          error: null,
         },
         predictions: {
           data: [],
           loading: false,
-          error: null
-        }
-      }
+          error: null,
+        },
+      },
     });
 
     render(
@@ -74,10 +80,10 @@ describe('App Component', () => {
     );
 
     fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'test@example.com' }
+      target: { value: 'test@example.com' },
     });
     fireEvent.change(screen.getByLabelText(/Password/i), {
-      target: { value: 'password123' }
+      target: { value: 'password123' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Sign In/i }));
 
@@ -94,10 +100,10 @@ describe('App Component', () => {
     );
 
     fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'invalid@example.com' }
+      target: { value: 'invalid@example.com' },
     });
     fireEvent.change(screen.getByLabelText(/Password/i), {
-      target: { value: 'wrongpassword' }
+      target: { value: 'wrongpassword' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Sign In/i }));
 
@@ -123,7 +129,7 @@ describe('App Component', () => {
 
     // Try invalid email format
     fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'invalid-email' }
+      target: { value: 'invalid-email' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Sign In/i }));
 
@@ -140,10 +146,10 @@ describe('App Component', () => {
     );
 
     fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'test@example.com' }
+      target: { value: 'test@example.com' },
     });
     fireEvent.change(screen.getByLabelText(/Password/i), {
-      target: { value: 'password123' }
+      target: { value: 'password123' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Sign In/i }));
 
@@ -197,10 +203,10 @@ describe('App Component', () => {
     );
 
     fireEvent.change(screen.getByLabelText(/Email/i), {
-      target: { value: 'test@example.com' }
+      target: { value: 'test@example.com' },
     });
     fireEvent.change(screen.getByLabelText(/Password/i), {
-      target: { value: 'password123' }
+      target: { value: 'password123' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Sign In/i }));
 
@@ -208,4 +214,4 @@ describe('App Component', () => {
       expect(screen.getByText(/Network error/i)).toBeInTheDocument();
     });
   });
-}); 
+});

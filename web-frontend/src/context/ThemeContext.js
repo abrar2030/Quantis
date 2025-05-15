@@ -1,5 +1,8 @@
 import React from 'react';
-import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
+import {
+  ThemeProvider as MuiThemeProvider,
+  createTheme,
+} from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { useContext, createContext, useState, useMemo } from 'react';
 
@@ -98,9 +101,10 @@ export const ThemeProvider = ({ children }) => {
             styleOverrides: {
               root: {
                 borderRadius: 12,
-                boxShadow: mode === 'light' 
-                  ? '0px 2px 4px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.05)' 
-                  : '0px 2px 4px rgba(0, 0, 0, 0.2), 0px 4px 6px rgba(0, 0, 0, 0.2)',
+                boxShadow:
+                  mode === 'light'
+                    ? '0px 2px 4px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.05)'
+                    : '0px 2px 4px rgba(0, 0, 0, 0.2), 0px 4px 6px rgba(0, 0, 0, 0.2)',
               },
             },
           },
@@ -113,7 +117,7 @@ export const ThemeProvider = ({ children }) => {
           },
         },
       }),
-    [mode],
+    [mode]
   );
 
   // Provide the theme context to children

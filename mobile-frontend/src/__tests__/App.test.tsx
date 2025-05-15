@@ -13,14 +13,14 @@ const createTestStore = () => {
         isAuthenticated: false,
         user: null,
         loading: false,
-        error: null
+        error: null,
       },
       predictions: {
         data: [],
         loading: false,
-        error: null
-      }
-    }
+        error: null,
+      },
+    },
   });
 };
 
@@ -48,14 +48,14 @@ describe('Mobile App Component', () => {
           isAuthenticated: true,
           user: { id: 1, email: 'test@example.com' },
           loading: false,
-          error: null
+          error: null,
         },
         predictions: {
           data: [],
           loading: false,
-          error: null
-        }
-      }
+          error: null,
+        },
+      },
     });
 
     const { getByText } = render(
@@ -106,14 +106,14 @@ describe('Mobile App Component', () => {
           isAuthenticated: true,
           user: { id: 1, email: 'test@example.com' },
           loading: false,
-          error: null
+          error: null,
         },
         predictions: {
           data: [],
           loading: false,
-          error: null
-        }
-      }
+          error: null,
+        },
+      },
     });
 
     const { getByText } = render(
@@ -188,10 +188,10 @@ describe('Mobile App Component', () => {
     // Mock network status
     const mockNetInfo = {
       isConnected: false,
-      isInternetReachable: false
+      isInternetReachable: false,
     };
     jest.mock('@react-native-community/netinfo', () => ({
-      useNetInfo: () => mockNetInfo
+      useNetInfo: () => mockNetInfo,
     }));
 
     const { getByText } = render(
@@ -214,7 +214,7 @@ describe('Mobile App Component', () => {
     act(() => {
       store.dispatch({
         type: 'HANDLE_DEEP_LINK',
-        payload: { screen: 'Predictions', params: { id: 123 } }
+        payload: { screen: 'Predictions', params: { id: 123 } },
       });
     });
 
@@ -232,7 +232,7 @@ describe('Mobile App Component', () => {
 
     // Mock biometric authentication
     const mockBiometrics = {
-      authenticate: jest.fn().mockResolvedValue({ success: true })
+      authenticate: jest.fn().mockResolvedValue({ success: true }),
     };
     jest.mock('react-native-biometrics', () => mockBiometrics);
 
@@ -242,4 +242,4 @@ describe('Mobile App Component', () => {
       expect(mockBiometrics.authenticate).toHaveBeenCalled();
     });
   });
-}); 
+});

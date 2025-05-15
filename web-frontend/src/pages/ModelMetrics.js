@@ -1,9 +1,9 @@
 import React from 'react';
-import { 
-  Box, 
-  Typography, 
-  Card, 
-  CardContent, 
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
   CardHeader,
   Divider,
   Grid,
@@ -15,7 +15,7 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Button
+  Button,
 } from '@mui/material';
 import LineChart from '../components/charts/LineChart';
 import BarChart from '../components/charts/BarChart';
@@ -44,10 +44,30 @@ const ModelMetrics = () => {
 
   // Mock data for model versions
   const modelVersions = [
-    { version: '2.1.0', date: '2025-04-01', accuracy: '92.7%', status: 'Active' },
-    { version: '2.0.1', date: '2025-03-15', accuracy: '91.2%', status: 'Archived' },
-    { version: '2.0.0', date: '2025-02-28', accuracy: '90.5%', status: 'Archived' },
-    { version: '1.9.0', date: '2025-01-10', accuracy: '88.3%', status: 'Archived' },
+    {
+      version: '2.1.0',
+      date: '2025-04-01',
+      accuracy: '92.7%',
+      status: 'Active',
+    },
+    {
+      version: '2.0.1',
+      date: '2025-03-15',
+      accuracy: '91.2%',
+      status: 'Archived',
+    },
+    {
+      version: '2.0.0',
+      date: '2025-02-28',
+      accuracy: '90.5%',
+      status: 'Archived',
+    },
+    {
+      version: '1.9.0',
+      date: '2025-01-10',
+      accuracy: '88.3%',
+      status: 'Archived',
+    },
   ];
 
   return (
@@ -62,8 +82,8 @@ const ModelMetrics = () => {
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Card>
-            <CardHeader 
-              title="Performance Metrics" 
+            <CardHeader
+              title="Performance Metrics"
               subheader="Key metrics for model evaluation"
             />
             <Divider />
@@ -72,8 +92,12 @@ const ModelMetrics = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell><Typography variant="subtitle2">Metric</Typography></TableCell>
-                      <TableCell align="right"><Typography variant="subtitle2">Value</Typography></TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2">Metric</Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="subtitle2">Value</Typography>
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -91,11 +115,11 @@ const ModelMetrics = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <Card>
-            <CardHeader 
-              title="Feature Importance" 
+            <CardHeader
+              title="Feature Importance"
               subheader="Top 5 influential features"
             />
             <Divider />
@@ -104,11 +128,11 @@ const ModelMetrics = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12}>
           <Card>
-            <CardHeader 
-              title="Model Versions" 
+            <CardHeader
+              title="Model Versions"
               subheader="History of model deployments"
               action={
                 <Button size="small" color="primary">
@@ -122,10 +146,20 @@ const ModelMetrics = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell><Typography variant="subtitle2">Version</Typography></TableCell>
-                      <TableCell><Typography variant="subtitle2">Deployment Date</Typography></TableCell>
-                      <TableCell><Typography variant="subtitle2">Accuracy</Typography></TableCell>
-                      <TableCell><Typography variant="subtitle2">Status</Typography></TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2">Version</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2">
+                          Deployment Date
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2">Accuracy</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2">Status</Typography>
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -137,18 +171,20 @@ const ModelMetrics = () => {
                         <TableCell>{version.date}</TableCell>
                         <TableCell>{version.accuracy}</TableCell>
                         <TableCell>
-                          <Box 
-                            sx={{ 
+                          <Box
+                            sx={{
                               display: 'inline-block',
                               px: 1,
                               py: 0.5,
                               borderRadius: 1,
-                              backgroundColor: version.status === 'Active' 
-                                ? theme.palette.success.main + '20' 
-                                : theme.palette.text.secondary + '20',
-                              color: version.status === 'Active' 
-                                ? theme.palette.success.main 
-                                : theme.palette.text.secondary,
+                              backgroundColor:
+                                version.status === 'Active'
+                                  ? theme.palette.success.main + '20'
+                                  : theme.palette.text.secondary + '20',
+                              color:
+                                version.status === 'Active'
+                                  ? theme.palette.success.main
+                                  : theme.palette.text.secondary,
                             }}
                           >
                             {version.status}
@@ -162,11 +198,11 @@ const ModelMetrics = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12}>
           <Card>
-            <CardHeader 
-              title="Performance Over Time" 
+            <CardHeader
+              title="Performance Over Time"
               subheader="Model accuracy trends"
             />
             <Divider />

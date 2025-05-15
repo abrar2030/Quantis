@@ -58,7 +58,12 @@ const Sidebar = ({ open, onClose }) => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{ fontWeight: 600 }}
+          >
             Quantis
           </Typography>
         </Box>
@@ -88,7 +93,10 @@ const Sidebar = ({ open, onClose }) => {
             >
               <ListItemIcon
                 sx={{
-                  color: location.pathname === item.path ? theme.palette.primary.main : 'inherit',
+                  color:
+                    location.pathname === item.path
+                      ? theme.palette.primary.main
+                      : 'inherit',
                 }}
               >
                 {item.icon}
@@ -96,7 +104,10 @@ const Sidebar = ({ open, onClose }) => {
               <ListItemText
                 primary={item.text}
                 sx={{
-                  color: location.pathname === item.path ? theme.palette.primary.main : 'inherit',
+                  color:
+                    location.pathname === item.path
+                      ? theme.palette.primary.main
+                      : 'inherit',
                 }}
               />
             </ListItemButton>
@@ -110,7 +121,9 @@ const Sidebar = ({ open, onClose }) => {
             <ListItemIcon>
               {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
             </ListItemIcon>
-            <ListItemText primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'} />
+            <ListItemText
+              primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            />
           </ListItemButton>
         </ListItem>
       </List>

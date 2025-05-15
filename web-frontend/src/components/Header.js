@@ -1,5 +1,13 @@
 import React from 'react';
-import { AppBar, Toolbar, IconButton, Typography, Box, useMediaQuery, Avatar } from '@mui/material';
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Box,
+  useMediaQuery,
+  Avatar,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -32,15 +40,20 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
         >
           <MenuIcon />
         </IconButton>
-        
+
         {!sidebarOpen && (
-          <Typography variant="h6" noWrap component="div" sx={{ display: { xs: 'none', sm: 'block' }, fontWeight: 600 }}>
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{ display: { xs: 'none', sm: 'block' }, fontWeight: 600 }}
+          >
             Quantis
           </Typography>
         )}
-        
+
         <Box sx={{ flexGrow: 1 }} />
-        
+
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton color="inherit" sx={{ ml: 1 }}>
             <SearchIcon />
@@ -48,12 +61,12 @@ const Header = ({ toggleSidebar, sidebarOpen }) => {
           <IconButton color="inherit" sx={{ ml: 1 }}>
             <NotificationsIcon />
           </IconButton>
-          <Avatar 
-            sx={{ 
-              ml: 2, 
-              width: 36, 
+          <Avatar
+            sx={{
+              ml: 2,
+              width: 36,
               height: 36,
-              bgcolor: theme.palette.primary.main
+              bgcolor: theme.palette.primary.main,
             }}
           >
             U

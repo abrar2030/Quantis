@@ -42,7 +42,7 @@ export default function Register() {
 
       // Simulate successful registration
       // In a real app, you'd handle the response from your backend API
-      console.log('Registration successful for:', email) 
+      console.log('Registration successful for:', email)
       setSuccess('Registration successful! Redirecting to login...')
 
       // Redirect to login page after a short delay
@@ -122,8 +122,8 @@ export default function Register() {
             )}
           </CardContent>
           <CardFooter className="flex flex-col p-6 bg-gray-800/50 border-t border-gray-700 space-y-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full text-lg font-semibold py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               disabled={isLoading}
             >
@@ -145,4 +145,4 @@ export default function Register() {
     </main>
   )
 }
-```
+```;
