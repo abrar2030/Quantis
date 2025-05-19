@@ -1,16 +1,15 @@
-import importlib.util
 import os
-import sys
-
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .endpoints import prediction, users
+from .middleware.auth import validate_api_key
 
+# Create FastAPI app
 app = FastAPI(
     title="Quantis API",
-    description="Machine Learning API for time series forecasting",
-    version="2.1.0",
+    description="API for Quantis time series forecasting platform",
+    version="2.0.0",
 )
 
 # Add CORS middleware
@@ -23,10 +22,37 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(prediction.router, tags=["prediction"])
-app.include_router(users.router, prefix="/api", tags=["users"])
+app.include_router(prediction.router, tags=["Forecasting"])
+app.include_router(users.router, tags=["Users"])
 
-
+# Root endpoint
 @app.get("/")
-def read_root():
-    return {"message": "Welcome to Quantis API", "version": "2.1.0"}
+async def root():
+    return {"message": "Welcome to Quantis API"}
+
+# Health check endpoint
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
+
+# Protected endpoint example
+@app.get("/protected")
+async def protected_route(user: dict = Depends(validate_api_key)):
+    return {"message": f"Hello, {user['user_id']}! You have {user['role']} access."}
+
+# Error handlers
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    return {
+        "status_code": exc.status_code,
+        "detail": exc.detail,
+        "headers": exc.headers,
+    }
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    # Log the error in a production system
+    return {
+        "status_code": 500,
+        "detail": f"Internal Server Error: {str(exc)}",
+    }
