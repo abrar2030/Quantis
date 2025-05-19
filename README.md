@@ -1,21 +1,25 @@
-# Quantis Project
+# Quantis
 
-[![CI Status](https://img.shields.io/github/actions/workflow/status/abrar2030/Quantis/ci-cd.yml?branch=main&label=CI&logo=github)](https://github.com/abrar2030/Quantis/actions)
-[![CI Status](https://img.shields.io/github/workflow/status/abrar2030/Quantis/CI/main?label=CI)](https://github.com/abrar2030/Quantis/actions)
+[![CI/CD Status](https://img.shields.io/github/actions/workflow/status/abrar2030/Quantis/ci-cd.yml?branch=main&label=CI/CD&logo=github)](https://github.com/abrar2030/Quantis/actions)
 [![Test Coverage](https://img.shields.io/codecov/c/github/abrar2030/Quantis/main?label=Coverage)](https://codecov.io/gh/abrar2030/Quantis)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code Quality](https://img.shields.io/lgtm/grade/python/g/abrar2030/Quantis?label=Code%20Quality)](https://lgtm.com/projects/g/abrar2030/Quantis/)
+[![License](https://img.shields.io/github/license/abrar2030/Quantis)](https://github.com/abrar2030/Quantis/blob/main/LICENSE)
 
-Quantis is an advanced time series forecasting platform that provides machine learning-based predictions and analytics.
+## 📈 Quantitative Trading & Investment Analytics Platform
+
+Quantis is a comprehensive quantitative trading and investment analytics platform that combines advanced statistical models, machine learning algorithms, and real-time market data to provide powerful insights and automated trading strategies.
 
 <div align="center">
-  <img src="docs/Quantis.bmp" alt="An Advanced Time Series Forecasting Platform" width="100%">
+  <img src="docs/images/quantis_dashboard.png" alt="Quantis Dashboard" width="80%">
 </div>
 
-> **Note**: This Project is currently under active development. Features and functionalities are being added and improved continuously to enhance user experience.
+> **Note**: This project is under active development. Features and functionalities are continuously being enhanced to improve trading capabilities and user experience.
 
 ## Table of Contents
-- [Project Structure](#project-structure)
-- [Features](#features)
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Technology Stack](#technology-stack)
+- [Architecture](#architecture)
 - [Feature Implementation Status](#feature-implementation-status)
 - [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
@@ -24,77 +28,121 @@ Quantis is an advanced time series forecasting platform that provides machine le
 - [Contributing](#contributing)
 - [License](#license)
 
-## Project Structure
+## Overview
+
+Quantis provides a robust platform for quantitative analysis, algorithmic trading, and investment portfolio optimization. The system leverages advanced statistical models and machine learning algorithms to analyze market data, identify trading opportunities, and execute automated trading strategies.
+
+## Key Features
+
+### Data Processing & Analysis
+- **Real-time Market Data**: Integration with multiple data sources for comprehensive market coverage
+- **Historical Data Analysis**: Tools for backtesting and historical performance evaluation
+- **Alternative Data Processing**: Analysis of non-traditional data sources for unique insights
+- **Data Quality Assurance**: Automated validation and cleaning of financial data
+
+### Quantitative Modeling
+- **Statistical Models**: Time series analysis, regression models, and factor analysis
+- **Machine Learning Algorithms**: Classification, regression, and clustering for market prediction
+- **Risk Models**: Value at Risk (VaR), Expected Shortfall, and stress testing
+- **Portfolio Optimization**: Modern Portfolio Theory implementation with custom constraints
+
+### Trading Strategies
+- **Strategy Development Framework**: Tools for creating and testing trading algorithms
+- **Algorithmic Trading**: Automated execution of trading strategies
+- **Signal Generation**: Technical and fundamental indicators for trade signals
+- **Backtesting Engine**: Historical performance evaluation of trading strategies
+
+### Portfolio Management
+- **Asset Allocation**: Optimal distribution of investments across asset classes
+- **Risk Management**: Tools for monitoring and controlling portfolio risk
+- **Performance Analytics**: Comprehensive metrics for evaluating investment performance
+- **Rebalancing Strategies**: Automated portfolio rebalancing based on defined rules
+
+## Technology Stack
+
+### Backend
+- **Language**: Python, Rust (for performance-critical components)
+- **Framework**: FastAPI, Flask
+- **Database**: PostgreSQL, InfluxDB (time series data)
+- **Task Queue**: Celery, Redis
+- **ML Libraries**: scikit-learn, PyTorch, TensorFlow
+- **Financial Libraries**: pandas-ta, pyfolio, zipline
+
+### Frontend
+- **Framework**: React with TypeScript
+- **State Management**: Redux Toolkit
+- **Data Visualization**: D3.js, Plotly, TradingView
+- **Styling**: Tailwind CSS, Styled Components
+- **API Client**: Axios, React Query
+
+### DevOps
+- **Containerization**: Docker
+- **Orchestration**: Kubernetes
+- **CI/CD**: GitHub Actions
+- **Monitoring**: Prometheus, Grafana
+- **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
+
+## Architecture
+
+Quantis follows a microservices architecture with the following components:
 
 ```
-quantis/
-├── api/                  # Backend API
-│   ├── endpoints/        # API endpoint implementations
-│   ├── middleware/       # API middleware (auth, etc.)
-│   ├── app.py            # FastAPI application
-│   └── schemas.py        # Pydantic schemas
-├── data/                 # Data processing
-│   ├── features/         # Feature engineering
-│   ├── processed/        # Processed data storage
-│   ├── raw/              # Raw data storage
-│   └── process_data.py   # Data processing pipeline
-├── frontend/             # React frontend application
-│   ├── public/           # Static public assets
-│   └── src/              # React source code
-│       ├── components/   # Reusable UI components
-│       ├── context/      # React context providers
-│       ├── hooks/        # Custom React hooks
-│       ├── pages/        # Application pages
-│       ├── services/     # API service integrations
-│       ├── styles/       # CSS and styling
-│       ├── utils/        # Utility functions
-│       ├── App.js        # Main application component
-│       └── index.js      # Application entry point
-├── infrastructure/       # Deployment configuration
-│   ├── kubernetes/       # Kubernetes manifests
-│   ├── terraform/        # Infrastructure as code
-│   └── docker-compose.yml # Docker Compose configuration
-├── models/               # ML models
-│   ├── hyperparameter_tuning/ # Hyperparameter optimization
-│   ├── model_serving/    # Model serving code
-│   ├── train_model.py    # Model training script
-│   └── tft_model.pkl     # Serialized model
-├── monitoring/           # Monitoring and observability
-│   ├── grafana_dashboards/ # Grafana dashboard configs
-│   ├── model_monitor.py  # Model monitoring code
-│   └── prometheus.yml    # Prometheus configuration
-└── tests/                # Test suite
-    └── test_model.py     # Model tests
+Quantis/
+├── Data Services
+│   ├── Market Data Service
+│   ├── Alternative Data Service
+│   ├── Historical Data Service
+│   └── Data Quality Service
+├── Analytical Services
+│   ├── Statistical Analysis Service
+│   ├── Machine Learning Service
+│   ├── Risk Analysis Service
+│   └── Portfolio Optimization Service
+├── Trading Services
+│   ├── Strategy Service
+│   ├── Signal Generation Service
+│   ├── Backtesting Service
+│   └── Execution Service
+├── Frontend Applications
+│   ├── Web Dashboard
+│   └── Mobile App
+└── Infrastructure
+    ├── API Gateway
+    ├── Authentication Service
+    ├── Monitoring Stack
+    └── Data Storage
 ```
-
-## Features
-
-- Time series forecasting with advanced ML models
-- Interactive dashboard with performance metrics
-- Feature importance analysis
-- Model version tracking
-- API for integration with other systems
-- Monitoring and observability
 
 ## Feature Implementation Status
 
 | Feature | Status | Description | Planned Release |
 |---------|--------|-------------|----------------|
-| **Time Series Forecasting** |
-| ARIMA Models | ✅ Implemented | Statistical forecasting models | v1.0 |
-| Prophet Models | ✅ Implemented | Facebook's time series forecasting | v1.0 |
-| LSTM Networks | ✅ Implemented | Deep learning for sequential data | v1.0 |
-| Transformer Models | 🔄 In Progress | Attention-based forecasting | v1.1 |
-| Ensemble Methods | 🔄 In Progress | Combined model predictions | v1.1 |
-| Probabilistic Forecasting | 📅 Planned | Uncertainty quantification | v1.2 |
-| **Dashboard & Visualization** |
-| Performance Metrics | ✅ Implemented | Model accuracy and error metrics | v1.0 |
-| Interactive Charts | ✅ Implemented | Dynamic data visualization | v1.0 |
-| Forecast Comparisons | ✅ Implemented | Compare multiple model outputs | v1.0 |
-| Custom Reporting | 🔄 In Progress | User-defined report generation | v1.1 |
-| Anomaly Highlighting | 📅 Planned | Visual anomaly detection | v1.2 |
+| **Data Processing** |
+| Market Data Integration | ✅ Implemented | Real-time and historical market data | v1.0 |
+| Data Cleaning | ✅ Implemented | Automated data validation | v1.0 |
+| Feature Engineering | ✅ Implemented | Technical indicator calculation | v1.0 |
+| Alternative Data | 🔄 In Progress | News, social media, satellite imagery | v1.1 |
+| Data Versioning | 📅 Planned | Track data lineage and changes | v1.2 |
+| **Quantitative Analysis** |
+| Statistical Models | ✅ Implemented | Time series, regression analysis | v1.0 |
+| Factor Analysis | ✅ Implemented | Multi-factor models | v1.0 |
+| Machine Learning | ✅ Implemented | Predictive models for markets | v1.0 |
+| Deep Learning | 🔄 In Progress | Neural networks for complex patterns | v1.1 |
+| Reinforcement Learning | 📅 Planned | Adaptive trading strategies | v1.2 |
+| **Trading Strategies** |
+| Strategy Framework | ✅ Implemented | Tools for strategy development | v1.0 |
+| Backtesting Engine | ✅ Implemented | Historical performance testing | v1.0 |
+| Signal Generation | ✅ Implemented | Technical and fundamental signals | v1.0 |
+| Strategy Optimization | 🔄 In Progress | Parameter tuning and optimization | v1.1 |
+| Multi-asset Strategies | 📅 Planned | Cross-asset class strategies | v1.2 |
+| **Portfolio Management** |
+| Asset Allocation | ✅ Implemented | Portfolio construction tools | v1.0 |
+| Risk Management | ✅ Implemented | Risk metrics and monitoring | v1.0 |
+| Performance Analytics | ✅ Implemented | Return and risk attribution | v1.0 |
+| Rebalancing | 🔄 In Progress | Automated portfolio rebalancing | v1.1 |
+| Tax-efficient Strategies | 📅 Planned | Tax-loss harvesting and optimization | v1.2 |
 | **Feature Engineering** |
-| Automated Feature Selection | ✅ Implemented | Identify important variables | v1.0 |
+| Technical Indicators | ✅ Implemented | Standard technical analysis | v1.0 |
 | Feature Importance Analysis | ✅ Implemented | Quantify variable impact | v1.0 |
 | Temporal Feature Extraction | ✅ Implemented | Time-based feature creation | v1.0 |
 | External Data Integration | 🔄 In Progress | Incorporate external factors | v1.1 |
@@ -125,55 +173,93 @@ quantis/
 ## Getting Started
 
 ### Prerequisites
-
 - Python 3.8+
 - Node.js 14+
 - Docker and Docker Compose (for containerized deployment)
 
-### Installation
+### Quick Start with Setup Script
+```bash
+# Clone the repository
+git clone https://github.com/abrar2030/Quantis.git
+cd Quantis
 
-1. Clone the repository
+# Run the setup script
+./setup_quantis_env.sh
+
+# Start the application
+./run_quantis.sh
+```
+
+### Manual Installation
+
+#### Clone the Repository
 ```bash
 git clone https://github.com/abrar2030/Quantis.git
 cd Quantis
 ```
 
-2. Install backend dependencies:
+#### Backend Setup
 ```bash
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
-```
 
-3. Install frontend dependencies:
-```bash
-cd frontend
-npm install
-```
-
-### Running the Application
-
-#### Backend
-
-```bash
+# Start the API server
 cd api
 uvicorn app:app --reload
 ```
 
-#### Frontend
-
+#### Frontend Setup
 ```bash
-cd frontend
+cd web-frontend
+npm install
 npm start
 ```
 
 #### Using Docker Compose
-
 ```bash
+# Build and start all services
 docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
 ```
 
 ## API Documentation
 
-API documentation is available at `/docs` when the backend is running.
+API documentation is available at `/docs` when the backend is running. The API provides endpoints for:
+
+- Market data retrieval
+- Strategy backtesting
+- Portfolio optimization
+- Risk analysis
+- Model training and inference
+- Trading signal generation
+
+Example API request:
+```python
+import requests
+
+# Get historical market data
+response = requests.get(
+    "http://localhost:8000/api/v1/market-data/historical",
+    params={
+        "symbol": "AAPL",
+        "start_date": "2022-01-01",
+        "end_date": "2022-12-31",
+        "interval": "1d"
+    },
+    headers={"Authorization": f"Bearer {api_key}"}
+)
+
+data = response.json()
+```
 
 ## Testing
 
@@ -183,19 +269,21 @@ The project includes comprehensive testing to ensure reliability and accuracy:
 - Model component tests
 - API endpoint tests
 - Data processing pipeline tests
+- Strategy implementation tests
 
 ### Integration Testing
 - End-to-end workflow tests
 - Frontend-backend integration tests
 - Data pipeline integration tests
+- Trading strategy execution tests
 
 ### Performance Testing
 - Model inference latency tests
 - API throughput tests
+- Backtesting performance tests
 - Scalability tests
 
 To run tests:
-
 ```bash
 # Run all tests
 pytest
@@ -206,6 +294,9 @@ pytest tests/test_api.py
 
 # Run with coverage
 pytest --cov=quantis tests/
+
+# Generate coverage report
+pytest --cov=quantis --cov-report=html tests/
 ```
 
 ## CI/CD Pipeline
@@ -217,17 +308,19 @@ Quantis uses GitHub Actions for continuous integration and deployment:
 - Code quality checks with pylint and black
 - Test coverage reporting with pytest-cov
 - Security scanning for vulnerabilities
+- Performance benchmarking
 
 ### Continuous Deployment
 - Automated deployment to staging environment on merge to main
 - Manual promotion to production after approval
 - Docker image building and publishing
 - Kubernetes deployment updates
+- Database migration management
 
 Current CI/CD Status:
-- Build: ![Build Status](https://img.shields.io/github/workflow/status/abrar2030/Quantis/CI/main?label=build)
+- Build: ![Build Status](https://img.shields.io/github/actions/workflow/status/abrar2030/Quantis/ci-cd.yml?branch=main&label=build)
 - Test Coverage: ![Coverage](https://img.shields.io/codecov/c/github/abrar2030/Quantis/main?label=coverage)
-- Code Quality: ![Code Quality](https://img.shields.io/codacy/grade/abrar2030/Quantis?label=code%20quality)
+- Code Quality: ![Code Quality](https://img.shields.io/lgtm/grade/python/g/abrar2030/Quantis?label=code%20quality)
 
 ## Contributing
 
@@ -259,7 +352,6 @@ We welcome contributions to improve Quantis! Here's how you can contribute:
    - Respond to review comments and make necessary adjustments
 
 ### Development Guidelines
-
 - Follow PEP 8 style guide for Python code
 - Use ESLint and Prettier for JavaScript/React code
 - Write unit tests for new features
@@ -269,4 +361,4 @@ We welcome contributions to improve Quantis! Here's how you can contribute:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
