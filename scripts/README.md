@@ -5,7 +5,7 @@ This package contains a comprehensive set of automation scripts for the Quantis 
 ## Scripts Included
 
 1. **unified_build.sh** - Comprehensive build script for all Quantis components
-2. **enhanced_linting.sh** - Advanced linting capabilities for all code types
+2. **linting.sh** - Advanced linting capabilities for all code types
 3. **setup_environment.sh** - Robust environment setup for development
 4. **monitoring_dashboard.sh** - Automated monitoring dashboard setup and management
 5. **documentation_generator.sh** - Automated documentation generation
