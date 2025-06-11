@@ -9,13 +9,13 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
-import database import get_db
-importmiddleware.auth import (
+from ..database import get_db
+from ..middleware.auth import (
     admin_required, create_jwt_token, public_rate_limit, readonly_or_above,
     standard_rate_limit, user_or_admin_required, validate_api_key
 )
-importschemas import User, UserCreate, UserBase
-importservices.user_service import UserService
+from ..schemas import User, UserCreate, UserBase
+from ..services.user_service import UserService
 
 router = APIRouter()
 
@@ -270,7 +270,7 @@ async def revoke_user_api_key(
         raise HTTPException(status_code=404, detail="API key not found")
     
     # Revoke the key by making it inactive
-    import models ApiKey
+    from ..models import ApiKey
     db.query(ApiKey).filter(ApiKey.id == key_id).update({"is_active": False})
     db.commit()
     

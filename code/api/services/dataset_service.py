@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 import pandas as pd
 
-import models
+from .. import models
 
 
 class DatasetService:
@@ -79,18 +79,18 @@ class DatasetService:
     def get_dataset_by_id(self, dataset_id: int) -> Optional[models.Dataset]:
         """Get dataset by ID"""
         return self.db.query(models.Dataset).filter(
-            and_(Dataset.id == dataset_id, Dataset.is_active == True)
+            and_(models.Dataset.id == dataset_id, models.Dataset.is_active == True)
         ).first()
 
     def get_datasets_by_owner(self, owner_id: int, skip: int = 0, limit: int = 100) -> List[models.Dataset]:
         """Get datasets by owner"""
         return self.db.query(models.Dataset).filter(
-            and_(Dataset.owner_id == owner_id, Dataset.is_active == True)
+            and_(models.Dataset.owner_id == owner_id, models.Dataset.is_active == True)
         ).offset(skip).limit(limit).all()
 
     def get_all_datasets(self, skip: int = 0, limit: int = 100) -> List[models.Dataset]:
         """Get all datasets (admin only)"""
-        return self.db.query(models.Dataset).filter(Dataset.is_active == True).offset(skip).limit(limit).all()
+        return self.db.query(models.Dataset).filter(models.Dataset.is_active == True).offset(skip).limit(limit).all()
 
     def update_dataset(self, dataset_id: int, **kwargs) -> Optional[models.Dataset]:
         """Update dataset information"""

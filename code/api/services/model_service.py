@@ -12,7 +12,7 @@ from sqlalchemy import and_
 import pandas as pd
 import numpy as np
 
-import models
+from .. import models
 
 
 class ModelService:
@@ -28,7 +28,7 @@ class ModelService:
             raise ValueError("Owner not found")
         
         dataset = self.db.query(models.Dataset).filter(
-            and_(Dataset.id == dataset_id, Dataset.is_active == True)
+            and_(models.Dataset.id == dataset_id, models.Dataset.is_active == True)
         ).first()
         if not dataset:
             raise ValueError("Dataset not found")
@@ -52,18 +52,18 @@ class ModelService:
     def get_model_by_id(self, model_id: int) -> Optional[models.Model]:
         """Get model by ID"""
         return self.db.query(models.Model).filter(
-            and_(Model.id == model_id, Model.is_active == True)
+            and_(models.Model.id == model_id, models.Model.is_active == True)
         ).first()
 
     def get_models_by_owner(self, owner_id: int, skip: int = 0, limit: int = 100) -> List[models.Model]:
         """Get models by owner"""
         return self.db.query(models.Model).filter(
-            and_(Model.owner_id == owner_id, Model.is_active == True)
+            and_(models.Model.owner_id == owner_id, models.Model.is_active == True)
         ).offset(skip).limit(limit).all()
 
     def get_all_models(self, skip: int = 0, limit: int = 100) -> List[models.Model]:
         """Get all models (admin only)"""
-        return self.db.query(models.Model).filter(Model.is_active == True).offset(skip).limit(limit).all()
+        return self.db.query(models.Model).filter(models.Model.is_active == True).offset(skip).limit(limit).all()
 
     def update_model(self, model_id: int, **kwargs) -> Optional[models.Model]:
         """Update model information"""
@@ -72,7 +72,7 @@ class ModelService:
             return None
         
         for key, value in kwargs.items():
-            if hasattr(model, key) and key not in ['id', 'owner_id', 'created_at']:
+            if hasattr(model, key) and key not in [\'id\', \'owner_id\', \'created_at\']:
                 setattr(model, key, value)
         
         self.db.commit()
@@ -96,7 +96,7 @@ class ModelService:
             return False
         
         try:
-            # Create models directory if it doesn't exist
+            # Create models directory if it doesn\'t exist
             os.makedirs("models", exist_ok=True)
             
             # Save model to file
@@ -143,13 +143,13 @@ class ModelService:
             
             # Create a simple dummy model based on type
             if model.model_type.lower() in ["tft", "transformer"]:
-                dummy_model = DummyTFTmodels.Model()
+                dummy_model = DummyTFTModel()
             elif model.model_type.lower() in ["lstm", "rnn"]:
-                dummy_model = DummyLSTMmodels.Model()
+                dummy_model = DummyLSTMModel()
             elif model.model_type.lower() == "arima":
-                dummy_model = DummyARIMAmodels.Model()
+                dummy_model = DummyARIMAModel()
             else:
-                dummy_model = DummyLinearmodels.Model()
+                dummy_model = DummyLinearModel()
             
             # Simulate training metrics
             metrics = {
@@ -184,7 +184,7 @@ class DummyTFTModel:
             X = X.reshape(1, -1)
         # Pad or truncate to expected size
         if X.shape[1] < 10:
-            X = np.pad(X, ((0, 0), (0, 10 - X.shape[1])), mode='constant')
+            X = np.pad(X, ((0, 0), (0, 10 - X.shape[1])), mode=\'constant\')
         elif X.shape[1] > 10:
             X = X[:, :10]
         return np.dot(X, self.weights)
@@ -208,7 +208,7 @@ class DummyLSTMModel:
             X = X.reshape(1, -1)
         # Pad or truncate to expected size
         if X.shape[1] < 8:
-            X = np.pad(X, ((0, 0), (0, 8 - X.shape[1])), mode='constant')
+            X = np.pad(X, ((0, 0), (0, 8 - X.shape[1])), mode=\'constant\')
         elif X.shape[1] > 8:
             X = X[:, :8]
         return np.dot(X, self.weights)
@@ -252,7 +252,7 @@ class DummyLinearModel:
             X = X.reshape(1, -1)
         # Pad or truncate to expected size
         if X.shape[1] < 6:
-            X = np.pad(X, ((0, 0), (0, 6 - X.shape[1])), mode='constant')
+            X = np.pad(X, ((0, 0), (0, 6 - X.shape[1])), mode=\'constant\')
         elif X.shape[1] > 6:
             X = X[:, :6]
         return (np.dot(X, self.weights) + self.bias).reshape(-1, 1)
@@ -262,4 +262,6 @@ class DummyLinearModel:
         # Simple binary classification probabilities
         prob_pos = 1 / (1 + np.exp(-pred.flatten()))
         return np.column_stack([1 - prob_pos, prob_pos])
+
+
 

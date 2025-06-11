@@ -1,205 +1,81 @@
 """
-Enhanced configuration management for Quantis API
+Configuration management for the Quantis API
 """
 import os
 from typing import Optional, List
 from pydantic import BaseSettings, validator
-from pydantic_settings import BaseSettings as PydanticBaseSettings
 
 
-class DatabaseSettings(PydanticBaseSettings):
-    """Database configuration settings"""
-    url: str = "sqlite:///./quantis.db"
-    echo: bool = False
-    pool_size: int = 10
-    max_overflow: int = 20
-    pool_timeout: int = 30
-    pool_recycle: int = 3600
+class Settings(BaseSettings):
+    """Application settings with environment variable support"""
     
-    class Config:
-        env_prefix = "DB_"
-
-
-class RedisSettings(PydanticBaseSettings):
-    """Redis configuration settings"""
-    host: str = "localhost"
-    port: int = 6379
-    password: Optional[str] = None
-    db: int = 0
-    max_connections: int = 20
-    socket_timeout: int = 5
-    socket_connect_timeout: int = 5
-    
-    class Config:
-        env_prefix = "REDIS_"
-    
-    @property
-    def url(self) -> str:
-        if self.password:
-            return f"redis://:{self.password}@{self.host}:{self.port}/{self.db}"
-        return f"redis://{self.host}:{self.port}/{self.db}"
-
-
-class SecuritySettings(PydanticBaseSettings):
-    """Security configuration settings"""
-    secret_key: str = "your-secret-key-change-in-production"
-    algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
-    refresh_token_expire_days: int = 7
-    password_min_length: int = 8
-    max_login_attempts: int = 5
-    lockout_duration_minutes: int = 15
-    
-    # Rate limiting
-    rate_limit_requests: int = 100
-    rate_limit_window: int = 60  # seconds
-    
-    # CORS settings
-    cors_origins: List[str] = ["*"]
-    cors_methods: List[str] = ["*"]
-    cors_headers: List[str] = ["*"]
-    
-    class Config:
-        env_prefix = "SECURITY_"
-
-
-class CelerySettings(PydanticBaseSettings):
-    """Celery configuration settings"""
-    broker_url: str = "redis://localhost:6379/1"
-    result_backend: str = "redis://localhost:6379/1"
-    task_serializer: str = "json"
-    result_serializer: str = "json"
-    accept_content: List[str] = ["json"]
-    timezone: str = "UTC"
-    enable_utc: bool = True
-    
-    # Task routing
-    task_routes: dict = {
-        "quantis.tasks.ml.*": {"queue": "ml_queue"},
-        "quantis.tasks.data.*": {"queue": "data_queue"},
-        "quantis.tasks.notifications.*": {"queue": "notifications_queue"},
-    }
-    
-    class Config:
-        env_prefix = "CELERY_"
-
-
-class MonitoringSettings(PydanticBaseSettings):
-    """Monitoring and observability settings"""
-    enable_metrics: bool = True
-    metrics_port: int = 8001
-    log_level: str = "INFO"
-    log_format: str = "json"
-    
-    # Sentry configuration
-    sentry_dsn: Optional[str] = None
-    sentry_environment: str = "development"
-    sentry_traces_sample_rate: float = 0.1
-    
-    # Health check settings
-    health_check_interval: int = 30
-    health_check_timeout: int = 5
-    
-    class Config:
-        env_prefix = "MONITORING_"
-
-
-class EmailSettings(PydanticBaseSettings):
-    """Email configuration settings"""
-    smtp_host: str = "localhost"
-    smtp_port: int = 587
-    smtp_username: Optional[str] = None
-    smtp_password: Optional[str] = None
-    smtp_tls: bool = True
-    smtp_ssl: bool = False
-    from_email: str = "noreply@quantis.com"
-    from_name: str = "Quantis Platform"
-    
-    class Config:
-        env_prefix = "EMAIL_"
-
-
-class StorageSettings(PydanticBaseSettings):
-    """File storage configuration settings"""
-    storage_type: str = "local"  # local, s3, minio
-    local_storage_path: str = "./storage"
-    
-    # S3/MinIO settings
-    s3_bucket: Optional[str] = None
-    s3_region: Optional[str] = None
-    s3_access_key: Optional[str] = None
-    s3_secret_key: Optional[str] = None
-    s3_endpoint_url: Optional[str] = None
-    
-    # File upload limits
-    max_file_size: int = 100 * 1024 * 1024  # 100MB
-    allowed_file_types: List[str] = [".csv", ".json", ".parquet", ".xlsx"]
-    
-    class Config:
-        env_prefix = "STORAGE_"
-
-
-class ExternalAPISettings(PydanticBaseSettings):
-    """External API configuration settings"""
-    alpha_vantage_api_key: Optional[str] = None
-    yahoo_finance_enabled: bool = True
-    bloomberg_api_key: Optional[str] = None
-    
-    # API rate limits
-    alpha_vantage_requests_per_minute: int = 5
-    yahoo_finance_requests_per_minute: int = 2000
-    
-    class Config:
-        env_prefix = "EXTERNAL_API_"
-
-
-class MLSettings(PydanticBaseSettings):
-    """Machine Learning configuration settings"""
-    model_storage_path: str = "./models"
-    max_training_time_minutes: int = 60
-    default_test_size: float = 0.2
-    default_validation_size: float = 0.1
-    
-    # MLflow settings
-    mlflow_tracking_uri: str = "sqlite:///./mlflow.db"
-    mlflow_experiment_name: str = "quantis_experiments"
-    
-    # Model serving
-    model_cache_size: int = 10
-    prediction_timeout_seconds: int = 30
-    
-    class Config:
-        env_prefix = "ML_"
-
-
-class Settings(PydanticBaseSettings):
-    """Main application settings"""
+    # Application settings
     app_name: str = "Quantis API"
-    app_version: str = "2.0.0"
+    app_version: str = "1.0.0"
     environment: str = "development"
     debug: bool = False
     
     # Server settings
     host: str = "0.0.0.0"
     port: int = 8000
-    workers: int = 1
+    reload: bool = False
     
-    # Feature flags
-    enable_websockets: bool = True
-    enable_background_tasks: bool = True
-    enable_real_time_data: bool = True
-    enable_ml_training: bool = True
+    # Database settings
+    database_url: str = "sqlite:///./quantis.db"
+    database_echo: bool = False
     
-    # Nested settings
-    database: DatabaseSettings = DatabaseSettings()
-    redis: RedisSettings = RedisSettings()
-    security: SecuritySettings = SecuritySettings()
-    celery: CelerySettings = CelerySettings()
-    monitoring: MonitoringSettings = MonitoringSettings()
-    email: EmailSettings = EmailSettings()
-    storage: StorageSettings = StorageSettings()
-    external_api: ExternalAPISettings = ExternalAPISettings()
-    ml: MLSettings = MLSettings()
+    # Security settings
+    secret_key: str = "your-secret-key-change-this-in-production"
+    jwt_secret: str = "your-jwt-secret-change-this-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_expiration_minutes: int = 30
+    api_secret: Optional[str] = None
+    
+    # CORS settings
+    cors_origins: List[str] = ["*"]
+    cors_credentials: bool = False
+    cors_methods: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+    cors_headers: List[str] = ["*"]
+    
+    # Rate limiting
+    rate_limit_requests_per_minute: int = 60
+    rate_limit_prediction_requests_per_minute: int = 30
+    rate_limit_public_requests_per_minute: int = 30
+    
+    # Logging
+    log_level: str = "INFO"
+    log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    log_file: Optional[str] = None
+    
+    # File upload settings
+    max_upload_size: int = 10 * 1024 * 1024  # 10MB
+    allowed_file_types: List[str] = [".csv", ".json", ".xlsx", ".xls"]
+    upload_directory: str = "./uploads"
+    
+    # Model settings
+    model_directory: str = "./models"
+    max_models_per_user: int = 10
+    model_training_timeout: int = 3600  # 1 hour
+    
+    # Prediction settings
+    max_batch_size: int = 1000
+    prediction_timeout: int = 30  # 30 seconds
+    
+    # Monitoring and metrics
+    enable_metrics: bool = True
+    metrics_endpoint: str = "/metrics"
+    health_check_endpoint: str = "/health"
+    
+    # External services
+    redis_url: Optional[str] = None
+    celery_broker_url: Optional[str] = None
+    
+    # Email settings (for notifications)
+    smtp_server: Optional[str] = None
+    smtp_port: int = 587
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_use_tls: bool = True
     
     class Config:
         env_file = ".env"
@@ -208,20 +84,101 @@ class Settings(PydanticBaseSettings):
     
     @validator("environment")
     def validate_environment(cls, v):
-        allowed_environments = ["development", "testing", "staging", "production"]
-        if v not in allowed_environments:
-            raise ValueError(f"Environment must be one of {allowed_environments}")
+        allowed_envs = ["development", "staging", "production", "testing"]
+        if v not in allowed_envs:
+            raise ValueError(f"Environment must be one of: {allowed_envs}")
         return v
     
-    @validator("debug")
-    def validate_debug_in_production(cls, v, values):
-        if values.get("environment") == "production" and v:
-            raise ValueError("Debug mode cannot be enabled in production")
+    @validator("cors_origins", pre=True)
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",")]
         return v
+    
+    @validator("cors_methods", pre=True)
+    def parse_cors_methods(cls, v):
+        if isinstance(v, str):
+            return [method.strip().upper() for method in v.split(",")]
+        return v
+    
+    @validator("cors_headers", pre=True)
+    def parse_cors_headers(cls, v):
+        if isinstance(v, str):
+            return [header.strip() for header in v.split(",")]
+        return v
+    
+    @validator("allowed_file_types", pre=True)
+    def parse_allowed_file_types(cls, v):
+        if isinstance(v, str):
+            return [ext.strip() for ext in v.split(",")]
+        return v
+    
+    @property
+    def is_development(self) -> bool:
+        return self.environment == "development"
+    
+    @property
+    def is_production(self) -> bool:
+        return self.environment == "production"
+    
+    @property
+    def is_testing(self) -> bool:
+        return self.environment == "testing"
+
+
+class DatabaseSettings(BaseSettings):
+    """Database-specific settings"""
+    
+    # PostgreSQL settings
+    postgres_user: Optional[str] = None
+    postgres_password: Optional[str] = None
+    postgres_host: Optional[str] = None
+    postgres_port: int = 5432
+    postgres_db: Optional[str] = None
+    
+    # MySQL settings
+    mysql_user: Optional[str] = None
+    mysql_password: Optional[str] = None
+    mysql_host: Optional[str] = None
+    mysql_port: int = 3306
+    mysql_db: Optional[str] = None
+    
+    # Connection pool settings
+    pool_size: int = 5
+    max_overflow: int = 10
+    pool_timeout: int = 30
+    pool_recycle: int = 3600
+    
+    class Config:
+        env_file = ".env"
+        env_prefix = "DB_"
+    
+    def get_database_url(self, db_type: str = "sqlite") -> str:
+        """Get database URL based on type"""
+        if db_type == "postgresql" and all([
+            self.postgres_user, self.postgres_password, 
+            self.postgres_host, self.postgres_db
+        ]):
+            return (
+                f"postgresql://{self.postgres_user}:{self.postgres_password}"
+                f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+            )
+        elif db_type == "mysql" and all([
+            self.mysql_user, self.mysql_password,
+            self.mysql_host, self.mysql_db
+        ]):
+            return (
+                f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}"
+                f"@{self.mysql_host}:{self.mysql_port}/{self.mysql_db}"
+            )
+        else:
+            # Default to SQLite
+            return "sqlite:///./quantis.db"
 
 
 # Global settings instance
 settings = Settings()
+db_settings = DatabaseSettings()
 
 
 def get_settings() -> Settings:
@@ -229,9 +186,57 @@ def get_settings() -> Settings:
     return settings
 
 
-def reload_settings():
-    """Reload settings from environment"""
+def get_db_settings() -> DatabaseSettings:
+    """Get database settings"""
+    return db_settings
+
+
+def update_settings(**kwargs):
+    """Update settings at runtime"""
     global settings
-    settings = Settings()
-    return settings
+    for key, value in kwargs.items():
+        if hasattr(settings, key):
+            setattr(settings, key, value)
+
+
+def load_environment_config():
+    """Load configuration based on environment"""
+    env = settings.environment
+    
+    if env == "production":
+        # Production-specific settings
+        settings.debug = False
+        settings.reload = False
+        settings.cors_credentials = True
+        settings.log_level = "WARNING"
+        
+        # Ensure security settings are set
+        if settings.secret_key == "your-secret-key-change-this-in-production":
+            raise ValueError("SECRET_KEY must be set in production")
+        if settings.jwt_secret == "your-jwt-secret-change-this-in-production":
+            raise ValueError("JWT_SECRET must be set in production")
+    
+    elif env == "staging":
+        # Staging-specific settings
+        settings.debug = False
+        settings.reload = False
+        settings.cors_credentials = True
+        settings.log_level = "INFO"
+    
+    elif env == "development":
+        # Development-specific settings
+        settings.debug = True
+        settings.reload = True
+        settings.cors_credentials = False
+        settings.log_level = "DEBUG"
+    
+    elif env == "testing":
+        # Testing-specific settings
+        settings.debug = True
+        settings.database_url = "sqlite:///:memory:"
+        settings.log_level = "ERROR"
+
+
+# Load environment-specific configuration
+load_environment_config()
 

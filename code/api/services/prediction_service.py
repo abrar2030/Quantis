@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
 import numpy as np
 
-import models
+from .. import models
 from .model_service import ModelService
 
 
@@ -76,24 +76,24 @@ class PredictionService:
 
     def get_prediction_by_id(self, prediction_id: int) -> Optional[models.Prediction]:
         """Get prediction by ID"""
-        return self.db.query(models.Prediction).filter(Prediction.id == prediction_id).first()
+        return self.db.query(models.Prediction).filter(models.Prediction.id == prediction_id).first()
 
     def get_predictions_by_user(self, user_id: int, skip: int = 0, limit: int = 100) -> List[models.Prediction]:
         """Get predictions by user"""
         return self.db.query(models.Prediction).filter(
-            Prediction.user_id == user_id
+            models.Prediction.user_id == user_id
         ).order_by(desc(Prediction.created_at)).offset(skip).limit(limit).all()
 
     def get_predictions_by_model(self, model_id: int, skip: int = 0, limit: int = 100) -> List[models.Prediction]:
         """Get predictions by model"""
         return self.db.query(models.Prediction).filter(
-            Prediction.model_id == model_id
+            models.Prediction.model_id == model_id
         ).order_by(desc(Prediction.created_at)).offset(skip).limit(limit).all()
 
     def get_all_predictions(self, skip: int = 0, limit: int = 100) -> List[models.Prediction]:
         """Get all predictions (admin only)"""
         return self.db.query(models.Prediction).order_by(
-            desc(Prediction.created_at)
+            desc(models.Prediction.created_at)
         ).offset(skip).limit(limit).all()
 
     def get_prediction_statistics(self, user_id: int = None, model_id: int = None) -> Dict[str, Any]:
@@ -101,9 +101,9 @@ class PredictionService:
         query = self.db.query(models.Prediction)
         
         if user_id:
-            query = query.filter(Prediction.user_id == user_id)
+            query = query.filter(models.Prediction.user_id == user_id)
         if model_id:
-            query = query.filter(Prediction.model_id == model_id)
+            query = query.filter(models.Prediction.model_id == model_id)
         
         predictions = query.all()
         

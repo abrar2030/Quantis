@@ -11,8 +11,8 @@ from fastapi import Depends, HTTPException, Security
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-import database import get_db
-importservices.user_service import UserService
+from ..database import get_db, SessionLocal
+from ..services.user_service import UserService
 
 # Constants
 API_KEY_HEADER = APIKeyHeader(name="X-API-Key")
@@ -228,7 +228,6 @@ class ApiKeyManager:
     def create_api_key(user_id: str, role: str = Roles.USER, expiry_days: int = 30) -> str:
         """Create a new API key - legacy compatibility method"""
         # This is kept for backward compatibility but should use the service layer
-        import database import SessionLocal
         db = SessionLocal()
         try:
             user_service = UserService(db)
@@ -242,7 +241,6 @@ class ApiKeyManager:
     @staticmethod
     def validate_api_key(api_key: str) -> Dict:
         """Validate API key - legacy compatibility method"""
-        import database import SessionLocal
         db = SessionLocal()
         try:
             user_service = UserService(db)
@@ -253,7 +251,6 @@ class ApiKeyManager:
     @staticmethod
     def revoke_api_key(api_key: str) -> bool:
         """Revoke an API key - legacy compatibility method"""
-        import database import SessionLocal
         db = SessionLocal()
         try:
             user_service = UserService(db)
@@ -264,7 +261,6 @@ class ApiKeyManager:
     @staticmethod
     def get_user_keys(user_id: str) -> List[str]:
         """Get all API keys for a user - legacy compatibility method"""
-        import database import SessionLocal
         db = SessionLocal()
         try:
             user_service = UserService(db)

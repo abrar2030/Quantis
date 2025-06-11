@@ -7,13 +7,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-import database import get_db
-importmiddleware.auth import (
+from ..database import get_db
+from ..middleware.auth import (
     admin_required, readonly_or_above, user_or_admin_required,
     validate_api_key
 )
-importservices.model_service import ModelService
-importservices.dataset_service import DatasetService
+from ..services.model_service import ModelService
+from ..services.dataset_service import DatasetService
+from ..services.user_service import UserService
 
 router = APIRouter()
 
@@ -134,7 +135,6 @@ async def get_models(
         models = [m for m in models if m.model_type == model_type]
     
     # Get additional info
-    importservices.user_service import UserService
     user_service = UserService(db)
     
     result = []
@@ -182,7 +182,6 @@ async def get_model(
         raise HTTPException(status_code=403, detail="Access denied")
     
     # Get additional info
-    importservices.user_service import UserService
     user_service = UserService(db)
     owner = user_service.get_user_by_id(model.owner_id)
     dataset = dataset_service.get_dataset_by_id(model.dataset_id)
@@ -457,4 +456,6 @@ async def get_model_types(
             }
         ]
     }
+
+
 

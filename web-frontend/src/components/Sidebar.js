@@ -1,89 +1,130 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Box,
   Drawer,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Divider,
-  IconButton,
   Typography,
-  useMediaQuery,
+  Box,
+  Divider,
+  Avatar,
+  useTheme,
 } from '@mui/material';
-import { useTheme as useMuiTheme } from '@mui/material/styles';
-import { useTheme } from '../context/ThemeContext';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import SettingsIcon from '@mui/icons-material/Settings';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
+import {
+  Dashboard as DashboardIcon,
+  TrendingUp,
+  Storage,
+  CloudUpload,
+  ModelTraining,
+  Settings,
+  Psychology,
+  BarChart,
+  Logout,
+} from '@mui/icons-material';
+import { useAuth } from '../context/AuthContext';
 
 const drawerWidth = 240;
 
-const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Predictions', icon: <TimelineIcon />, path: '/predictions' },
-  { text: 'Model Metrics', icon: <AssessmentIcon />, path: '/metrics' },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
-];
-
 const Sidebar = ({ open, onClose }) => {
-  const theme = useMuiTheme();
-  const { toggleColorMode, mode } = useTheme();
-  const navigate = useNavigate();
+  const theme = useTheme();
   const location = useLocation();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const menuItems = [
+    {
+      text: 'Dashboard',
+      icon: <DashboardIcon />,
+      path: '/',
+      section: 'main',
+    },
+    {
+      text: 'Predictions',
+      icon: <TrendingUp />,
+      path: '/predictions',
+      section: 'main',
+    },
+    {
+      text: 'Models',
+      icon: <Psychology />,
+      path: '/models',
+      section: 'main',
+    },
+    {
+      text: 'Model Management',
+      icon: <ModelTraining />,
+      path: '/model-management',
+      section: 'management',
+    },
+    {
+      text: 'Datasets',
+      icon: <Storage />,
+      path: '/datasets',
+      section: 'management',
+    },
+    {
+      text: 'Upload Dataset',
+      icon: <CloudUpload />,
+      path: '/dataset-upload',
+      section: 'management',
+    },
+  ];
 
   const handleNavigation = (path) => {
     navigate(path);
-    if (isMobile) {
+    if (onClose) {
       onClose();
     }
   };
 
-  const drawer = (
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  const isSelected = (path) => {
+    if (path === '/') {
+      return location.pathname === '/' || location.pathname === '/dashboard';
+    }
+    return location.pathname === path;
+  };
+
+  const renderMenuSection = (sectionItems, title) => (
     <>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: theme.spacing(0, 1),
-          ...theme.mixins.toolbar,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ fontWeight: 600 }}
-          >
-            Quantis
-          </Typography>
-        </Box>
-        <IconButton onClick={onClose}>
-          <ChevronLeftIcon />
-        </IconButton>
-      </Box>
-      <Divider />
-      <List>
-        {menuItems.map((item) => (
+      {title && (
+        <Typography
+          variant="overline"
+          sx={{
+            px: 2,
+            py: 1,
+            color: theme.palette.text.secondary,
+            fontSize: '0.75rem',
+            fontWeight: 600,
+          }}
+        >
+          {title}
+        </Typography>
+      )}
+      <List sx={{ py: 0 }}>
+        {sectionItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
-              selected={location.pathname === item.path}
               onClick={() => handleNavigation(item.path)}
+              selected={isSelected(item.path)}
               sx={{
+                mx: 1,
+                borderRadius: 1,
                 '&.Mui-selected': {
-                  backgroundColor: theme.palette.primary.main + '20',
-                  borderRight: `3px solid ${theme.palette.primary.main}`,
+                  backgroundColor: theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
                   '&:hover': {
-                    backgroundColor: theme.palette.primary.main + '30',
+                    backgroundColor: theme.palette.primary.dark,
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: theme.palette.primary.contrastText,
                   },
                 },
                 '&:hover': {
@@ -93,60 +134,142 @@ const Sidebar = ({ open, onClose }) => {
             >
               <ListItemIcon
                 sx={{
-                  color:
-                    location.pathname === item.path
-                      ? theme.palette.primary.main
-                      : 'inherit',
+                  color: isSelected(item.path)
+                    ? theme.palette.primary.contrastText
+                    : theme.palette.text.secondary,
                 }}
               >
                 {item.icon}
               </ListItemIcon>
               <ListItemText
                 primary={item.text}
-                sx={{
-                  color:
-                    location.pathname === item.path
-                      ? theme.palette.primary.main
-                      : 'inherit',
+                primaryTypographyProps={{
+                  fontSize: '0.875rem',
+                  fontWeight: isSelected(item.path) ? 600 : 400,
                 }}
               />
             </ListItemButton>
           </ListItem>
         ))}
       </List>
-      <Divider />
-      <List>
-        <ListItem disablePadding>
-          <ListItemButton onClick={toggleColorMode}>
-            <ListItemIcon>
-              {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-            </ListItemIcon>
-            <ListItemText
-              primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            />
-          </ListItemButton>
-        </ListItem>
-      </List>
     </>
+  );
+
+  const drawerContent = (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Header */}
+      <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 700,
+            color: theme.palette.primary.main,
+            textAlign: 'center',
+          }}
+        >
+          Quantis
+        </Typography>
+      </Box>
+
+      {/* User Info */}
+      {user && (
+        <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar
+              sx={{
+                bgcolor: theme.palette.primary.main,
+                width: 40,
+                height: 40,
+              }}
+            >
+              {user.username?.charAt(0).toUpperCase() || 'U'}
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 600 }}
+                noWrap
+              >
+                {user.username || 'User'}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                noWrap
+              >
+                {user.email || ''}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
+      {/* Navigation */}
+      <Box sx={{ flex: 1, overflow: 'auto', py: 1 }}>
+        {renderMenuSection(
+          menuItems.filter(item => item.section === 'main'),
+          null
+        )}
+        
+        <Divider sx={{ my: 1, mx: 2 }} />
+        
+        {renderMenuSection(
+          menuItems.filter(item => item.section === 'management'),
+          'Management'
+        )}
+      </Box>
+
+      {/* Footer */}
+      <Box sx={{ borderTop: `1px solid ${theme.palette.divider}` }}>
+        <List sx={{ py: 0 }}>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={handleLogout}
+              sx={{
+                mx: 1,
+                borderRadius: 1,
+                '&:hover': {
+                  backgroundColor: theme.palette.error.light,
+                  color: theme.palette.error.contrastText,
+                  '& .MuiListItemIcon-root': {
+                    color: theme.palette.error.contrastText,
+                  },
+                },
+              }}
+            >
+              <ListItemIcon>
+                <Logout />
+              </ListItemIcon>
+              <ListItemText
+                primary="Logout"
+                primaryTypographyProps={{
+                  fontSize: '0.875rem',
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Box>
+    </Box>
   );
 
   return (
     <Drawer
-      variant={isMobile ? 'temporary' : 'persistent'}
-      open={open}
-      onClose={onClose}
+      variant="permanent"
       sx={{
         width: drawerWidth,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
+          borderRight: `1px solid ${theme.palette.divider}`,
         },
       }}
     >
-      {drawer}
+      {drawerContent}
     </Drawer>
   );
 };
 
 export default Sidebar;
+

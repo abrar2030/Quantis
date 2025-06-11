@@ -1,71 +1,110 @@
 import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
+import {
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
-const BarChart = ({ data }) => {
+const BarChart = ({ data, title, height = 300, dataKey = 'value', nameKey = 'name' }) => {
   const theme = useTheme();
 
-  // This is a placeholder component that would use Nivo charts in a real implementation
-  // For now, we'll just display a placeholder with simulated bars
+  // Transform data if needed
+  const transformedData = React.useMemo(() => {
+    if (!data || data.length === 0) {
+      return [];
+    }
 
-  return (
-    <Box
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: theme.palette.background.default,
-        borderRadius: 1,
-        p: 2,
-      }}
-    >
-      <Typography variant="body1" color="text.secondary" align="center">
-        Feature Importance
-      </Typography>
-      <Typography
-        variant="body2"
-        color="text.secondary"
-        align="center"
-        sx={{ mt: 1, mb: 3 }}
-      >
-        Top 5 influential features in the model
-      </Typography>
+    // Check if data needs transformation
+    if (data[0] && data[0].feature && data[0].value !== undefined) {
+      // Transform feature importance data
+      return data.map(item => ({
+        name: item.feature,
+        value: item.value,
+      }));
+    }
 
+    // Data is already in the correct format or use as-is
+    return data;
+  }, [data]);
+
+  if (!transformedData || transformedData.length === 0) {
+    return (
       <Box
         sx={{
-          width: '100%',
-          height: '70%',
+          height,
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: theme.palette.background.default,
+          borderRadius: 1,
         }}
       >
-        {data.map((item, index) => (
-          <Box
-            key={index}
-            sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
-          >
-            <Typography variant="caption" sx={{ width: 80, mr: 1 }}>
-              {item.feature}
-            </Typography>
-            <Box
-              sx={{
-                height: 20,
-                width: `${item.value * 100}%`,
-                backgroundColor: theme.palette.primary.main,
-                opacity: 0.7 + (5 - index) * 0.06, // Decreasing opacity for lower values
-                borderRadius: 1,
-              }}
-            />
-            <Typography variant="caption" sx={{ ml: 1 }}>
-              {(item.value * 100).toFixed(0)}%
-            </Typography>
-          </Box>
-        ))}
+        <Typography variant="body2" color="text.secondary">
+          No data available
+        </Typography>
       </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ width: '100%', height }}>
+      {title && (
+        <Typography variant="h6" gutterBottom>
+          {title}
+        </Typography>
+      )}
+      <ResponsiveContainer width="100%" height="100%">
+        <RechartsBarChart
+          data={transformedData}
+          margin={{
+            top: 5,
+            right: 30,
+            left: 20,
+            bottom: 5,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+          <XAxis
+            dataKey={nameKey}
+            stroke={theme.palette.text.secondary}
+            fontSize={12}
+            angle={-45}
+            textAnchor="end"
+            height={60}
+          />
+          <YAxis
+            stroke={theme.palette.text.secondary}
+            fontSize={12}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: theme.palette.background.paper,
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: theme.shape.borderRadius,
+              color: theme.palette.text.primary,
+            }}
+            formatter={(value, name) => [
+              typeof value === 'number' ? value.toFixed(3) : value,
+              name
+            ]}
+          />
+          <Legend />
+          <Bar
+            dataKey={dataKey}
+            fill={theme.palette.primary.main}
+            radius={[4, 4, 0, 0]}
+          />
+        </RechartsBarChart>
+      </ResponsiveContainer>
     </Box>
   );
 };
 
 export default BarChart;
+
