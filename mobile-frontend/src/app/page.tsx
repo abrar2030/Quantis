@@ -1,4 +1,4 @@
-'use client';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,7 +19,10 @@ import {
   History,
   Trash2,
   LineChart as LineChartIcon,
-} from 'lucide-react'; // Import icons
+  UploadCloud,
+  Database,
+  Model,
+} from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -32,75 +35,67 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts'; // Import recharts components
+} from 'recharts';
+import { useAuth } from '@/context/AuthContext';
+import { predictionsAPI, handleApiError } from '@/lib/api';
 
-// Define the structure for the prediction response
 interface PredictionResponse {
   prediction: number[] | number;
   confidence: number;
 }
 
-// Define the structure for a history entry
 interface HistoryEntry extends PredictionResponse {
-  features: string; // Store the input features as a string
-  timestamp: number; // Store the time of prediction
+  features: string;
+  timestamp: number;
 }
 
-// Helper function to format prediction data for the chart
 const formatChartData = (prediction: number[]) => {
   return prediction.map((value, index) => ({ name: `t+${index + 1}`, value }));
 };
 
 export default function Home() {
   const router = useRouter();
+  const { user, logout, isLoading: authLoading } = useAuth();
   const [featureInput, setFeatureInput] = useState<string>('');
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [predictionResult, setPredictionResult] =
-    useState<PredictionResponse | null>(null);
+  const [predictionResult, setPredictionResult] = useState<PredictionResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [predictionHistory, setPredictionHistory] = useState<HistoryEntry[]>(
     []
   );
 
-  // Load API key, email, and history from localStorage on mount
   useEffect(() => {
-    const storedApiKey = localStorage.getItem('apiKey');
-    const storedEmail = localStorage.getItem('userEmail');
-    const storedHistory = localStorage.getItem('predictionHistory');
-
-    if (storedApiKey) {
-      setApiKey(storedApiKey);
-      setUserEmail(storedEmail);
-      if (storedHistory) {
-        try {
-          setPredictionHistory(JSON.parse(storedHistory));
-        } catch (e) {
-          console.error('Failed to parse prediction history:', e);
-          localStorage.removeItem('predictionHistory'); // Clear corrupted history
-        }
-      }
-    } else {
+    if (!authLoading && !user) {
       router.push('/login');
     }
-  }, [router]);
+  }, [user, authLoading, router]);
 
-  // Save history to localStorage whenever it changes
   useEffect(() => {
-    if (predictionHistory.length > 0) {
+    const storedHistory = localStorage.getItem(`predictionHistory_${user?.id}`);
+    if (storedHistory) {
+      try {
+        setPredictionHistory(JSON.parse(storedHistory));
+      } catch (e) {
+        console.error('Failed to parse prediction history:', e);
+        localStorage.removeItem(`predictionHistory_${user?.id}`);
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user && predictionHistory.length > 0) {
       localStorage.setItem(
-        'predictionHistory',
+        `predictionHistory_${user.id}`,
         JSON.stringify(predictionHistory)
       );
-    } else {
-      localStorage.removeItem('predictionHistory');
+    } else if (user) {
+      localStorage.removeItem(`predictionHistory_${user.id}`);
     }
-  }, [predictionHistory]);
+  }, [predictionHistory, user]);
 
   const handlePredict = async () => {
-    if (!apiKey) {
-      setError('API Key not found. Please log in again.');
+    if (!user) {
+      setError('User not authenticated. Please log in.');
       router.push('/login');
       return;
     }
@@ -110,9 +105,6 @@ export default function Home() {
     setPredictionResult(null);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_PROXY_URL
-        ? `${process.env.NEXT_PUBLIC_API_PROXY_URL}/predict`
-        : '/api/predict';
       const features = featureInput
         .split(',')
         .map((f) => parseFloat(f.trim()))
@@ -123,48 +115,27 @@ export default function Home() {
         );
       }
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
-        },
-        body: JSON.stringify({ features: features }),
-      });
+      const response = await predictionsAPI.createPrediction({ features });
+      setPredictionResult(response);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.detail ||
-            `API request failed with status ${response.status}`
-        );
-      }
-
-      const data: PredictionResponse = await response.json();
-      setPredictionResult(data);
-
-      // Add to history
       const newHistoryEntry: HistoryEntry = {
-        ...data,
+        ...response,
         features: featureInput,
         timestamp: Date.now(),
       };
       setPredictionHistory((prevHistory) =>
         [newHistoryEntry, ...prevHistory].slice(0, 10)
-      ); // Keep latest 10
+      );
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+      const apiError = handleApiError(err);
+      setError(apiError.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('apiKey');
-    localStorage.removeItem('userEmail');
-    setApiKey(null);
-    setUserEmail(null);
-    setPredictionHistory([]);
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
   };
 
@@ -172,8 +143,7 @@ export default function Home() {
     setPredictionHistory([]);
   };
 
-  // Render loading state
-  if (apiKey === null) {
+  if (authLoading || !user) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
         <Loader2 className="h-12 w-12 animate-spin text-blue-400 mb-4" />
@@ -195,7 +165,7 @@ export default function Home() {
           <CardDescription className="text-gray-400">
             Welcome back,{' '}
             <span className="font-medium text-gray-300">
-              {userEmail || 'User'}
+              {user.username || user.email || 'User'}
             </span>
             ! Input features for prediction.
           </CardDescription>
@@ -221,7 +191,7 @@ export default function Home() {
           </div>
           <Button
             onClick={handlePredict}
-            disabled={isLoading || !featureInput || !apiKey}
+            disabled={isLoading || !featureInput || !user}
             className="w-full text-lg font-semibold py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isLoading ? (
@@ -233,7 +203,6 @@ export default function Home() {
             )}
           </Button>
 
-          {/* Display Prediction Result */}
           {error && (
             <Alert
               variant="destructive"
@@ -302,7 +271,6 @@ export default function Home() {
             </Alert>
           )}
 
-          {/* Prediction History Section */}
           {predictionHistory.length > 0 && (
             <div className="mt-6 pt-6 border-t border-gray-700">
               <div className="flex justify-between items-center mb-3">
@@ -349,6 +317,22 @@ export default function Home() {
           )}
         </CardContent>
         <CardFooter className="flex flex-col items-center p-6 bg-gray-800/50 border-t border-gray-700">
+          <div className="flex space-x-4 mb-4">
+            <Button
+              variant="outline"
+              onClick={() => router.push('/datasets')}
+              className="bg-transparent border-gray-600 hover:bg-gray-700/50 text-gray-300 hover:text-white rounded-lg flex items-center justify-center"
+            >
+              <Database className="mr-2 h-4 w-4" /> Datasets
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/models')}
+              className="bg-transparent border-gray-600 hover:bg-gray-700/50 text-gray-300 hover:text-white rounded-lg flex items-center justify-center"
+            >
+              <Model className="mr-2 h-4 w-4" /> Models
+            </Button>
+          </div>
           <Button
             variant="outline"
             onClick={handleLogout}
@@ -361,3 +345,5 @@ export default function Home() {
     </main>
   );
 }
+
+
