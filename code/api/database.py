@@ -11,17 +11,21 @@ from sqlalchemy.pool import QueuePool
 from sqlalchemy.engine import Engine
 import redis.asyncio as redis
 from redis.asyncio import Redis
+from cryptography.fernet import Fernet
 
 from .config import get_settings
-from .models import Base
+from .models_enhanced import Base, EncryptionKey, DataRetentionPolicy, ConsentRecord, DataMaskingConfig # Import new models
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+# Determine database URL based on settings
+database_url = settings.database.get_database_url("postgresql") # Default to postgresql, can be configured
+
 # Synchronous database engine
 engine = create_engine(
-    settings.database.url,
-    echo=settings.database.echo,
+    database_url,
+    echo=settings.logging.log_level == "DEBUG", # Use logging setting for echo
     poolclass=QueuePool,
     pool_size=settings.database.pool_size,
     max_overflow=settings.database.max_overflow,
@@ -36,11 +40,14 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Redis connection
 redis_client: Optional[Redis] = None
 
+# Encryption key cache
+_encryption_keys: Dict[str, Fernet] = {}
+
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     """Set SQLite pragmas for better performance and reliability"""
-    if "sqlite" in settings.database.url:
+    if "sqlite" in database_url:
         cursor = dbapi_connection.cursor()
         # Enable foreign key constraints
         cursor.execute("PRAGMA foreign_keys=ON")
@@ -93,11 +100,10 @@ async def get_redis() -> Redis:
     """Get Redis client dependency"""
     global redis_client
     if redis_client is None:
+        if not settings.redis_url:
+            raise ValueError("Redis URL is not configured in settings.")
         redis_client = redis.from_url(
-            settings.redis.url,
-            max_connections=settings.redis.max_connections,
-            socket_timeout=settings.redis.socket_timeout,
-            socket_connect_timeout=settings.redis.socket_connect_timeout,
+            settings.redis_url,
             decode_responses=True,
         )
     return redis_client
@@ -317,4 +323,196 @@ def health_check() -> dict:
     health_status["timestamp"] = datetime.utcnow().isoformat()
     
     return health_status
+
+
+class EncryptionManager:
+    """Manages encryption and decryption of sensitive data."""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def _get_fernet(self, key_name: str) -> Fernet:
+        """Retrieves or generates a Fernet key."""
+        if key_name not in _encryption_keys:
+            key_record = self.db.query(EncryptionKey).filter_by(key_name=key_name, is_active=True).first()
+            if not key_record:
+                # In a real KMS integration, this would fetch from KMS
+                # For now, generate a new key and store it
+                new_key_value = Fernet.generate_key().decode()
+                key_record = EncryptionKey(
+                    key_name=key_name,
+                    key_value=new_key_value,
+                    key_type="Fernet",
+                    is_active=True,
+                    expires_at=datetime.utcnow() + timedelta(days=settings.encryption.key_rotation_interval_days)
+                )
+                self.db.add(key_record)
+                self.db.commit()
+                logger.info(f"Generated new encryption key: {key_name}")
+            _encryption_keys[key_name] = Fernet(key_record.key_value.encode())
+        return _encryption_keys[key_name]
+
+    def encrypt(self, data: str, key_name: str = settings.encryption.data_encryption_key_name) -> str:
+        """Encrypts data using the specified key."""
+        if not settings.compliance.enable_data_encryption:
+            return data # Return original data if encryption is disabled
+        try:
+            f = self._get_fernet(key_name)
+            encrypted_data = f.encrypt(data.encode()).decode()
+            logger.debug(f"Data encrypted with key {key_name}")
+            return encrypted_data
+        except Exception as e:
+            logger.error(f"Encryption failed for key {key_name}: {e}")
+            raise
+
+    def decrypt(self, encrypted_data: str, key_name: str = settings.encryption.data_encryption_key_name) -> str:
+        """Decrypts data using the specified key."""
+        if not settings.compliance.enable_data_encryption:
+            return encrypted_data # Return original data if encryption is disabled
+        try:
+            f = self._get_fernet(key_name)
+            decrypted_data = f.decrypt(encrypted_data.encode()).decode()
+            logger.debug(f"Data decrypted with key {key_name}")
+            return decrypted_data
+        except Exception as e:
+            logger.error(f"Decryption failed for key {key_name}: {e}")
+            raise
+
+
+class DataRetentionManager:
+    """Manages data retention and deletion based on policies."""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def apply_retention_policy(self, data_type: str, query):
+        """Applies retention policy to a given query."""
+        if not settings.compliance.enable_data_retention_policies:
+            return query # Return original query if policies are disabled
+
+        policy = self.db.query(DataRetentionPolicy).filter_by(data_type=data_type, is_active=True).first()
+        if policy and policy.retention_period_days > 0:
+            retention_date = datetime.utcnow() - timedelta(days=policy.retention_period_days)
+            return query.filter(DataRetentionPolicy.created_at < retention_date) # Assuming created_at for retention
+        return query
+
+    def delete_expired_data(self):
+        """Deletes data that has exceeded its retention period."""
+        if not settings.compliance.enable_data_retention_policies:
+            logger.info("Data retention policies are disabled. Skipping data deletion.")
+            return
+
+        # Example for AuditLog. Extend for other data types.
+        audit_log_policy = self.db.query(DataRetentionPolicy).filter_by(data_type="audit_logs", is_active=True).first()
+        if audit_log_policy and audit_log_policy.retention_period_days > 0:
+            retention_date = datetime.utcnow() - timedelta(days=audit_log_policy.retention_period_days)
+            deleted_count = self.db.query(AuditLog).filter(AuditLog.timestamp < retention_date).delete()
+            self.db.commit()
+            logger.info(f"Deleted {deleted_count} expired audit logs.")
+
+
+class ConsentManager:
+    """Manages user consent records."""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def record_consent(self, user_id: int, consent_type: str, details: Dict[str, Any] = None) -> ConsentRecord:
+        """Records a new consent for a user."""
+        if not settings.compliance.enable_consent_management:
+            logger.warning("Consent management is disabled. Consent not recorded.")
+            return None
+
+        consent = ConsentRecord(
+            user_id=user_id,
+            consent_type=consent_type,
+            details=details or {},
+            is_active=True
+        )
+        self.db.add(consent)
+        self.db.commit()
+        self.db.refresh(consent)
+        logger.info(f"Consent recorded for user {user_id}, type: {consent_type}")
+        return consent
+
+    def revoke_consent(self, user_id: int, consent_type: str):
+        """Revokes an existing consent for a user."""
+        if not settings.compliance.enable_consent_management:
+            logger.warning("Consent management is disabled. Consent not revoked.")
+            return
+
+        consent = self.db.query(ConsentRecord).filter_by(user_id=user_id, consent_type=consent_type, is_active=True).first()
+        if consent:
+            consent.is_active = False
+            self.db.commit()
+            logger.info(f"Consent revoked for user {user_id}, type: {consent_type}")
+
+    def get_user_consents(self, user_id: int) -> List[ConsentRecord]:
+        """Retrieves all active consents for a user."""
+        return self.db.query(ConsentRecord).filter_by(user_id=user_id, is_active=True).all()
+
+
+class DataMaskingManager:
+    """Applies data masking based on configured policies."""
+
+    def __init__(self, db: Session):
+        self.db = db
+        self.masking_configs = self._load_masking_configs()
+
+    def _load_masking_configs(self) -> Dict[str, DataMaskingConfig]:
+        """Loads active data masking configurations from the database."""
+        configs = self.db.query(DataMaskingConfig).filter_by(is_active=True).all()
+        return {config.field_name: config for config in configs}
+
+    def mask_data(self, field_name: str, data: str) -> str:
+        """Applies masking to a given data field based on configuration."""
+        if not settings.compliance.enable_data_masking:
+            return data # Return original data if masking is disabled
+
+        config = self.masking_configs.get(field_name)
+        if not config:
+            return data # No masking config found for this field
+
+        method = config.masking_method
+        if method == "hash":
+            return hashlib.sha256(data.encode()).hexdigest()
+        elif method == "redact":
+            return "[REDACTED]"
+        elif method == "partial":
+            # Example: Mask all but last 4 characters
+            if len(data) > 4:
+                return "*" * (len(data) - 4) + data[-4:]
+            return "*" * len(data)
+        else:
+            logger.warning(f"Unknown masking method: {method} for field {field_name}")
+            return data
+
+    def mask_object(self, obj: Dict[str, Any]) -> Dict[str, Any]:
+        """Applies masking to all relevant fields in a dictionary object."""
+        if not settings.compliance.enable_data_masking:
+            return obj
+
+        masked_obj = obj.copy()
+        for field_name, config in self.masking_configs.items():
+            if field_name in masked_obj:
+                masked_obj[field_name] = self.mask_data(field_name, str(masked_obj[field_name]))
+        return masked_obj
+
+
+# Dependency for EncryptionManager
+def get_encryption_manager(db: Session = Depends(get_db)) -> EncryptionManager:
+    return EncryptionManager(db)
+
+# Dependency for DataRetentionManager
+def get_data_retention_manager(db: Session = Depends(get_db)) -> DataRetentionManager:
+    return DataRetentionManager(db)
+
+# Dependency for ConsentManager
+def get_consent_manager(db: Session = Depends(get_db)) -> ConsentManager:
+    return ConsentManager(db)
+
+# Dependency for DataMaskingManager
+def get_data_masking_manager(db: Session = Depends(get_db)) -> DataMaskingManager:
+    return DataMaskingManager(db)
+
 

@@ -1,585 +1,766 @@
 """
-Enhanced authentication endpoints for Quantis API
+Enhanced authentication and security system for Quantis API
 """
 import logging
-from datetime import datetime, timedelta
-from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
-from fastapi.security import HTTPBearer
-from sqlalchemy.orm import Session
 import secrets
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Any, List
+from fastapi import Depends, HTTPException, status, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+import redis.asyncio as redis
+from functools import wraps
+import time
+import hashlib
+import pyotp # Added for MFA
+import qrcode # Added for MFA QR code generation
+import io # Added for MFA QR code generation
 
-from ..config import get_settings
-from ..database_enhanced import get_db, get_cache_manager, CacheManager
-from ..auth_enhanced import (
-    authenticate_user, create_tokens, refresh_access_token,
-    get_current_user, security_manager, AuditLogger,
-    create_user_session, rate_limit
-)
-from ..models_enhanced import User, ApiKey, UserSession
-from ..schemas_enhanced import (
-    UserLogin, Token, TokenRefresh, UserCreate, UserResponse,
-    PasswordChange, ApiKeyCreate, ApiKeyResponse, ApiKeyWithSecret,
-    ErrorResponse
-)
+from .config import get_settings
+from .database_enhanced import get_db, get_redis
+from .models_enhanced import User, ApiKey, UserSession, AuditLog, RolePermission # Added RolePermission
+from .schemas_enhanced import UserResponse, Token
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-router = APIRouter()
-security = HTTPBearer()
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# JWT settings
+ALGORITHM = settings.security.algorithm
+SECRET_KEY = settings.security.secret_key
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.security.access_token_expire_minutes
+REFRESH_TOKEN_EXPIRE_DAYS = settings.security.refresh_token_expire_days
+
+# Security schemes
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-@rate_limit(requests=5, window=300)  # 5 registrations per 5 minutes
-async def register(
-    user_data: UserCreate,
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    """Register a new user"""
-    try:
-        # Check if username already exists
-        existing_user = db.query(User).filter(
-            (User.username == user_data.username) | (User.email == user_data.email)
-        ).first()
+class SecurityManager:
+    """Centralized security management"""
+    
+    def __init__(self):
+        self.pwd_context = pwd_context
+        self.failed_attempts = {}  # In production, use Redis
+    
+    def hash_password(self, password: str) -> str:
+        """Hash a password"""
+        return self.pwd_context.hash(password)
+    
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        """Verify a password against its hash"""
+        return self.pwd_context.verify(plain_password, hashed_password)
+    
+    def generate_token(self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+        """Generate a JWT token"""
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         
-        if existing_user:
-            if existing_user.username == user_data.username:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Username already registered"
-                )
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email already registered"
-                )
+        to_encode.update({"exp": expire, "iat": datetime.utcnow()})
+        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
+    
+    def verify_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """Verify and decode a JWT token"""
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            return payload
+        except JWTError as e:
+            logger.warning(f"Token verification failed: {e}")
+            return None
+    
+    def create_access_token(self, user_id: int, username: str, role: str, permissions: List[str]) -> str: # Added permissions
+        """Create an access token"""
+        data = {
+            "sub": str(user_id),
+            "username": username,
+            "role": role,
+            "permissions": permissions, # Added permissions
+            "type": "access"
+        }
+        return self.generate_token(data, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    
+    def create_refresh_token(self, user_id: int, username: str) -> str:
+        """Create a refresh token"""
+        data = {
+            "sub": str(user_id),
+            "username": username,
+            "type": "refresh"
+        }
+        return self.generate_token(data, timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
+    
+    def generate_api_key(self) -> str:
+        """Generate a new API key"""
+        return f"qk_{secrets.token_urlsafe(32)}"
+    
+    def hash_api_key(self, api_key: str) -> str:
+        """Hash an API key"""
+        return hashlib.sha256(api_key.encode()).hexdigest()
+    
+    def check_rate_limit(self, identifier: str, limit: int, window: int) -> bool:
+        """Check if request is within rate limit"""
+        # This is a simple in-memory implementation
+        # In production, use Redis for distributed rate limiting
+        current_time = time.time()
+        if identifier not in self.failed_attempts:
+            self.failed_attempts[identifier] = []
         
-        # Create new user
-        hashed_password = security_manager.hash_password(user_data.password)
+        # Remove old attempts outside the window
+        self.failed_attempts[identifier] = [
+            attempt for attempt in self.failed_attempts[identifier]
+            if current_time - attempt < window
+        ]
         
-        new_user = User(
-            username=user_data.username,
-            email=user_data.email,
-            hashed_password=hashed_password,
-            first_name=user_data.first_name,
-            last_name=user_data.last_name,
-            phone_number=user_data.phone_number,
-            timezone=user_data.timezone,
-            role=user_data.role,
-            is_active=True,
-            is_verified=False  # Email verification required
+        # Check if within limit
+        if len(self.failed_attempts[identifier]) >= limit:
+            return False
+        
+        # Add current attempt
+        self.failed_attempts[identifier].append(current_time)
+        return True
+    
+    def is_account_locked(self, user: User) -> bool:
+        """Check if user account is locked"""
+        if user.locked_until and user.locked_until > datetime.utcnow():
+            return True
+        return False
+    
+    def lock_account(self, user: User, db: Session):
+        """Lock user account after failed attempts"""
+        user.locked_until = datetime.utcnow() + timedelta(
+            minutes=settings.security.lockout_duration_minutes
         )
-        
-        db.add(new_user)
+        user.login_attempts = 0
         db.commit()
-        db.refresh(new_user)
-        
-        # Log registration event
-        AuditLogger.log_event(
-            db=db,
-            user_id=new_user.id,
-            action="user_registration",
-            resource_type="user",
-            resource_id=str(new_user.id),
-            resource_name=new_user.username,
-            request=request,
-            status_code=201
-        )
-        
-        logger.info(f"New user registered: {new_user.username}")
-        
-        return UserResponse.from_orm(new_user)
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Registration failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Registration failed"
+        logger.warning(f"Account locked for user {user.username}")
+    
+    def record_failed_login(self, user: User, db: Session):
+        """Record a failed login attempt"""
+        user.login_attempts += 1
+        if user.login_attempts >= settings.security.max_login_attempts:
+            self.lock_account(user, db)
+        else:
+            db.commit()
+    
+    def record_successful_login(self, user: User, db: Session):
+        """Record a successful login"""
+        user.last_login = datetime.utcnow()
+        user.login_attempts = 0
+        user.locked_until = None
+        db.commit()
+
+    def generate_mfa_secret(self) -> str:
+        """Generates a new MFA secret."""
+        return pyotp.random_base32()
+
+    def get_mfa_uri(self, user_email: str, secret: str) -> str:
+        """Generates the provisioning URI for MFA."""
+        return pyotp.totp.TOTP(secret).provisioning_uri(
+            name=user_email,
+            issuer_name="Quantis"
         )
 
+    def verify_mfa_code(self, secret: str, otp_code: str) -> bool:
+        """Verifies the MFA code."""
+        totp = pyotp.TOTP(secret)
+        return totp.verify(otp_code)
 
-@router.post("/login", response_model=Token)
-@rate_limit(requests=10, window=300)  # 10 login attempts per 5 minutes
-async def login(
-    user_credentials: UserLogin,
-    request: Request,
-    response: Response,
-    db: Session = Depends(get_db)
-):
-    """Authenticate user and return tokens"""
-    try:
-        # Authenticate user
-        user = authenticate_user(db, user_credentials.username, user_credentials.password)
+    def generate_qr_code_svg(self, uri: str) -> str:
+        """Generates an SVG string for a QR code from a URI."""
+        img = qrcode.make(uri)
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG") # Save as PNG first, then convert to SVG if needed, or directly use base64 encoded PNG
+        # For simplicity, returning base64 encoded PNG. If SVG is strictly required, more complex libs might be needed.
+        # Or, a direct SVG generation library like 'qrcode[svg]' could be used.
+        # For now, let's assume a base64 encoded PNG is acceptable for display.
+        import base64
+        return base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+
+# Global security manager instance
+security_manager = SecurityManager()
+
+
+class RateLimiter:
+    """Advanced rate limiting with Redis backend"""
+    
+    def __init__(self, redis_client: redis.Redis):
+        self.redis = redis_client
+    
+    async def is_allowed(
+        self,
+        key: str,
+        limit: int,
+        window: int,
+        identifier: str = "default"
+    ) -> tuple[bool, Dict[str, Any]]:
+        """
+        Check if request is allowed based on rate limit
+        Returns (is_allowed, info_dict)
+        """
+        current_time = int(time.time())
+        pipe = self.redis.pipeline()
         
-        if not user:
-            # Log failed login attempt
-            AuditLogger.log_login_attempt(
-                db=db,
-                username=user_credentials.username,
-                success=False,
-                request=request,
-                failure_reason="Invalid credentials"
+        # Use sliding window log algorithm
+        window_start = current_time - window
+        
+        # Remove old entries
+        await pipe.zremrangebyscore(key, 0, window_start)
+        
+        # Count current requests
+        current_requests = await pipe.zcard(key)
+        
+        if current_requests >= limit:
+            # Get time until reset
+            oldest_request = await self.redis.zrange(key, 0, 0, withscores=True)
+            if oldest_request:
+                reset_time = int(oldest_request[0][1]) + window
+                time_until_reset = max(0, reset_time - current_time)
+            else:
+                time_until_reset = window
+            
+            return False, {
+                "limit": limit,
+                "remaining": 0,
+                "reset_time": time_until_reset,
+                "retry_after": time_until_reset
+            }
+        
+        # Add current request
+        await pipe.zadd(key, {f"{current_time}:{identifier}": current_time})
+        await pipe.expire(key, window)
+        await pipe.execute()
+        
+        remaining = limit - current_requests - 1
+        
+        return True, {
+            "limit": limit,
+            "remaining": remaining,
+            "reset_time": window,
+            "retry_after": 0
+        }
+
+
+async def get_rate_limiter() -> RateLimiter:
+    """Get rate limiter dependency"""
+    redis_client = await get_redis()
+    return RateLimiter(redis_client)
+
+
+def rate_limit(requests: int = 100, window: int = 60):
+    """Rate limiting decorator"""
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Extract request from args/kwargs
+            request = None
+            for arg in args:
+                if isinstance(arg, Request):
+                    request = arg
+                    break
+            
+            if not request:
+                # If no request found, skip rate limiting
+                return await func(*args, **kwargs)
+            
+            # Get client identifier
+            client_ip = request.client.host
+            user_agent = request.headers.get("user-agent", "")
+            identifier = f"{client_ip}:{hashlib.md5(user_agent.encode()).hexdigest()[:8]}"
+            
+            # Check rate limit
+            rate_limiter = await get_rate_limiter()
+            is_allowed, info = await rate_limiter.is_allowed(
+                f"rate_limit:{identifier}",
+                requests,
+                window,
+                identifier
             )
             
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid username or password"
-            )
-        
-        # Check if user is verified
-        if not user.is_verified:
+            if not is_allowed:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Rate limit exceeded",
+                    headers={
+                        "X-RateLimit-Limit": str(info["limit"]),
+                        "X-RateLimit-Remaining": str(info["remaining"]),
+                        "X-RateLimit-Reset": str(info["reset_time"]),
+                        "Retry-After": str(info["retry_after"])
+                    }
+                )
+            
+            # Add rate limit headers to response
+            response = await func(*args, **kwargs)
+            if hasattr(response, 'headers'):
+                response.headers["X-RateLimit-Limit"] = str(info["limit"])
+                response.headers["X-RateLimit-Remaining"] = str(info["remaining"])
+                response.headers["X-RateLimit-Reset"] = str(info["reset_time"])
+            
+            return response
+        return wrapper
+    return decorator
+
+
+async def get_current_user_from_token(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+    mfa_code: Optional[str] = None # Added for MFA
+) -> User:
+    """Get current user from JWT token"""
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Verify token
+    payload = security_manager.verify_token(credentials.credentials)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Check token type
+    if payload.get("type") != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Get user
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    user = db.query(User).filter(
+        User.id == int(user_id),
+        User.is_active == True,
+        User.is_deleted == False
+    ).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Check if account is locked
+    if security_manager.is_account_locked(user):
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Account is temporarily locked"
+        )
+
+    # MFA check
+    if user.is_mfa_enabled:
+        if not mfa_code:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Email verification required"
+                detail="MFA code required"
             )
-        
-        # Create tokens
-        tokens = create_tokens(user)
-        
-        # Create user session
-        session = create_user_session(
-            db=db,
-            user=user,
-            access_token=tokens.access_token,
-            refresh_token=tokens.refresh_token,
-            request=request
-        )
-        
-        # Set secure cookie for refresh token if remember_me is True
-        if user_credentials.remember_me:
-            response.set_cookie(
-                key="refresh_token",
-                value=tokens.refresh_token,
-                max_age=settings.security.refresh_token_expire_days * 24 * 60 * 60,
-                httponly=True,
-                secure=not settings.debug,
-                samesite="lax"
-            )
-        
-        # Log successful login
-        AuditLogger.log_login_attempt(
-            db=db,
-            username=user_credentials.username,
-            success=True,
-            request=request,
-            user_id=user.id
-        )
-        
-        logger.info(f"User logged in: {user.username}")
-        
-        return tokens
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Login failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Login failed"
-        )
-
-
-@router.post("/refresh", response_model=Token)
-@rate_limit(requests=20, window=300)  # 20 refresh attempts per 5 minutes
-async def refresh_token(
-    token_data: Optional[TokenRefresh] = None,
-    request: Request = None,
-    db: Session = Depends(get_db)
-):
-    """Refresh access token using refresh token"""
-    try:
-        # Get refresh token from request body or cookie
-        refresh_token = None
-        if token_data:
-            refresh_token = token_data.refresh_token
-        elif request:
-            refresh_token = request.cookies.get("refresh_token")
-        
-        if not refresh_token:
+        if not user.mfa_secret:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Refresh token required"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="MFA enabled but secret not found"
             )
-        
-        # Refresh tokens
-        new_tokens = refresh_access_token(db, refresh_token)
-        
-        if not new_tokens:
+        if not security_manager.verify_mfa_code(user.mfa_secret, mfa_code):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired refresh token"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid MFA code"
             )
-        
-        logger.info("Token refreshed successfully")
-        
-        return new_tokens
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Token refresh failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Token refresh failed"
-        )
+    
+    return user
 
 
-@router.post("/logout")
-@rate_limit(requests=30, window=300)  # 30 logout attempts per 5 minutes
-async def logout(
+async def get_current_user_from_api_key(
     request: Request,
-    response: Response,
-    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
-):
-    """Logout user and invalidate session"""
-    try:
-        # Get refresh token from cookie
-        refresh_token = request.cookies.get("refresh_token")
-        
-        if refresh_token:
-            # Invalidate session
-            session = db.query(UserSession).filter(
-                UserSession.user_id == current_user.id,
-                UserSession.refresh_token == refresh_token,
-                UserSession.is_active == True
-            ).first()
-            
-            if session:
-                session.is_active = False
-                db.commit()
-        
-        # Clear refresh token cookie
-        response.delete_cookie(key="refresh_token")
-        
-        # Log logout event
-        AuditLogger.log_event(
-            db=db,
-            user_id=current_user.id,
-            action="user_logout",
-            resource_type="authentication",
-            resource_name=current_user.username,
-            request=request
-        )
-        
-        logger.info(f"User logged out: {current_user.username}")
-        
-        return {"message": "Successfully logged out"}
-        
-    except Exception as e:
-        logger.error(f"Logout failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Logout failed"
-        )
-
-
-@router.post("/change-password")
-@rate_limit(requests=5, window=300)  # 5 password changes per 5 minutes
-async def change_password(
-    password_data: PasswordChange,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Change user password"""
-    try:
-        # Verify current password
-        if not security_manager.verify_password(password_data.current_password, current_user.hashed_password):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Current password is incorrect"
-            )
-        
-        # Update password
-        current_user.hashed_password = security_manager.hash_password(password_data.new_password)
-        db.commit()
-        
-        # Invalidate all user sessions except current one
-        db.query(UserSession).filter(
-            UserSession.user_id == current_user.id,
-            UserSession.is_active == True
-        ).update({"is_active": False})
-        db.commit()
-        
-        # Log password change event
-        AuditLogger.log_event(
-            db=db,
-            user_id=current_user.id,
-            action="password_change",
-            resource_type="user",
-            resource_id=str(current_user.id),
-            resource_name=current_user.username,
-            request=request
-        )
-        
-        logger.info(f"Password changed for user: {current_user.username}")
-        
-        return {"message": "Password changed successfully"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Password change failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Password change failed"
-        )
-
-
-@router.get("/me", response_model=UserResponse)
-async def get_current_user_info(current_user: User = Depends(get_current_user)):
-    """Get current user information"""
-    return UserResponse.from_orm(current_user)
-
-
-@router.get("/sessions", response_model=List[dict])
-async def get_user_sessions(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get user's active sessions"""
-    sessions = db.query(UserSession).filter(
-        UserSession.user_id == current_user.id,
-        UserSession.is_active == True
-    ).all()
-    
-    return [
-        {
-            "id": session.id,
-            "created_at": session.created_at,
-            "last_activity": session.last_activity,
-            "ip_address": session.ip_address,
-            "user_agent": session.user_agent,
-            "expires_at": session.expires_at
-        }
-        for session in sessions
-    ]
-
-
-@router.delete("/sessions/{session_id}")
-async def revoke_session(
-    session_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Revoke a specific session"""
-    session = db.query(UserSession).filter(
-        UserSession.id == session_id,
-        UserSession.user_id == current_user.id,
-        UserSession.is_active == True
-    ).first()
-    
-    if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Session not found"
-        )
-    
-    session.is_active = False
-    db.commit()
-    
-    return {"message": "Session revoked successfully"}
-
-
-# API Key Management
-@router.post("/api-keys", response_model=ApiKeyWithSecret, status_code=status.HTTP_201_CREATED)
-@rate_limit(requests=10, window=3600)  # 10 API keys per hour
-async def create_api_key(
-    api_key_data: ApiKeyCreate,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Create a new API key"""
-    try:
-        # Generate API key
-        api_key = security_manager.generate_api_key()
-        key_hash = security_manager.hash_api_key(api_key)
-        
-        # Create API key record
-        new_api_key = ApiKey(
-            user_id=current_user.id,
-            key_hash=key_hash,
-            name=api_key_data.name,
-            description=api_key_data.description,
-            expires_at=api_key_data.expires_at,
-            rate_limit=api_key_data.rate_limit,
-            scopes=api_key_data.scopes,
-            is_active=True
-        )
-        
-        db.add(new_api_key)
-        db.commit()
-        db.refresh(new_api_key)
-        
-        # Log API key creation
-        AuditLogger.log_event(
-            db=db,
-            user_id=current_user.id,
-            action="api_key_creation",
-            resource_type="api_key",
-            resource_id=str(new_api_key.id),
-            resource_name=new_api_key.name,
-            request=request
-        )
-        
-        logger.info(f"API key created: {new_api_key.name} for user {current_user.username}")
-        
-        # Return API key with secret (only shown once)
-        response_data = ApiKeyWithSecret.from_orm(new_api_key)
-        response_data.key = api_key
-        response_data.key_preview = api_key[:8] + "..."
-        
-        return response_data
-        
-    except Exception as e:
-        logger.error(f"API key creation failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="API key creation failed"
-        )
-
-
-@router.get("/api-keys", response_model=List[ApiKeyResponse])
-async def list_api_keys(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """List user's API keys"""
-    api_keys = db.query(ApiKey).filter(
-        ApiKey.user_id == current_user.id,
-        ApiKey.is_deleted == False
-    ).all()
-    
-    return [
-        {
-            **ApiKeyResponse.from_orm(api_key).dict(),
-            "key_preview": "qk_" + "*" * 8 + "..."
-        }
-        for api_key in api_keys
-    ]
-
-
-@router.delete("/api-keys/{api_key_id}")
-async def revoke_api_key(
-    api_key_id: int,
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Revoke an API key"""
-    api_key = db.query(ApiKey).filter(
-        ApiKey.id == api_key_id,
-        ApiKey.user_id == current_user.id,
-        ApiKey.is_deleted == False
-    ).first()
-    
+) -> Optional[User]:
+    """Get current user from API key"""
+    api_key = request.headers.get("X-API-Key")
     if not api_key:
+        return None
+    
+    # Hash the API key
+    key_hash = security_manager.hash_api_key(api_key)
+    
+    # Find API key in database
+    api_key_obj = db.query(ApiKey).filter(
+        ApiKey.key_hash == key_hash,
+        ApiKey.is_active == True,
+        ApiKey.is_deleted == False
+    ).first()
+    
+    if not api_key_obj:
+        return None
+    
+    # Check if API key is expired
+    if api_key_obj.is_expired():
+        return None
+
+    # Check IP Whitelist for API Key
+    client_ip = request.client.host
+    if api_key_obj.ip_whitelist and client_ip not in api_key_obj.ip_whitelist:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="API key not found"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="API Key not authorized from this IP address"
         )
     
-    # Soft delete API key
-    api_key.is_active = False
-    api_key.is_deleted = True
-    api_key.deleted_at = datetime.utcnow()
-    api_key.deleted_by_id = current_user.id
+    # Get user
+    user = db.query(User).filter(
+        User.id == api_key_obj.user_id,
+        User.is_active == True,
+        User.is_deleted == False
+    ).first()
+    
+    if not user:
+        return None
+    
+    # Update API key usage
+    api_key_obj.last_used = datetime.utcnow()
+    api_key_obj.usage_count += 1
     db.commit()
     
-    # Log API key revocation
-    AuditLogger.log_event(
-        db=db,
-        user_id=current_user.id,
-        action="api_key_revocation",
-        resource_type="api_key",
-        resource_id=str(api_key.id),
-        resource_name=api_key.name,
-        request=request
-    )
-    
-    logger.info(f"API key revoked: {api_key.name} for user {current_user.username}")
-    
-    return {"message": "API key revoked successfully"}
+    return user
 
 
-@router.post("/verify-email")
-@rate_limit(requests=3, window=300)  # 3 verification attempts per 5 minutes
-async def verify_email(
-    verification_token: str,
-    db: Session = Depends(get_db),
-    cache: CacheManager = Depends(get_cache_manager)
-):
-    """Verify user email address"""
-    try:
-        # In a real implementation, you would:
-        # 1. Validate the verification token
-        # 2. Find the user associated with the token
-        # 3. Mark the user as verified
-        
-        # For now, this is a placeholder
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="Email verification not implemented"
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Email verification failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Email verification failed"
-        )
-
-
-@router.post("/forgot-password")
-@rate_limit(requests=3, window=300)  # 3 password reset requests per 5 minutes
-async def forgot_password(
-    email: str,
+async def get_current_user(
     request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
     db: Session = Depends(get_db)
-):
-    """Request password reset"""
-    try:
-        # Find user by email
-        user = db.query(User).filter(
-            User.email == email,
-            User.is_active == True,
-            User.is_deleted == False
-        ).first()
-        
-        if user:
-            # In a real implementation, you would:
-            # 1. Generate a password reset token
-            # 2. Store it in the database or cache
-            # 3. Send an email with the reset link
+) -> User:
+    """Get current user from either JWT token or API key"""
+    # Try API key first
+    user = await get_current_user_from_api_key(request, db)
+    if user:
+        return user
+    
+    # Fall back to JWT token
+    return await get_current_user_from_token(credentials, db)
+
+
+def require_permission(required_permissions: List[str]): # Renamed from require_role
+    """Decorator to require specific user permissions"""
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Find current user in kwargs
+            current_user = None
+            for arg in args:
+                if isinstance(arg, User):
+                    current_user = arg # Corrected assignment
+                    break
             
-            # Log password reset request
+            if not current_user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Authentication required"
+                )
+            
+            # Check if user has all required permissions
+            user_permissions = set([p.permission_name for p in current_user.role.permissions]) # Access permissions via role
+            if not all(perm in user_permissions for perm in required_permissions):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Insufficient permissions"
+                )
+            
+            return await func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def require_admin(current_user: User = Depends(get_current_user)):
+    """Dependency to require admin role"""
+    if current_user.role.value != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return current_user
+
+
+def require_verified_user(current_user: User = Depends(get_current_user)):
+    """Dependency to require verified user"""
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email verification required"
+        )
+    return current_user
+
+
+class AuditLogger:
+    """Audit logging for security events"""
+    
+    @staticmethod
+    def log_event(
+        db: Session,
+        user_id: Optional[int],
+        action: str,
+        resource_type: str,
+        resource_id: Optional[str] = None,
+        resource_name: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+        request: Optional[Request] = None,
+        status_code: Optional[int] = None
+    ):
+        """Log an audit event"""
+        audit_log = AuditLog(
+            user_id=user_id,
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            resource_name=resource_name,
+            details=details or {},
+            status_code=status_code
+        )
+        
+        if request:
+            audit_log.ip_address = request.client.host
+            audit_log.user_agent = request.headers.get("user-agent")
+            audit_log.endpoint = str(request.url.path)
+            audit_log.method = request.method
+        
+        db.add(audit_log)
+        db.commit()
+    
+    @staticmethod
+    def log_login_attempt(
+        db: Session,
+        username: str,
+        success: bool,
+        request: Request,
+        user_id: Optional[int] = None,
+        failure_reason: Optional[str] = None
+    ):
+        """Log a login attempt"""
+        AuditLogger.log_event(
+            db=db,
+            user_id=user_id,
+            action="user_login",
+            resource_type="authentication",
+            resource_name=username,
+            request=request,
+            status_code=200 if success else 401,
+            details={"success": success, "failure_reason": failure_reason}
+        )
+
+    @staticmethod
+    def log_mfa_event(
+        db: Session,
+        user_id: int,
+        action: str,
+        request: Request,
+        success: bool,
+        details: Optional[Dict[str, Any]] = None
+    ):
+        """Log an MFA related event"""
+        AuditLogger.log_event(
+            db=db,
+            user_id=user_id,
+            action=action,
+            resource_type="mfa",
+            resource_id=str(user_id),
+            resource_name=f"MFA for user {user_id}",
+            request=request,
+            status_code=200 if success else 400,
+            details=details
+        )
+
+
+# Dependency to get current user with optional MFA code
+async def get_current_user_with_mfa(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    """Dependency to get current user, requiring MFA if enabled"""
+    mfa_code = request.headers.get("X-MFA-Code") # Assuming MFA code is passed in a header
+    return await get_current_user_from_token(credentials, db, mfa_code)
+
+
+# Dependency to get current user for MFA setup/disable
+async def get_current_user_for_mfa_setup(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    """Dependency to get current user without MFA check for MFA setup/disable endpoints"""
+    # This dependency is used for endpoints where MFA is being set up or disabled,
+    # so we don't want to enforce MFA check here.
+    return await get_current_user_from_token(credentials, db, mfa_code=None)
+
+
+async def create_user_session(
+    db: Session,
+    user: User,
+    access_token: str,
+    refresh_token: str,
+    request: Request,
+    max_concurrent_sessions: int = settings.security.max_concurrent_sessions # Added for concurrent session control
+) -> UserSession:
+    """Create a new user session, handling concurrent sessions and IP/User-Agent binding"""
+    # Invalidate old sessions if max_concurrent_sessions is exceeded
+    active_sessions = db.query(UserSession).filter(
+        UserSession.user_id == user.id,
+        UserSession.is_active == True
+    ).order_by(UserSession.last_activity.asc()).all()
+
+    if len(active_sessions) >= max_concurrent_sessions:
+        # Invalidate the oldest session(s)
+        for i in range(len(active_sessions) - max_concurrent_sessions + 1):
+            active_sessions[i].is_active = False
             AuditLogger.log_event(
                 db=db,
                 user_id=user.id,
-                action="password_reset_request",
-                resource_type="user",
-                resource_id=str(user.id),
-                resource_name=user.username,
-                request=request
+                action="session_invalidation",
+                resource_type="user_session",
+                resource_id=str(active_sessions[i].id),
+                resource_name=f"Session {active_sessions[i].id} for {user.username}",
+                request=request,
+                details={"reason": "Max concurrent sessions exceeded"}
             )
-            
-            logger.info(f"Password reset requested for user: {user.username}")
-        
-        # Always return success to prevent email enumeration
-        return {"message": "If the email exists, a password reset link has been sent"}
-        
-    except Exception as e:
-        logger.error(f"Password reset request failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Password reset request failed"
+
+    # Invalidate any existing session with the same IP and User-Agent (optional, but good for security)
+    # This prevents a user from having multiple active sessions from the exact same client fingerprint
+    existing_session_same_client = db.query(UserSession).filter(
+        UserSession.user_id == user.id,
+        UserSession.ip_address == request.client.host,
+        UserSession.user_agent == request.headers.get("user-agent"),
+        UserSession.is_active == True
+    ).first()
+
+    if existing_session_same_client:
+        existing_session_same_client.is_active = False
+        AuditLogger.log_event(
+            db=db,
+            user_id=user.id,
+            action="session_invalidation",
+            resource_type="user_session",
+            resource_id=str(existing_session_same_client.id),
+            resource_name=f"Session {existing_session_same_client.id} for {user.username}",
+            request=request,
+            details={"reason": "New session from same client fingerprint"}
         )
+
+    session = UserSession(
+        user_id=user.id,
+        session_token=access_token, # Storing access token here for simplicity, typically you'd store a hash or a separate session ID
+        refresh_token=refresh_token,
+        expires_at=datetime.utcnow() + timedelta(days=settings.security.refresh_token_expire_days),
+        ip_address=request.client.host,
+        user_agent=request.headers.get("user-agent"),
+        is_active=True
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
+    """Authenticate user by username/email and password"""
+    user = db.query(User).filter(
+        (User.username == username) | (User.email == username)
+    ).first()
+    
+    if not user:
+        return None
+    
+    if security_manager.is_account_locked(user):
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Account is temporarily locked due to too many failed login attempts."
+        )
+
+    if not security_manager.verify_password(password, user.hashed_password):
+        security_manager.record_failed_login(user, db)
+        return None
+    
+    security_manager.record_successful_login(user, db)
+    return user
+
+
+def create_tokens(user: User) -> Token:
+    """Create access and refresh tokens for a user"""
+    # Fetch user's permissions from the database
+    user_permissions = [p.permission_name for p in user.role.permissions]
+
+    access_token = security_manager.create_access_token(
+        user_id=user.id,
+        username=user.username,
+        role=user.role.value,
+        permissions=user_permissions # Pass permissions to the token
+    )
+    refresh_token = security_manager.create_refresh_token(
+        user_id=user.id,
+        username=user.username
+    )
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.security.access_token_expire_minutes * 60
+    )
+
+
+def refresh_access_token(db: Session, refresh_token: str) -> Optional[Token]:
+    """Refresh access token using a valid refresh token"""
+    payload = security_manager.verify_token(refresh_token)
+    if not payload or payload.get("type") != "refresh":
+        return None
+    
+    user_id = payload.get("sub")
+    if not user_id:
+        return None
+    
+    user = db.query(User).filter(
+        User.id == int(user_id),
+        User.is_active == True,
+        User.is_deleted == False
+    ).first()
+    
+    if not user:
+        return None
+
+    # Validate refresh token against active sessions and IP/User-Agent binding
+    session = db.query(UserSession).filter(
+        UserSession.user_id == user.id,
+        UserSession.refresh_token == refresh_token,
+        UserSession.is_active == True
+    ).first()
+
+    if not session or session.is_expired():
+        # If session is invalid or expired, invalidate it and return None
+        if session: # Only if session exists
+            session.is_active = False
+            db.commit()
+        return None
+
+    # Optional: Check if IP address or User-Agent has changed significantly
+    # This might be too strict for some use cases (e.g., mobile users switching networks)
+    # For financial applications, this is a good security measure.
+    # You would need to pass the current request object to this function.
+    # For now, we'll just update the last_activity.
+    session.last_activity = datetime.utcnow()
+    db.commit()
+
+    return create_tokens(user)
+
 

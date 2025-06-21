@@ -1,3 +1,4 @@
+
 """
 Enhanced Pydantic schemas for Quantis API with comprehensive validation
 """
@@ -41,15 +42,15 @@ class UserBase(BaseSchema):
     email: EmailStr = Field(..., description="Valid email address")
     first_name: Optional[constr(max_length=50)] = Field(None, description="First name")
     last_name: Optional[constr(max_length=50)] = Field(None, description="Last name")
-    phone_number: Optional[constr(regex=r'^\+?1?\d{9,15}$')] = Field(None, description="Phone number")
+    phone_number: Optional[constr(regex=r'^\+?1?\d{9,15}$') = Field(None, description="Phone number")
     timezone: Optional[str] = Field("UTC", description="User timezone")
-    role: Optional[UserRole] = Field(UserRole.USER, description="User role")
+    role_id: Optional[int] = Field(None, description="ID of the user's role") # Changed from role to role_id
 
 
 class UserCreate(UserBase):
     """Schema for creating a user"""
-    password: constr(min_length=8, max_length=128) = Field(
-        ..., description="Password (minimum 8 characters)"
+    password: constr(min_length=12, max_length=128) = Field(
+        ..., description="Password (minimum 12 characters, strong complexity required)"
     )
     confirm_password: str = Field(..., description="Password confirmation")
     
@@ -61,6 +62,8 @@ class UserCreate(UserBase):
     
     @validator('password')
     def validate_password_strength(cls, v):
+        if len(v) < 12:
+            raise ValueError('Password must be at least 12 characters long')
         if not any(c.isupper() for c in v):
             raise ValueError('Password must contain at least one uppercase letter')
         if not any(c.islower() for c in v):
@@ -76,9 +79,10 @@ class UserUpdate(BaseSchema):
     """Schema for updating a user"""
     first_name: Optional[constr(max_length=50)] = None
     last_name: Optional[constr(max_length=50)] = None
-    phone_number: Optional[constr(regex=r'^\+?1?\d{9,15}$')] = None
+    phone_number: Optional[constr(regex=r'^\+?1?\d{9,15}$') = None
     timezone: Optional[str] = None
     preferences: Optional[Dict[str, Any]] = None
+    is_mfa_enabled: Optional[bool] = Field(None, description="Whether MFA is enabled for the user")
 
 
 class UserResponse(UserBase, TimestampMixin, UUIDMixin):
@@ -86,8 +90,11 @@ class UserResponse(UserBase, TimestampMixin, UUIDMixin):
     id: int
     is_active: bool
     is_verified: bool
+    is_mfa_enabled: bool
     last_login: Optional[datetime] = None
     full_name: Optional[str] = None
+    role: Optional[str] = Field(None, description="User's role name") # Added role name
+    permissions: Optional[List[str]] = Field(None, description="List of permissions associated with the user's role") # Added permissions
     
     @validator('full_name', always=True)
     def compute_full_name(cls, v, values):
@@ -101,13 +108,14 @@ class UserLogin(BaseSchema):
     username: str = Field(..., description="Username or email")
     password: str = Field(..., description="Password")
     remember_me: bool = Field(False, description="Remember login session")
+    mfa_code: Optional[str] = Field(None, description="Multi-factor authentication code")
 
 
 class PasswordChange(BaseSchema):
     """Schema for password change"""
     current_password: str = Field(..., description="Current password")
-    new_password: constr(min_length=8, max_length=128) = Field(
-        ..., description="New password (minimum 8 characters)"
+    new_password: constr(min_length=12, max_length=128) = Field(
+        ..., description="New password (minimum 12 characters, strong complexity required)"
     )
     confirm_password: str = Field(..., description="New password confirmation")
     
@@ -115,6 +123,20 @@ class PasswordChange(BaseSchema):
     def passwords_match(cls, v, values):
         if 'new_password' in values and v != values['new_password']:
             raise ValueError('Passwords do not match')
+        return v
+    
+    @validator('new_password')
+    def validate_new_password_strength(cls, v):
+        if len(v) < 12:
+            raise ValueError('Password must be at least 12 characters long')
+        if not any(c.isupper() for c in v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not any(c.islower() for c in v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not any(c.isdigit() for c in v):
+            raise ValueError('Password must contain at least one digit')
+        if not any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in v):
+            raise ValueError('Password must contain at least one special character')
         return v
 
 
@@ -132,6 +154,25 @@ class TokenRefresh(BaseSchema):
     refresh_token: str = Field(..., description="Refresh token")
 
 
+# MFA schemas
+class MFAEnable(BaseSchema):
+    """Schema for enabling MFA"""
+    otp_code: constr(min_length=6, max_length=6) = Field(..., description="One-Time Password from authenticator app")
+    password: str = Field(..., description="User's current password for verification")
+
+
+class MFADisable(BaseSchema):
+    """Schema for disabling MFA"""
+    otp_code: constr(min_length=6, max_length=6) = Field(..., description="One-Time Password from authenticator app")
+
+
+class MFAResponse(BaseSchema):
+    """Schema for MFA setup response"""
+    qr_code_svg: str = Field(..., description="Base64 encoded SVG string of the QR code")
+    secret: str = Field(..., description="MFA secret key (for manual entry)")
+    message: str = Field(..., description="Instructions for MFA setup")
+
+
 # API Key schemas
 class ApiKeyBase(BaseSchema):
     """Base API key schema"""
@@ -140,6 +181,7 @@ class ApiKeyBase(BaseSchema):
     expires_at: Optional[datetime] = Field(None, description="Expiration date")
     rate_limit: Optional[conint(ge=1, le=10000)] = Field(1000, description="Rate limit per hour")
     scopes: Optional[List[str]] = Field([], description="API key scopes")
+    ip_whitelist: Optional[List[str]] = Field([], description="List of allowed IP addresses for this API key")
 
 
 class ApiKeyCreate(ApiKeyBase):
@@ -203,7 +245,7 @@ class DatasetUpload(BaseSchema):
     """Schema for dataset upload"""
     name: str = Field(..., description="Dataset name")
     description: Optional[str] = Field(None, description="Dataset description")
-    tags: Optional[List[str]] = Field([], description="Dataset tags")
+    tags: Optional[List[str>] = Field([], description="Dataset tags")
     source: Optional[str] = Field(None, description="Data source")
     frequency: Optional[str] = Field(None, description="Data frequency")
 
@@ -389,93 +431,187 @@ class MarketDataCreate(MarketDataBase):
 class MarketDataResponse(MarketDataBase, TimestampMixin):
     """Schema for market data response"""
     id: int
-    source_id: Optional[str] = None
-    is_validated: bool
-    quality_score: Optional[float] = None
 
 
-# System schemas
-class HealthCheck(BaseSchema):
-    """Schema for health check response"""
-    status: str = Field(..., description="Overall system status")
-    timestamp: datetime = Field(..., description="Health check timestamp")
-    database: bool = Field(..., description="Database status")
-    redis: bool = Field(..., description="Redis status")
-    external_apis: Dict[str, bool] = Field({}, description="External API status")
-    version: str = Field(..., description="API version")
-    uptime_seconds: int = Field(..., description="System uptime in seconds")
+# Role and Permission schemas
+class PermissionBase(BaseSchema):
+    """Base permission schema"""
+    permission_name: constr(min_length=1, max_length=100) = Field(..., description="Name of the permission")
+    description: Optional[str] = Field(None, description="Description of the permission")
 
 
-class SystemMetricsResponse(BaseSchema):
-    """Schema for system metrics response"""
-    cpu_usage: float = Field(..., description="CPU usage percentage")
-    memory_usage: float = Field(..., description="Memory usage percentage")
-    disk_usage: float = Field(..., description="Disk usage percentage")
-    active_connections: int = Field(..., description="Active database connections")
-    request_count: int = Field(..., description="Total request count")
-    error_rate: float = Field(..., description="Error rate percentage")
-    average_response_time: float = Field(..., description="Average response time in ms")
+class PermissionCreate(PermissionBase):
+    """Schema for creating a permission"""
+    pass
 
 
-# Pagination schemas
-class PaginationParams(BaseSchema):
-    """Schema for pagination parameters"""
-    page: conint(ge=1) = Field(1, description="Page number (starts from 1)")
-    size: conint(ge=1, le=100) = Field(20, description="Page size (max 100)")
-    sort_by: Optional[str] = Field(None, description="Sort field")
-    sort_order: Optional[str] = Field("asc", description="Sort order (asc/desc)")
-    
-    @validator('sort_order')
-    def validate_sort_order(cls, v):
-        if v not in ['asc', 'desc']:
-            raise ValueError('Sort order must be "asc" or "desc"')
-        return v
+class PermissionResponse(PermissionBase, TimestampMixin):
+    """Schema for permission response"""
+    id: int
 
 
-class PaginatedResponse(BaseSchema):
-    """Schema for paginated response"""
-    items: List[Any] = Field(..., description="List of items")
-    total: int = Field(..., description="Total number of items")
-    page: int = Field(..., description="Current page number")
-    size: int = Field(..., description="Page size")
-    pages: int = Field(..., description="Total number of pages")
-    has_next: bool = Field(..., description="Has next page")
-    has_prev: bool = Field(..., description="Has previous page")
+class RoleBase(BaseSchema):
+    """Base role schema"""
+    role_name: constr(min_length=1, max_length=50) = Field(..., description="Name of the role")
+    description: Optional[str] = Field(None, description="Description of the role")
+    permission_ids: Optional[List[int]] = Field([], description="List of permission IDs associated with this role")
 
 
-# Error schemas
-class ErrorDetail(BaseSchema):
-    """Schema for error detail"""
-    field: Optional[str] = Field(None, description="Field name (for validation errors)")
-    message: str = Field(..., description="Error message")
-    code: Optional[str] = Field(None, description="Error code")
+class RoleCreate(RoleBase):
+    """Schema for creating a role"""
+    pass
 
 
-class ErrorResponse(BaseSchema):
-    """Schema for error response"""
-    error: str = Field(..., description="Error type")
-    message: str = Field(..., description="Error message")
-    details: Optional[List[ErrorDetail]] = Field(None, description="Error details")
-    timestamp: datetime = Field(..., description="Error timestamp")
-    request_id: Optional[str] = Field(None, description="Request ID for tracking")
+class RoleResponse(RoleBase, TimestampMixin):
+    """Schema for role response"""
+    id: int
+    permissions: Optional[List[PermissionResponse]] = Field([], description="List of permissions associated with this role")
 
 
-# File upload schemas
-class FileUploadResponse(BaseSchema):
-    """Schema for file upload response"""
-    filename: str = Field(..., description="Uploaded filename")
-    file_size: int = Field(..., description="File size in bytes")
-    file_hash: str = Field(..., description="File hash for integrity")
-    upload_id: str = Field(..., description="Upload ID for tracking")
-    status: str = Field(..., description="Upload status")
+# Data Retention Policy schemas
+class DataRetentionPolicyBase(BaseSchema):
+    """Base data retention policy schema"""
+    data_type: constr(min_length=1, max_length=100) = Field(..., description="Type of data (e.g., 'audit_logs', 'predictions')")
+    retention_period_days: conint(ge=0) = Field(..., description="Retention period in days (0 for indefinite)")
+    is_active: bool = Field(True, description="Whether the policy is active")
+    description: Optional[str] = Field(None, description="Description of the policy")
 
 
-# Bulk operation schemas
-class BulkOperationResponse(BaseSchema):
-    """Schema for bulk operation response"""
-    total: int = Field(..., description="Total number of items")
-    successful: int = Field(..., description="Number of successful operations")
-    failed: int = Field(..., description="Number of failed operations")
-    errors: List[ErrorDetail] = Field([], description="List of errors")
-    operation_id: str = Field(..., description="Operation ID for tracking")
+class DataRetentionPolicyCreate(DataRetentionPolicyBase):
+    """Schema for creating a data retention policy"""
+    pass
+
+
+class DataRetentionPolicyResponse(DataRetentionPolicyBase, TimestampMixin):
+    """Schema for data retention policy response"""
+    id: int
+
+
+# Consent Record schemas
+class ConsentRecordBase(BaseSchema):
+    """Base consent record schema"""
+    user_id: int = Field(..., description="ID of the user who gave consent")
+    consent_type: constr(min_length=1, max_length=100) = Field(..., description="Type of consent (e.g., 'data_processing', 'marketing_emails')")
+    is_active: bool = Field(True, description="Whether the consent is active")
+    details: Optional[Dict[str, Any]] = Field({}, description="Additional details about the consent")
+
+
+class ConsentRecordCreate(ConsentRecordBase):
+    """Schema for creating a consent record"""
+    pass
+
+
+class ConsentRecordResponse(ConsentRecordBase, TimestampMixin):
+    """Schema for consent record response"""
+    id: int
+    given_at: datetime
+
+
+# Data Masking Config schemas
+class DataMaskingConfigBase(BaseSchema):
+    """Base data masking configuration schema"""
+    field_name: constr(min_length=1, max_length=100) = Field(..., description="Name of the field to mask (e.g., 'credit_card_number', 'ssn')")
+    masking_method: constr(min_length=1, max_length=50) = Field(..., description="Masking method (e.g., 'hash', 'redact', 'partial')")
+    is_active: bool = Field(True, description="Whether the masking configuration is active")
+    config_details: Optional[Dict[str, Any]] = Field({}, description="Method-specific configuration details")
+
+
+class DataMaskingConfigCreate(DataMaskingConfigBase):
+    """Schema for creating a data masking configuration"""
+    pass
+
+
+class DataMaskingConfigResponse(DataMaskingConfigBase, TimestampMixin):
+    """Schema for data masking configuration response"""
+    id: int
+
+
+# Encryption Key schemas
+class EncryptionKeyBase(BaseSchema):
+    """Base encryption key schema"""
+    key_name: constr(min_length=1, max_length=100) = Field(..., description="Name of the encryption key")
+    key_value: constr(min_length=1, max_length=255) = Field(..., description="Value of the encryption key (or identifier)")
+    key_type: constr(min_length=1, max_length=50) = Field(..., description="Type of encryption key (e.g., 'AES', 'RSA', 'Fernet')")
+    is_active: bool = Field(True, description="Whether the key is active")
+    expires_at: Optional[datetime] = Field(None, description="Expiration date of the key")
+    previous_key_id: Optional[int] = Field(None, description="ID of the previous key in rotation")
+    next_key_id: Optional[int] = Field(None, description="ID of the next key in rotation")
+
+
+class EncryptionKeyCreate(EncryptionKeyBase):
+    """Schema for creating an encryption key"""
+    pass
+
+
+class EncryptionKeyResponse(EncryptionKeyBase, TimestampMixin):
+    """Schema for encryption key response"""
+    id: int
+
+
+
+
+# Financial schemas
+class TransactionBase(BaseSchema):
+    """Base transaction schema"""
+    amount: confloat(gt=0, le=1000000) = Field(..., description="Transaction amount (must be positive and <= 1,000,000)")
+    transaction_type: str = Field(..., description="Type of transaction (deposit, withdrawal, transfer, etc.)")
+    description: Optional[constr(max_length=500)] = Field(None, description="Transaction description")
+    counterparty_info: Optional[Dict[str, Any]] = Field(None, description="Information about the counterparty")
+
+
+class TransactionCreate(TransactionBase):
+    """Schema for creating a transaction"""
+    pass
+
+
+class TransactionResponse(TransactionBase, TimestampMixin):
+    """Schema for transaction response"""
+    id: int
+    user_id: int
+    status: str = Field(..., description="Transaction status")
+    risk_level: Optional[str] = Field(None, description="Risk level assessment")
+    requires_approval: bool = Field(False, description="Whether transaction requires approval")
+    compliance_status: str = Field("compliant", description="Compliance status")
+
+
+class FinancialSummaryResponse(BaseSchema):
+    """Schema for financial summary response"""
+    period: Dict[str, str] = Field(..., description="Period information")
+    transaction_count: int = Field(..., description="Total number of transactions")
+    total_volume: str = Field(..., description="Total transaction volume")
+    by_type: Dict[str, Dict[str, Any]] = Field(..., description="Breakdown by transaction type")
+    by_status: Dict[str, Dict[str, Any]] = Field(..., description="Breakdown by transaction status")
+    average_amount: str = Field(..., description="Average transaction amount")
+    largest_transaction: str = Field(..., description="Largest transaction amount")
+    smallest_transaction: Optional[str] = Field(None, description="Smallest transaction amount")
+
+
+class InterestCalculationRequest(BaseSchema):
+    """Schema for interest calculation request"""
+    principal: confloat(gt=0) = Field(..., description="Principal amount")
+    rate: confloat(gt=0, le=1) = Field(..., description="Interest rate (as decimal)")
+    time_periods: conint(gt=0) = Field(..., description="Number of time periods")
+    compound_frequency: conint(gt=0) = Field(1, description="Compounding frequency per period")
+
+
+class NPVCalculationRequest(BaseSchema):
+    """Schema for NPV calculation request"""
+    cash_flows: List[float] = Field(..., description="List of cash flows")
+    discount_rate: confloat(gt=0, le=1) = Field(..., description="Discount rate (as decimal)")
+
+
+class RiskAssessmentResponse(BaseSchema):
+    """Schema for risk assessment response"""
+    risk_level: str = Field(..., description="Risk level (low, medium, high, critical)")
+    risk_score: int = Field(..., description="Numerical risk score")
+    risk_factors: List[str] = Field(..., description="List of identified risk factors")
+    requires_approval: bool = Field(..., description="Whether transaction requires approval")
+    requires_additional_verification: bool = Field(..., description="Whether additional verification is needed")
+
+
+class ComplianceLimitsResponse(BaseSchema):
+    """Schema for compliance limits response"""
+    daily_limits: Dict[str, str] = Field(..., description="Daily transaction limits and usage")
+    monthly_limits: Dict[str, str] = Field(..., description="Monthly transaction limits and usage")
+    compliance_status: str = Field(..., description="Overall compliance status")
 

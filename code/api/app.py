@@ -20,15 +20,15 @@ import structlog
 import asyncio
 import json
 
-from .config import get_settings
-from .database_enhanced import init_db, get_db, health_check, close_redis
+from .config import get_settings, Settings # Import Settings class
+from .database_enhanced import init_db, get_db, health_check, close_redis, AuditLog, get_encryption_manager, get_data_retention_manager, get_consent_manager, get_data_masking_manager # Import new managers and AuditLog
 from .auth_enhanced import get_current_user, AuditLogger, rate_limit
 from .models_enhanced import User
 from .schemas_enhanced import ErrorResponse, HealthCheck, SystemMetricsResponse
 from .endpoints import (
     auth_enhanced, users_enhanced, datasets_enhanced, 
     models_enhanced, predictions_enhanced, notifications_enhanced,
-    monitoring_enhanced, websocket_enhanced
+    monitoring_enhanced, websocket_enhanced, financial
 )
 
 # Configure structured logging
@@ -41,7 +41,6 @@ structlog.configure(
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
-        structlog.processors.UnicodeDecoder(),
         structlog.processors.JSONRenderer()
     ],
     context_class=dict,
@@ -51,7 +50,7 @@ structlog.configure(
 )
 
 logger = structlog.get_logger(__name__)
-settings = get_settings()
+settings: Settings = get_settings() # Use type hint for settings
 
 # Prometheus metrics
 REQUEST_COUNT = Counter(
@@ -118,8 +117,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
         # Process request
         response = await call_next(request)
         
-        # Log audit event for sensitive operations
-        if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+        # Log audit event for sensitive operations if audit logging is enabled
+        if settings.logging.enable_audit_logging and request.method in ["POST", "PUT", "DELETE", "PATCH"]:
             try:
                 # Get user if authenticated
                 user = getattr(request.state, "user", None)
@@ -222,12 +221,10 @@ async def lifespan(app: FastAPI):
         logger.info("Database initialized successfully")
         
         # Initialize other services
-        if settings.enable_background_tasks:
+        if settings.celery_broker_url:
             logger.info("Background tasks enabled")
         
-        if settings.enable_websockets:
-            logger.info("WebSocket support enabled")
-        
+        # No specific setting for websockets, it's always enabled if the router is included
         logger.info("Quantis API started successfully")
         
     except Exception as e:
@@ -301,10 +298,10 @@ app = FastAPI(
 # Add middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.security.cors_origins,
-    allow_credentials=True,
-    allow_methods=settings.security.cors_methods,
-    allow_headers=settings.security.cors_headers,
+    allow_origins=settings.cors_origins,
+    allow_credentials=settings.cors_credentials,
+    allow_methods=settings.cors_methods,
+    allow_headers=settings.cors_headers,
 )
 
 app.add_middleware(
@@ -404,10 +401,13 @@ async def system_info():
         "version": settings.app_version,
         "environment": settings.environment,
         "features": {
-            "websockets": settings.enable_websockets,
-            "background_tasks": settings.enable_background_tasks,
-            "real_time_data": settings.enable_real_time_data,
-            "ml_training": settings.enable_ml_training
+            "websockets": True, # WebSockets are now always enabled if the router is included
+            "background_tasks": bool(settings.celery_broker_url),
+            "data_encryption": settings.compliance.enable_data_encryption,
+            "data_masking": settings.compliance.enable_data_masking,
+            "data_retention": settings.compliance.enable_data_retention_policies,
+            "consent_management": settings.compliance.enable_consent_management,
+            "audit_logging": settings.logging.enable_audit_logging
         },
         "timestamp": time.time()
     }
@@ -434,10 +434,10 @@ app.include_router(models_enhanced.router, prefix="/models", tags=["Models"])
 app.include_router(predictions_enhanced.router, prefix="/predictions", tags=["Predictions"])
 app.include_router(notifications_enhanced.router, prefix="/notifications", tags=["Notifications"])
 app.include_router(monitoring_enhanced.router, prefix="/monitoring", tags=["Monitoring"])
+app.include_router(financial.router, prefix="/financial", tags=["Financial"])
 
 # WebSocket endpoints
-if settings.enable_websockets:
-    app.include_router(websocket_enhanced.router, prefix="/ws", tags=["WebSocket"])
+app.include_router(websocket_enhanced.router, prefix="/ws", tags=["WebSocket"])
 
 
 # WebSocket endpoint for notifications
@@ -456,102 +456,19 @@ async def websocket_notifications(websocket: WebSocket, user_id: int):
                 data = await websocket.receive_text()
                 message = json.loads(data)
                 
-                # Handle different message types
-                if message.get("type") == "ping":
-                    await websocket.send_text(json.dumps({"type": "pong"}))
+                # Process incoming WebSocket messages (e.g., user actions, acknowledgements)
+                logger.info("Received WebSocket message", user_id=user_id, message=message)
                 
+                # Example: Echo message back or trigger some action
+                await websocket.send_text(f"Message received: {message.get('text', 'No text')}")
+
         except WebSocketDisconnect:
             websocket_manager.disconnect("notifications", user_id)
-            
-    except Exception as e:
-        logger.error("WebSocket error", error=str(e), user_id=user_id)
-        websocket_manager.disconnect("notifications", user_id)
-
-
-# WebSocket endpoint for live predictions
-@app.websocket("/ws/predictions/{user_id}")
-async def websocket_predictions(websocket: WebSocket, user_id: int):
-    """WebSocket endpoint for real-time prediction updates"""
-    try:
-        await websocket_manager.connect(websocket, "predictions", user_id)
-        
-        try:
-            while True:
-                data = await websocket.receive_text()
-                message = json.loads(data)
-                
-                if message.get("type") == "ping":
-                    await websocket.send_text(json.dumps({"type": "pong"}))
-                elif message.get("type") == "subscribe":
-                    # Handle subscription to specific models or datasets
-                    model_id = message.get("model_id")
-                    await websocket.send_text(json.dumps({
-                        "type": "subscribed",
-                        "model_id": model_id
-                    }))
-                
-        except WebSocketDisconnect:
-            websocket_manager.disconnect("predictions", user_id)
-            
-    except Exception as e:
-        logger.error("WebSocket error", error=str(e), user_id=user_id)
-        websocket_manager.disconnect("predictions", user_id)
-
-
-# Startup event
-@app.on_event("startup")
-async def startup_event():
-    """Additional startup tasks"""
-    logger.info("Performing additional startup tasks...")
-    
-    # Start background tasks if enabled
-    if settings.enable_background_tasks:
-        # Start periodic tasks
-        asyncio.create_task(periodic_health_check())
-        asyncio.create_task(cleanup_old_sessions())
-
-
-async def periodic_health_check():
-    """Periodic health check task"""
-    while True:
-        try:
-            await asyncio.sleep(settings.monitoring.health_check_interval)
-            health_status = health_check()
-            
-            if not all(health_status.values()):
-                logger.warning("Health check failed", status=health_status)
-            
+            logger.info("WebSocket disconnected", user_id=user_id)
         except Exception as e:
-            logger.error("Health check task error", error=str(e))
+            logger.error("WebSocket error", user_id=user_id, error=str(e))
+            websocket_manager.disconnect("notifications", user_id)
+            raise HTTPException(status_code=500, detail="WebSocket internal error")
 
 
-async def cleanup_old_sessions():
-    """Cleanup old user sessions"""
-    while True:
-        try:
-            await asyncio.sleep(3600)  # Run every hour
-            
-            # This would clean up expired sessions from the database
-            logger.info("Cleaning up old sessions...")
-            
-        except Exception as e:
-            logger.error("Session cleanup task error", error=str(e))
-
-
-# Make WebSocket manager available to other modules
-app.state.websocket_manager = websocket_manager
-
-
-if __name__ == "__main__":
-    import uvicorn
-    
-    uvicorn.run(
-        "app_enhanced:app",
-        host=settings.host,
-        port=settings.port,
-        reload=settings.debug,
-        workers=settings.workers if not settings.debug else 1,
-        log_level="info",
-        access_log=True
-    )
 

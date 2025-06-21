@@ -1,458 +1,385 @@
 """
-Enhanced user management endpoints with database integration
+Enhanced user management endpoints for Quantis API
 """
-from datetime import timedelta
+import logging
 from typing import List, Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
-from ..database import get_db
-from ..middleware.auth import (
-    admin_required, create_jwt_token, public_rate_limit, readonly_or_above,
-    standard_rate_limit, user_or_admin_required, validate_api_key
-)
-from ..schemas import User, UserCreate, UserBase
-from ..services.user_service import UserService
+from ..config import get_settings, Settings
+from ..database_enhanced import get_db, AuditLog, get_data_masking_manager, DataMaskingManager
+from ..auth_enhanced import get_current_user, security_manager, AuditLogger, has_permission, get_current_active_user
+from ..models_enhanced import User, Role, Permission
+from ..schemas_enhanced import UserResponse, UserCreate, UserUpdate, RoleCreate, RoleResponse, PermissionCreate, PermissionResponse
+
+logger = logging.getLogger(__name__)
+settings: Settings = get_settings()
 
 router = APIRouter()
 
 
-# Additional Pydantic models
-class UserLogin(BaseModel):
-    username: str
-    password: str
-
-
-class UserRegistration(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-    role: str = "user"
-
-
-class ApiKeyResponse(BaseModel):
-    api_key: str
-    expires_at: Optional[str]
-    name: str
-
-
-class ApiKeyRequest(BaseModel):
-    name: str
-    expires_days: int = 30
-
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str
-    expires_in: int
-
-
-class UserProfile(BaseModel):
-    id: int
-    username: str
-    email: str
-    role: str
-    is_active: bool
-    created_at: str
-    last_login: Optional[str]
-
-
-class PasswordChange(BaseModel):
-    current_password: str
-    new_password: str
-
-
-# Authentication endpoints
-@router.post("/auth/register", response_model=UserProfile)
-async def register_user(
-    user_data: UserRegistration,
+# User Endpoints
+@router.get("/", response_model=List[UserResponse])
+@has_permission("read_users")
+async def get_all_users(
     request: Request,
     db: Session = Depends(get_db),
-    _: bool = Depends(public_rate_limit)
+    current_user: User = Depends(get_current_active_user),
+    data_masking_manager: DataMaskingManager = Depends(get_data_masking_manager)
 ):
-    """Register a new user account."""
-    user_service = UserService(db)
+    """Retrieve all users (admin/privileged access only)"""
+    users = db.query(User).filter(User.is_deleted == False).all()
     
-    try:
-        user = user_service.create_user(
-            username=user_data.username,
-            email=user_data.email,
-            password=user_data.password,
-            role=user_data.role
-        )
-        
-        return UserProfile(
-            id=user.id,
-            username=user.username,
-            email=user.email,
-            role=user.role,
-            is_active=user.is_active,
-            created_at=user.created_at.isoformat(),
-            last_login=user.last_login.isoformat() if user.last_login else None
-        )
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    # Apply data masking if enabled
+    masked_users = []
+    for user in users:
+        user_dict = UserResponse.from_orm(user).dict()
+        masked_users.append(data_masking_manager.mask_object(user_dict))
 
-
-@router.post("/auth/login", response_model=TokenResponse)
-async def login_user(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    """Login with username and password to get JWT token."""
-    user_service = UserService(db)
-    
-    user = user_service.authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Create JWT token
-    access_token_expires = timedelta(minutes=30)
-    access_token = create_jwt_token(
-        data={"user_id": user.id, "username": user.username, "role": user.role},
-        expires_delta=access_token_expires
+    AuditLogger.log_event(
+        db=db,
+        user_id=current_user.id,
+        action="read_all_users",
+        resource_type="user",
+        resource_name="all_users",
+        request=request
     )
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "expires_in": 1800  # 30 minutes in seconds
-    }
+    return masked_users
 
 
-# User profile endpoints
-@router.get("/users/me", response_model=UserProfile)
-async def get_current_user(
-    current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
-):
-    """Get information about the current authenticated user."""
-    user_service = UserService(db)
-    user = user_service.get_user_by_id(current_user["user_id"])
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return UserProfile(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        role=user.role,
-        is_active=user.is_active,
-        created_at=user.created_at.isoformat(),
-        last_login=user.last_login.isoformat() if user.last_login else None
-    )
-
-
-@router.put("/users/me", response_model=UserProfile)
-async def update_current_user(
-    user_update: UserBase,
-    current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
-):
-    """Update current user's profile information."""
-    user_service = UserService(db)
-    
-    # Users can only update their own profile (except role)
-    update_data = user_update.dict(exclude_unset=True)
-    if "role" in update_data and current_user["role"] != "admin":
-        del update_data["role"]  # Non-admins cannot change their role
-    
-    user = user_service.update_user(current_user["user_id"], **update_data)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return UserProfile(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        role=user.role,
-        is_active=user.is_active,
-        created_at=user.created_at.isoformat(),
-        last_login=user.last_login.isoformat() if user.last_login else None
-    )
-
-
-@router.post("/users/me/change-password")
-async def change_password(
-    password_data: PasswordChange,
-    current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
-):
-    """Change current user's password."""
-    user_service = UserService(db)
-    
-    # Verify current password
-    user = user_service.get_user_by_id(current_user["user_id"])
-    if not user or not user.verify_password(password_data.current_password):
-        raise HTTPException(status_code=400, detail="Current password is incorrect")
-    
-    # Update password
-    user_service.update_user(current_user["user_id"], password=password_data.new_password)
-    
-    return {"message": "Password changed successfully"}
-
-
-# API Key management
-@router.post("/users/me/api-keys", response_model=ApiKeyResponse)
-async def create_user_api_key(
-    key_request: ApiKeyRequest,
-    current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
-):
-    """Create a new API key for the current user."""
-    user_service = UserService(db)
-    
-    try:
-        api_key = user_service.create_api_key(
-            user_id=current_user["user_id"],
-            name=key_request.name,
-            expires_days=key_request.expires_days
-        )
-        
-        # Get key info for response
-        key_info = user_service.validate_api_key(api_key)
-        
-        return ApiKeyResponse(
-            api_key=api_key,
-            expires_at=key_info["expires_at"],
-            name=key_request.name
-        )
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.get("/users/me/api-keys")
-async def get_user_api_keys(
-    current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
-):
-    """Get all API keys for the current user."""
-    user_service = UserService(db)
-    api_keys = user_service.get_user_api_keys(current_user["user_id"])
-    
-    return [
-        {
-            "id": key.id,
-            "name": key.name,
-            "created_at": key.created_at.isoformat(),
-            "expires_at": key.expires_at.isoformat() if key.expires_at else None,
-            "last_used": key.last_used.isoformat() if key.last_used else None,
-            "is_active": key.is_active
-        }
-        for key in api_keys
-    ]
-
-
-@router.delete("/users/me/api-keys/{key_id}")
-async def revoke_user_api_key(
-    key_id: int,
-    current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
-):
-    """Revoke one of the current user's API keys."""
-    user_service = UserService(db)
-    
-    # Get the API key to verify ownership
-    api_keys = user_service.get_user_api_keys(current_user["user_id"])
-    target_key = next((key for key in api_keys if key.id == key_id), None)
-    
-    if not target_key:
-        raise HTTPException(status_code=404, detail="API key not found")
-    
-    # Revoke the key by making it inactive
-    from ..models import ApiKey
-    db.query(ApiKey).filter(ApiKey.id == key_id).update({"is_active": False})
-    db.commit()
-    
-    return {"message": "API key revoked successfully"}
-
-
-# Admin endpoints
-@router.get("/users", response_model=List[UserProfile])
-async def get_users(
-    skip: int = 0,
-    limit: int = 100,
-    current_user: dict = Depends(admin_required),
-    db: Session = Depends(get_db)
-):
-    """Get list of users (admin only)."""
-    user_service = UserService(db)
-    users = user_service.get_users(skip=skip, limit=limit)
-    
-    return [
-        UserProfile(
-            id=user.id,
-            username=user.username,
-            email=user.email,
-            role=user.role,
-            is_active=user.is_active,
-            created_at=user.created_at.isoformat(),
-            last_login=user.last_login.isoformat() if user.last_login else None
-        )
-        for user in users
-    ]
-
-
-@router.post("/users", response_model=UserProfile)
-async def create_user(
-    user_data: UserCreate,
-    current_user: dict = Depends(admin_required),
-    db: Session = Depends(get_db)
-):
-    """Create a new user (admin only)."""
-    user_service = UserService(db)
-    
-    try:
-        user = user_service.create_user(
-            username=user_data.username,
-            email=user_data.email,
-            password=user_data.password,
-            role=user_data.role
-        )
-        
-        return UserProfile(
-            id=user.id,
-            username=user.username,
-            email=user.email,
-            role=user.role,
-            is_active=user.is_active,
-            created_at=user.created_at.isoformat(),
-            last_login=user.last_login.isoformat() if user.last_login else None
-        )
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.get("/users/{user_id}", response_model=UserProfile)
-async def get_user(
+@router.get("/{user_id}", response_model=UserResponse)
+@has_permission("read_user")
+async def get_user_by_id(
     user_id: int,
-    current_user: dict = Depends(admin_required),
-    db: Session = Depends(get_db)
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    data_masking_manager: DataMaskingManager = Depends(get_data_masking_manager)
 ):
-    """Get user by ID (admin only)."""
-    user_service = UserService(db)
-    user = user_service.get_user_by_id(user_id)
-    
+    """Retrieve a user by ID (admin/privileged access or self)"""
+    user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return UserProfile(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        role=user.role,
-        is_active=user.is_active,
-        created_at=user.created_at.isoformat(),
-        last_login=user.last_login.isoformat() if user.last_login else None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # Ensure user can only access their own data unless they have admin/read_users permission
+    if not (current_user.id == user_id or has_permission("read_all_users")(current_user)):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this user's data")
+
+    user_dict = UserResponse.from_orm(user).dict()
+    masked_user = data_masking_manager.mask_object(user_dict)
+
+    AuditLogger.log_event(
+        db=db,
+        user_id=current_user.id,
+        action="read_user_by_id",
+        resource_type="user",
+        resource_id=str(user_id),
+        resource_name=user.username,
+        request=request
     )
+    return masked_user
 
 
-@router.put("/users/{user_id}", response_model=UserProfile)
+@router.put("/{user_id}", response_model=UserResponse)
+@has_permission("update_user")
 async def update_user(
     user_id: int,
-    user_update: UserBase,
-    current_user: dict = Depends(admin_required),
-    db: Session = Depends(get_db)
+    user_update: UserUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Update user information (admin only)."""
-    user_service = UserService(db)
-    
-    update_data = user_update.dict(exclude_unset=True)
-    user = user_service.update_user(user_id, **update_data)
-    
+    """Update a user's information (admin/privileged access or self)"""
+    user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # Ensure user can only update their own data unless they have admin/update_users permission
+    if not (current_user.id == user_id or has_permission("update_all_users")(current_user)):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this user's data")
+
+    update_data = user_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(user, key, value)
     
-    return UserProfile(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        role=user.role,
-        is_active=user.is_active,
-        created_at=user.created_at.isoformat(),
-        last_login=user.last_login.isoformat() if user.last_login else None
+    db.commit()
+    db.refresh(user)
+
+    AuditLogger.log_event(
+        db=db,
+        user_id=current_user.id,
+        action="update_user",
+        resource_type="user",
+        resource_id=str(user_id),
+        resource_name=user.username,
+        request=request
     )
+    return UserResponse.from_orm(user)
 
 
-@router.delete("/users/{user_id}")
-async def deactivate_user(
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@has_permission("delete_user")
+async def delete_user(
     user_id: int,
-    current_user: dict = Depends(admin_required),
-    db: Session = Depends(get_db)
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Deactivate user (admin only)."""
-    user_service = UserService(db)
-    
-    if user_id == current_user["user_id"]:
-        raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
-    
-    success = user_service.deactivate_user(user_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return {"message": "User deactivated successfully"}
+    """Soft delete a user (admin/privileged access only)"""
+    user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # Prevent self-deletion for admin users
+    if current_user.id == user_id and has_permission("admin")(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin users cannot delete their own account.")
+
+    user.is_deleted = True
+    user.deleted_at = datetime.utcnow()
+    user.deleted_by_id = current_user.id
+    db.commit()
+
+    AuditLogger.log_event(
+        db=db,
+        user_id=current_user.id,
+        action="delete_user",
+        resource_type="user",
+        resource_id=str(user_id),
+        resource_name=user.username,
+        request=request
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-# Admin API key management
-@router.post("/admin/api-keys", response_model=ApiKeyResponse)
-async def create_api_key_for_user(
-    user_id: int,
-    key_request: ApiKeyRequest,
-    current_user: dict = Depends(admin_required),
-    db: Session = Depends(get_db)
+# Role Endpoints
+@router.post("/roles", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
+@has_permission("create_role")
+async def create_role(
+    role_data: RoleCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Create API key for any user (admin only)."""
-    user_service = UserService(db)
-    
+    """Create a new role"""
     try:
-        api_key = user_service.create_api_key(
-            user_id=user_id,
-            name=key_request.name,
-            expires_days=key_request.expires_days
+        # Check if role name already exists
+        existing_role = db.query(Role).filter(Role.role_name == role_data.role_name).first()
+        if existing_role:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role name already exists.")
+
+        # Validate permissions
+        permissions = db.query(Permission).filter(Permission.id.in_(role_data.permission_ids)).all()
+        if len(permissions) != len(role_data.permission_ids):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more permission IDs are invalid.")
+
+        new_role = Role(
+            role_name=role_data.role_name,
+            description=role_data.description,
+            permissions=permissions
         )
-        
-        key_info = user_service.validate_api_key(api_key)
-        
-        return ApiKeyResponse(
-            api_key=api_key,
-            expires_at=key_info["expires_at"],
-            name=key_request.name
+        db.add(new_role)
+        db.commit()
+        db.refresh(new_role)
+
+        AuditLogger.log_event(
+            db=db,
+            user_id=current_user.id,
+            action="create_role",
+            resource_type="role",
+            resource_id=str(new_role.id),
+            resource_name=new_role.role_name,
+            request=request
         )
-        
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        return RoleResponse.from_orm(new_role)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role with this name already exists.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating role: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create role.")
 
 
-@router.get("/admin/users/{user_id}/api-keys")
-async def get_user_api_keys_admin(
-    user_id: int,
-    current_user: dict = Depends(admin_required),
-    db: Session = Depends(get_db)
+@router.get("/roles", response_model=List[RoleResponse])
+@has_permission("read_roles")
+async def get_all_roles(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Get all API keys for a specific user (admin only)."""
-    user_service = UserService(db)
-    api_keys = user_service.get_user_api_keys(user_id)
-    
-    return [
-        {
-            "id": key.id,
-            "name": key.name,
-            "created_at": key.created_at.isoformat(),
-            "expires_at": key.expires_at.isoformat() if key.expires_at else None,
-            "last_used": key.last_used.isoformat() if key.last_used else None,
-            "is_active": key.is_active
-        }
-        for key in api_keys
-    ]
+    """Retrieve all roles"""
+    roles = db.query(Role).all()
+    AuditLogger.log_event(
+        db=db,
+        user_id=current_user.id,
+        action="read_all_roles",
+        resource_type="role",
+        resource_name="all_roles",
+        request=request
+    )
+    return [RoleResponse.from_orm(role) for role in roles]
+
+
+@router.put("/roles/{role_id}", response_model=RoleResponse)
+@has_permission("update_role")
+async def update_role(
+    role_id: int,
+    role_update: RoleCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Update an existing role"""
+    role = db.query(Role).filter(Role.id == role_id).first()
+    if not role:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found.")
+
+    update_data = role_update.dict(exclude_unset=True)
+    if "permission_ids" in update_data:
+        permissions = db.query(Permission).filter(Permission.id.in_(update_data["permission_ids"])).all()
+        if len(permissions) != len(update_data["permission_ids"]):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more permission IDs are invalid.")
+        role.permissions = permissions
+        del update_data["permission_ids"]
+
+    for key, value in update_data.items():
+        setattr(role, key, value)
+
+    db.commit()
+    db.refresh(role)
+
+    AuditLogger.log_event(
+        db=db,
+        user_id=current_user.id,
+        action="update_role",
+        resource_type="role",
+        resource_id=str(role_id),
+        resource_name=role.role_name,
+        request=request
+    )
+    return RoleResponse.from_orm(role)
+
+
+@router.delete("/roles/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
+@has_permission("delete_role")
+async def delete_role(
+    role_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Delete a role"""
+    role = db.query(Role).filter(Role.id == role_id).first()
+    if not role:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found.")
+
+    # Prevent deletion of roles that have associated users
+    if db.query(User).filter(User.role_id == role_id).first():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete role: users are assigned to this role.")
+
+    db.delete(role)
+    db.commit()
+
+    AuditLogger.log_event(
+        db=db,
+        user_id=current_user.id,
+        action="delete_role",
+        resource_type="role",
+        resource_id=str(role_id),
+        resource_name=role.role_name,
+        request=request
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# Permission Endpoints
+@router.post("/permissions", response_model=PermissionResponse, status_code=status.HTTP_201_CREATED)
+@has_permission("create_permission")
+async def create_permission(
+    permission_data: PermissionCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Create a new permission"""
+    try:
+        new_permission = Permission(
+            permission_name=permission_data.permission_name,
+            description=permission_data.description
+        )
+        db.add(new_permission)
+        db.commit()
+        db.refresh(new_permission)
+
+        AuditLogger.log_event(
+            db=db,
+            user_id=current_user.id,
+            action="create_permission",
+            resource_type="permission",
+            resource_id=str(new_permission.id),
+            resource_name=new_permission.permission_name,
+            request=request
+        )
+        return PermissionResponse.from_orm(new_permission)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Permission with this name already exists.")
+    except Exception as e:
+        logger.error(f"Error creating permission: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create permission.")
+
+
+@router.get("/permissions", response_model=List[PermissionResponse])
+@has_permission("read_permissions")
+async def get_all_permissions(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Retrieve all permissions"""
+    permissions = db.query(Permission).all()
+    AuditLogger.log_event(
+        db=db,
+        user_id=current_user.id,
+        action="read_all_permissions",
+        resource_type="permission",
+        resource_name="all_permissions",
+        request=request
+    )
+    return [PermissionResponse.from_orm(permission) for permission in permissions]
+
+
+@router.delete("/permissions/{permission_id}", status_code=status.HTTP_204_NO_CONTENT)
+@has_permission("delete_permission")
+async def delete_permission(
+    permission_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Delete a permission"""
+    permission = db.query(Permission).filter(Permission.id == permission_id).first()
+    if not permission:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Permission not found.")
+
+    # Prevent deletion of permissions that are assigned to roles
+    if permission.roles:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete permission: it is assigned to one or more roles.")
+
+    db.delete(permission)
+    db.commit()
+
+    AuditLogger.log_event(
+        db=db,
+        user_id=current_user.id,
+        action="delete_permission",
+        resource_type="permission",
+        resource_id=str(permission_id),
+        resource_name=permission.permission_name,
+        request=request
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
