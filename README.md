@@ -20,7 +20,6 @@ Quantis is a comprehensive quantitative trading and investment analytics platfor
 - [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
 - [Architecture](#architecture)
-- [Feature Implementation Status](#feature-implementation-status)
 - [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
 - [Testing](#testing)
