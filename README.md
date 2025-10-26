@@ -14,249 +14,184 @@ Quantis is a comprehensive quantitative trading and investment analytics platfor
 
 > **Note**: This project is under active development. Features and functionalities are continuously being enhanced to improve trading capabilities and user experience.
 
+## Executive Summary
+
+Quantis is a comprehensive quantitative trading and investment analytics platform that combines **advanced statistical models, machine learning algorithms, and real-time market data** to provide powerful insights and automated trading strategies. It offers a robust framework for data processing, quantitative analysis, strategy development, and portfolio management, all built on a scalable **microservices architecture**.
+
+---
+
 ## Table of Contents
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Technology Stack](#technology-stack)
-- [Architecture](#architecture)
-- [Getting Started](#getting-started)
-- [API Documentation](#api-documentation)
-- [Testing](#testing)
-- [CI/CD Pipeline](#cicd-pipeline)
-- [Contributing](#contributing)
-- [License](#license)
+
+*   [Overview](#overview)
+*   [Key Features](#key-features)
+*   [Architecture](#architecture)
+*   [Technology Stack](#technology-stack)
+*   [Getting Started](#getting-started)
+*   [API Documentation](#api-documentation)
+*   [Testing](#testing)
+*   [CI/CD Pipeline](#cicd-pipeline)
+*   [Contributing](#contributing)
+*   [License](#license)
+
+---
 
 ## Overview
 
-Quantis provides a robust platform for quantitative analysis, algorithmic trading, and investment portfolio optimization. The system leverages advanced statistical models and machine learning algorithms to analyze market data, identify trading opportunities, and execute automated trading strategies.
+Quantis provides a robust platform for quantitative analysis, algorithmic trading, and investment portfolio optimization. The system leverages advanced statistical models and machine learning algorithms to analyze market data, identify trading opportunities, and execute automated trading strategies. The microservices architecture ensures that each component—from data ingestion to strategy execution—is independent, resilient, and can be scaled horizontally to handle high-volume, low-latency market operations.
+
+---
 
 ## Key Features
 
-### Data Processing & Analysis
-* **Real-time Market Data**: Integration with multiple data sources for comprehensive market coverage
-* **Historical Data Analysis**: Tools for backtesting and historical performance evaluation
-* **Alternative Data Processing**: Analysis of non-traditional data sources for unique insights
-* **Data Quality Assurance**: Automated validation and cleaning of financial data
+Quantis's functionality is divided into four main domains, each powered by dedicated services.
 
-### Quantitative Analysis
-* **Statistical Models**: Time series analysis, regression models, and factor analysis
-* **Machine Learning Algorithms**: Classification, regression, and clustering for market prediction
-* **Risk Models**: Value at Risk (VaR), Expected Shortfall, and stress testing
-* **Portfolio Optimization**: Modern Portfolio Theory implementation with custom constraints
+### 1. Data Processing & Analysis
 
-### Trading Strategies
-* **Strategy Development Framework**: Tools for creating and testing trading algorithms
-* **Algorithmic Trading**: Automated execution of trading strategies
-* **Signal Generation**: Technical and fundamental indicators for trade signals
-* **Backtesting Engine**: Historical performance evaluation of trading strategies
+The foundation of the platform lies in its ability to handle diverse financial data. This includes **Real-time Market Data** through seamless integration with multiple data sources, **Historical Data Analysis** using dedicated tools for efficient backtesting, and **Alternative Data Processing** to analyze non-traditional sources for unique insights. Furthermore, **Data Quality Assurance** is maintained through automated validation and cleaning processes to ensure the integrity of all financial data.
 
-### Portfolio Management
-* **Asset Allocation**: Optimal distribution of investments across asset classes
-* **Risk Management**: Tools for monitoring and controlling portfolio risk
-* **Performance Analytics**: Comprehensive metrics for evaluating investment performance
-* **Rebalancing Strategies**: Automated portfolio rebalancing based on defined rules
+### 2. Quantitative Analysis
 
-## Technology Stack
+Advanced mathematical and computational tools are used for signal generation and risk assessment. Quantis implements various **Statistical Models**, including time series analysis and factor analysis, alongside **Machine Learning Algorithms** (classification, regression, and clustering) for market prediction. For risk, it provides robust **Risk Models** such as **Value at Risk (VaR)** and comprehensive stress testing. Finally, **Portfolio Optimization** is achieved through the implementation of Modern Portfolio Theory (MPT) with support for custom constraints and optimization objectives.
 
-### Backend
-* **Language**: Python, Rust (for performance-critical components)
-* **Framework**: FastAPI, Flask
-* **Database**: PostgreSQL, InfluxDB (time series data)
-* **Task Queue**: Celery, Redis
-* **ML Libraries**: scikit-learn, PyTorch, TensorFlow
-* **Financial Libraries**: pandas-ta, pyfolio, zipline
+### 3. Trading Strategies
 
-### Frontend
-* **Framework**: React with TypeScript
-* **State Management**: Redux Toolkit
-* **Data Visualization**: D3.js, Plotly, TradingView
-* **Styling**: Tailwind CSS, Styled Components
-* **API Client**: Axios, React Query
+Quantis provides a flexible framework for developing, testing, and deploying automated strategies. This includes a **Strategy Development Framework** for rapid creation and rigorous testing of trading algorithms, leading to **Algorithmic Trading** with automated, low-latency execution across connected brokers. The platform also handles **Signal Generation** through the automated creation of technical and fundamental indicators, all supported by a powerful **Backtesting Engine** for historical performance evaluation and optimization.
 
-### Infrastructure
-* **Containerization**: Docker
-* **Orchestration**: Kubernetes
-* **CI/CD**: GitHub Actions
-* **Monitoring**: Prometheus, Grafana
-* **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
+### 4. Portfolio Management
+
+Tools are provided for monitoring, optimizing, and controlling investment portfolios. Key features include **Asset Allocation** to determine the optimal distribution of investments, and **Risk Management** with comprehensive tools for real-time monitoring of portfolio risk exposures. Users benefit from **Performance Analytics** with detailed metrics and visualizations, and **Rebalancing Strategies** that automate portfolio adjustments based on predefined rules and optimization results.
+
+---
 
 ## Architecture
 
-Quantis follows a microservices architecture with the following components:
+Quantis follows a microservices architecture, logically grouped into three main service layers, supported by a common infrastructure.
 
-```
-Quantis/
-├── Data Services
-│   ├── Market Data Service
-│   ├── Alternative Data Service
-│   ├── Historical Data Service
-│   └── Data Quality Service
-├── Analytical Services
-│   ├── Statistical Analysis Service
-│   ├── Machine Learning Service
-│   ├── Risk Analysis Service
-│   └── Portfolio Optimization Service
-├── Trading Services
-│   ├── Strategy Service
-│   ├── Signal Generation Service
-│   ├── Backtesting Service
-│   └── Execution Service
-├── Frontend Applications
-│   ├── Web Dashboard
-│   └── Mobile App
-└── Infrastructure
-    ├── API Gateway
-    ├── Authentication Service
-    ├── Monitoring Stack
-    └── Data Storage
-```
+### Architectural Components
+
+| Layer | Key Services | Description |
+| :--- | :--- | :--- |
+| **Data Services** | Market Data, Alternative Data, Historical Data, Data Quality | Responsible for all data ingestion, storage, cleaning, and retrieval. |
+| **Analytical Services** | Statistical Analysis, Machine Learning, Risk Analysis, Portfolio Optimization | Contains the core quantitative intelligence, running models and generating insights. |
+| **Trading Services** | Strategy, Signal Generation, Backtesting, Execution | Manages the full lifecycle of trading strategies, from development to live execution. |
+| **Infrastructure** | API Gateway, Authentication Service, Monitoring Stack, Data Storage | Provides common technical capabilities and ensures system stability and security. |
+
+---
+
+## Technology Stack
+
+The platform is built using a modern, performant, and well-supported technology stack.
+
+| Category | Key Technologies | Description |
+| :--- | :--- | :--- |
+| **Backend** | Python, Rust, FastAPI, Flask | Python for data science and rapid development; Rust for performance-critical components. FastAPI/Flask for robust API development. |
+| **Databases** | PostgreSQL, InfluxDB | PostgreSQL for relational data and core system state; InfluxDB for high-volume time series data storage. |
+| **Task Queue** | Celery, Redis | Celery for asynchronous task processing; Redis for task queuing and caching. |
+| **ML/Quant Libraries** | scikit-learn, PyTorch, pandas-ta, pyfolio, zipline | Specialized libraries for machine learning, technical analysis, performance reporting, and event-driven backtesting. |
+| **Frontend** | React, TypeScript, Redux Toolkit, D3.js, Plotly, TradingView | Modern stack for a responsive, data-rich web dashboard with advanced visualization capabilities. |
+| **DevOps** | Docker, Kubernetes, GitHub Actions, Prometheus, Grafana, ELK Stack | Full-stack CI/CD, container orchestration, and observability tools for production readiness. |
+
+---
+
 ## Getting Started
 
 ### Prerequisites
-* Python 3.9+
-* Node.js 16+
-* Docker and Docker Compose
-* Kubernetes (for production deployment)
+
+To set up the platform, ensure you have the following installed:
+*   **Python** (v3.9+)
+*   **Node.js** (v16+)
+*   **Docker** and Docker Compose
+*   **Kubernetes** (for production deployment)
 
 ### Local Development Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/abrar2030/Quantis.git
-   cd Quantis
-   ```
+The recommended way to set up the development environment is using the provided scripts:
 
-2. **Run the setup script**
-   ```bash
-   ./setup_quantis_env.sh
-   ```
+| Step | Command | Description |
+| :--- | :--- | :--- |
+| **1. Clone Repository** | `git clone https://github.com/abrar2030/Quantis.git && cd Quantis` | Download the source code and navigate to the project directory. |
+| **2. Run Setup Script** | `./setup_quantis_env.sh` | Installs dependencies and configures the local environment. |
+| **3. Start Services** | `./run_quantis.sh dev` | Starts all core services for development. |
 
-3. **Start the development environment**
-   ```bash
-   ./run_quantis.sh dev
-   ```
+**Access Points:**
+*   **Web Dashboard**: `http://localhost:3000`
+*   **API Documentation**: `http://localhost:8000/docs`
+*   **Monitoring Dashboard**: `http://localhost:9090`
 
-4. **Access the application**
-   * Web Dashboard: [http://localhost:3000](http://localhost:3000)
-   * API Documentation: [http://localhost:8000/docs](http://localhost:8000/docs)
-   * Monitoring Dashboard: [http://localhost:9090](http://localhost:9090)
+### Deployment
 
-### Docker Compose Setup
+Quantis supports both Docker Compose for local environments and Kubernetes for production deployment.
 
-```bash
-# Start all services
-docker-compose up -d
+| Deployment Target | Command Example |
+| :--- | :--- |
+| **Docker Compose** | `docker-compose up -d` |
+| **Kubernetes** | `kubectl apply -f infrastructure/k8s/` |
 
-# View logs
-docker-compose logs -f
-
-# Stop all services
-docker-compose down
-```
-
-### Kubernetes Deployment
-
-```bash
-# Apply Kubernetes manifests
-kubectl apply -f infrastructure/k8s/
-
-# Check deployment status
-kubectl get pods -n quantis
-
-# Port forward to access the dashboard
-kubectl port-forward svc/quantis-web 3000:3000 -n quantis
-```
+---
 
 ## API Documentation
 
-Quantis provides a comprehensive API for interacting with the platform:
+Quantis exposes a comprehensive, versioned API for all platform interactions, accessible via the API Gateway.
 
-### Market Data API
-* `GET /api/v1/market/prices` - Get real-time market prices
-* `GET /api/v1/market/historical` - Get historical market data
-* `GET /api/v1/market/indicators` - Get technical indicators
+### Key API Endpoints
 
-### Strategy API
-* `POST /api/v1/strategies` - Create a new trading strategy
-* `GET /api/v1/strategies` - List all strategies
-* `GET /api/v1/strategies/{id}` - Get strategy details
-* `POST /api/v1/strategies/{id}/backtest` - Run strategy backtest
+| Service | Endpoint | Method | Description |
+| :--- | :--- | :--- | :--- |
+| **Market Data** | `/api/v1/market/prices` | `GET` | Get real-time market prices. |
+| **Strategy** | `/api/v1/strategies` | `POST` | Create a new trading strategy. |
+| **Strategy** | `/api/v1/strategies/{id}/backtest` | `POST` | Run a strategy backtest and return results. |
+| **Portfolio** | `/api/v1/portfolios/{id}/performance` | `GET` | Get detailed portfolio performance metrics. |
+| **Portfolio** | `/api/v1/portfolios/{id}/rebalance` | `POST` | Trigger an automated portfolio rebalancing. |
 
-### Portfolio API
-* `GET /api/v1/portfolios` - List all portfolios
-* `POST /api/v1/portfolios` - Create a new portfolio
-* `GET /api/v1/portfolios/{id}/performance` - Get portfolio performance
-* `POST /api/v1/portfolios/{id}/rebalance` - Rebalance portfolio
+Full API documentation, including request/response schemas, is available at `http://localhost:8000/docs`.
+
+---
 
 ## Testing
 
-The project maintains comprehensive test coverage across all components to ensure reliability and accuracy.
+The project maintains an overall test coverage of **82%** across all components, ensuring reliability and accuracy in financial calculations and trading logic.
 
-### Test Coverage
+### Test Coverage Summary
 
 | Component | Coverage | Status |
-|-----------|----------|--------|
-| Data Services | 85% | ✅ |
-| Analytical Services | 83% | ✅ |
-| Trading Services | 87% | ✅ |
-| Portfolio Management | 80% | ✅ |
-| API Layer | 90% | ✅ |
-| Frontend Components | 75% | ✅ |
-| Overall | 82% | ✅ |
+| :--- | :--- | :--- |
+| **Trading Services** | 87% | ✅ |
+| **Data Services** | 85% | ✅ |
+| **Analytical Services** | 83% | ✅ |
+| **Portfolio Management** | 80% | ✅ |
+| **API Layer** | 90% | ✅ |
+| **Frontend Components** | 75% | ✅ |
 
-### Unit Tests
-* Data processing pipeline tests
-* Statistical model tests
-* Trading strategy tests
-* Portfolio optimization tests
+### Testing Types
 
-### Integration Tests
-* End-to-end trading workflow tests
-* API endpoint tests
-* Database integration tests
-* Third-party service integration tests
+Testing is categorized into four main types:
+1.  **Unit Tests**: Focused on individual functions, statistical models, and core trading logic.
+2.  **Integration Tests**: Validating end-to-end trading workflows, API endpoints, and database interactions.
+3.  **Performance Tests**: Measuring data processing throughput, backtesting speed, and API response times under load.
+4.  **Security Tests**: Ensuring the platform adheres to security standards and best practices.
 
-### Performance Tests
-* Data processing throughput tests
-* Strategy backtesting performance tests
-* API response time tests
-* Concurrent user load tests
+**Running Tests:** All tests can be executed using the `pytest` command from the root directory: `pytest`. Specific categories can be targeted (e.g., `pytest tests/unit/`).
 
-### Running Tests
-
-```bash
-# Run all tests
-pytest
-
-# Run specific test categories
-pytest tests/unit/
-pytest tests/integration/
-pytest tests/performance/
-
-# Run with coverage report
-pytest --cov=quantis
-```
+---
 
 ## CI/CD Pipeline
 
-Quantis uses GitHub Actions for continuous integration and deployment:
+Quantis uses **GitHub Actions** for continuous integration and deployment, automating the development workflow:
+*   **Continuous Integration**: Automated testing, code quality checks (pylint, flake8, ESLint), and security scanning on every pull request.
+*   **Continuous Deployment**: Automated Docker image building/publishing and deployment to staging and production environments (managed via Kubernetes).
 
-* Automated testing on each pull request
-* Code quality checks with pylint, flake8, and ESLint
-* Security scanning with Bandit and npm audit
-* Docker image building and publishing
-* Automated deployment to staging and production environments
+---
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions to Quantis! To get involved:
+1.  Fork the repository.
+2.  Create your feature branch (`git checkout -b feature/your-feature-name`).
+3.  Commit your changes and push to the branch.
+4.  Open a Pull Request for review.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
