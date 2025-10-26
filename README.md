@@ -1,8 +1,7 @@
 # Quantis
 
-[![CI/CD Status](https://img.shields.io/github/actions/workflow/status/abrar2030/Quantis/ci-cd.yml?branch=main&label=CI/CD&logo=github)](https://github.com/abrar2030/Quantis/actions)
+![CI/CD Status](https://img.shields.io/github/actions/workflow/status/abrar2030/Quantis/cicd.yml?branch=main&label=CI/CD&logo=github)
 [![Test Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)](https://github.com/abrar2030/Quantis/actions)
-[![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)](https://github.com/abrar2030/Quantis/tree/main/docs/quality)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## 📈 Quantitative Trading & Investment Analytics Platform
