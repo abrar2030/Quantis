@@ -79,7 +79,7 @@ class FinancialCalculationService:
             
         except Exception as e:
             logger.error(f"Error calculating interest: {e}")
-            return Decimal('0.00')
+            raise ValueError(f"Error in calculation: {e}")
     
     @staticmethod
     def calculate_present_value(future_value: Decimal, discount_rate: Decimal, 
@@ -96,7 +96,7 @@ class FinancialCalculationService:
             
         except Exception as e:
             logger.error(f"Error calculating present value: {e}")
-            return Decimal('0.00')
+            raise ValueError(f"Error in calculation: {e}")
     
     @staticmethod
     def calculate_net_present_value(cash_flows: List[Decimal], discount_rate: Decimal) -> Decimal:
@@ -114,7 +114,7 @@ class FinancialCalculationService:
             
         except Exception as e:
             logger.error(f"Error calculating NPV: {e}")
-            return Decimal('0.00')
+            raise ValueError(f"Error in calculation: {e}")
     
     @staticmethod
     def calculate_internal_rate_of_return(cash_flows: List[Decimal], 
@@ -146,11 +146,11 @@ class FinancialCalculationService:
                 
                 rate = rate - (npv / npv_derivative)
             
-            return None  # Convergence failed
+            raise ValueError("IRR calculation failed to converge.")
             
         except Exception as e:
             logger.error(f"Error calculating IRR: {e}")
-            return None
+            raise ValueError(f"Error calculating IRR: {e}")
 
 
 class RiskAssessmentService:

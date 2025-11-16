@@ -140,33 +140,33 @@ class FileService:
             
             # Read dataset based on file type
             if file_extension == ".csv":
-                df = pd.read_csv(file_path)
+                dataframe = pd.read_csv(file_path)
             elif file_extension == ".json":
-                df = pd.read_json(file_path)
+                dataframe = pd.read_json(file_path)
             elif file_extension in [".xlsx", ".xls"]:
-                df = pd.read_excel(file_path)
+                dataframe = pd.read_excel(file_path)
             else:
                 raise ValueError(f"Unsupported file type: {file_extension}")
             
             # Analyze dataset
-            columns = list(df.columns)
-            row_count = len(df)
+            columns = list(dataframe.columns)
+            row_count = len(dataframe)
             
             # Generate metadata
             metadata = {
-                "column_types": df.dtypes.astype(str).to_dict(),
-                "null_counts": df.isnull().sum().to_dict(),
-                "numeric_columns": df.select_dtypes(include=['number']).columns.tolist(),
-                "categorical_columns": df.select_dtypes(include=['object']).columns.tolist(),
-                "datetime_columns": df.select_dtypes(include=['datetime']).columns.tolist(),
-                "memory_usage": df.memory_usage(deep=True).sum(),
-                "shape": df.shape,
-                "sample_data": df.head(5).to_dict('records') if row_count > 0 else []
+                "column_types": dataframe.dtypes.astype(str).to_dict(),
+                "null_counts": dataframe.isnull().sum().to_dict(),
+                "numeric_columns": dataframe.select_dtypes(include=['number']).columns.tolist(),
+                "categorical_columns": dataframe.select_dtypes(include=['object']).columns.tolist(),
+                "datetime_columns": dataframe.select_dtypes(include=['datetime']).columns.tolist(),
+                "memory_usage": dataframe.memory_usage(deep=True).sum(),
+                "shape": dataframe.shape,
+                "sample_data": dataframe.head(5).to_dict('records') if row_count > 0 else []
             }
             
             # Add basic statistics for numeric columns
             if metadata["numeric_columns"]:
-                numeric_stats = df[metadata["numeric_columns"]].describe().to_dict()
+                numeric_stats = dataframe[metadata["numeric_columns"]].describe().to_dict()
                 metadata["numeric_statistics"] = numeric_stats
             
             return {
@@ -190,20 +190,20 @@ class FileService:
             
             # Read dataset
             if file_extension == ".csv":
-                df = pd.read_csv(file_path, nrows=rows)
+                dataframe = pd.read_csv(file_path, nrows=rows)
             elif file_extension == ".json":
-                df = pd.read_json(file_path)
-                df = df.head(rows)
+                dataframe = pd.read_json(file_path)
+                dataframe = dataframe.head(rows)
             elif file_extension in [".xlsx", ".xls"]:
-                df = pd.read_excel(file_path, nrows=rows)
+                dataframe = pd.read_excel(file_path, nrows=rows)
             else:
                 raise ValueError(f"Unsupported file type: {file_extension}")
             
             return {
-                "columns": list(df.columns),
-                "data": df.to_dict('records'),
+                "columns": list(dataframe.columns),
+                "data": dataframe.to_dict('records'),
                 "total_rows": dataset.row_count,
-                "preview_rows": len(df)
+                "preview_rows": len(dataframe)
             }
             
         except Exception as e:
@@ -225,20 +225,20 @@ class FileService:
     
     def get_file_info(self, file_path: str) -> Dict[str, Any]:
         """Get information about a file"""
-        path = Path(file_path)
+        file_path_obj = Path(file_path)
         
-        if not path.exists():
+        if not file_path_obj.exists():
             raise HTTPException(status_code=404, detail="File not found")
         
-        stat = path.stat()
+        stat = file_path_obj.stat()
         
         return {
-            "filename": path.name,
+            "filename": file_path_obj.name,
             "size": stat.st_size,
             "created": datetime.fromtimestamp(stat.st_ctime).isoformat(),
             "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
-            "extension": path.suffix,
-            "mime_type": mimetypes.guess_type(str(path))[0]
+            "extension": file_path_obj.suffix,
+            "mime_type": mimetypes.guess_type(str(file_path_obj))[0]
         }
     
     def cleanup_old_files(self, days: int = 30) -> int:
@@ -246,16 +246,16 @@ class FileService:
         cutoff_time = datetime.now().timestamp() - (days * 24 * 60 * 60)
         deleted_count = 0
         
-        for file_path in self.upload_dir.iterdir():
-            if file_path.is_file() and file_path.stat().st_mtime < cutoff_time:
+        for file_path_obj in self.upload_dir.iterdir():
+            if file_path_obj.is_file() and file_path_obj.stat().st_mtime < cutoff_time:
                 # Check if file is still referenced in database
                 dataset = self.db.query(models.Dataset).filter(
-                    models.Dataset.file_path == str(file_path)
+                    models.Dataset.file_path == str(file_path_obj)
                 ).first()
                 
                 if not dataset:
                     try:
-                        file_path.unlink()
+                        file_path_obj.unlink()
                         deleted_count += 1
                     except Exception:
                         pass
@@ -264,11 +264,11 @@ class FileService:
     
     def get_storage_stats(self) -> Dict[str, Any]:
         """Get storage statistics"""
-        upload_size = sum(f.stat().st_size for f in self.upload_dir.rglob('*') if f.is_file())
-        model_size = sum(f.stat().st_size for f in self.model_dir.rglob('*') if f.is_file())
+        upload_size = sum(file_obj.stat().st_size for file_obj in self.upload_dir.rglob('*') if file_obj.is_file())
+        model_size = sum(file_obj.stat().st_size for file_obj in self.model_dir.rglob('*') if file_obj.is_file())
         
-        upload_count = len([f for f in self.upload_dir.rglob('*') if f.is_file()])
-        model_count = len([f for f in self.model_dir.rglob('*') if f.is_file()])
+        upload_count = len([file_obj for file_obj in self.upload_dir.rglob('*') if file_obj.is_file()])
+        model_count = len([file_obj for file_obj in self.model_dir.rglob('*') if file_obj.is_file()])
         
         return {
             "upload_directory": {
@@ -286,4 +286,3 @@ class FileService:
             "total_size_bytes": upload_size + model_size,
             "total_size_mb": (upload_size + model_size) / (1024 * 1024)
         }
-

@@ -1,8 +1,6 @@
 """
 Enhanced FastAPI application with comprehensive backend features
 """
-import os
-import logging
 import time
 from contextlib import asynccontextmanager
 from typing import Dict, Any
@@ -17,8 +15,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 import structlog
-import asyncio
-import json
+import json # Kept for WebSocket message parsing
 
 from .config import get_settings, Settings # Import Settings class
 from .database_enhanced import init_db, get_db, health_check, close_redis, AuditLog, get_encryption_manager, get_data_retention_manager, get_consent_manager, get_data_masking_manager # Import new managers and AuditLog
@@ -138,6 +135,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 )
                 
             except Exception as e:
+                # Catch specific database or logging errors if possible, but for now, keep it broad
+                # to ensure the main request flow is not interrupted by a logging failure.
                 logger.error("Failed to log audit event", error=str(e))
         
         return response
@@ -194,6 +193,7 @@ class WebSocketManager:
                         try:
                             await websocket.send_text(message)
                         except Exception as e:
+                            # Catch specific WebSocket errors if possible
                             logger.error("Failed to send WebSocket message", error=str(e))
                             self.disconnect(connection_id, user_id)
     
@@ -204,6 +204,7 @@ class WebSocketManager:
                 try:
                     await websocket.send_text(message)
                 except Exception as e:
+                    # Catch specific WebSocket errors if possible
                     logger.error("Failed to broadcast WebSocket message", error=str(e))
 
 
@@ -228,6 +229,7 @@ async def lifespan(app: FastAPI):
         logger.info("Quantis API started successfully")
         
     except Exception as e:
+        # Keep broad exception here as it's a critical startup failure
         logger.error("Failed to start Quantis API", error=str(e))
         raise
     
@@ -239,6 +241,7 @@ async def lifespan(app: FastAPI):
         await close_redis()
         logger.info("Redis connection closed")
     except Exception as e:
+        # Keep broad exception here as it's a critical shutdown failure
         logger.error("Error during shutdown", error=str(e))
     
     logger.info("Quantis API shutdown complete")
@@ -282,107 +285,61 @@ app = FastAPI(
     version="2.0.0",
     contact={
         "name": "Quantis API Support",
-        "email": "support@quantis.com",
-        "url": "https://quantis.com/support"
+        "url": "https://quantis.ai/support",
+        "email": "support@quantis.ai",
     },
     license_info={
-        "name": "MIT License",
-        "url": "https://opensource.org/licenses/MIT"
+        "name": "Proprietary License",
+        "url": "https://quantis.ai/license",
     },
+    openapi_url="/openapi.json" if settings.debug else None,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
-    openapi_url="/openapi.json" if settings.debug else None,
-    lifespan=lifespan
+    lifespan=lifespan,
+    default_response_class=JSONResponse,
 )
 
-# Add middleware
+# Exception Handlers
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request, exc):
+    """Custom handler for HTTP exceptions"""
+    logger.warning("HTTP Exception", status_code=exc.status_code, detail=exc.detail, path=request.url.path)
+    return await http_exception_handler(request, exc)
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    """Custom handler for request validation errors"""
+    logger.warning("Validation Error", errors=exc.errors(), path=request.url.path)
+    return await request_validation_exception_handler(request, exc)
+
+# Middleware
+app.add_middleware(MetricsMiddleware)
+app.add_middleware(AuditMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials=settings.cors_credentials,
-    allow_methods=settings.cors_methods,
-    allow_headers=settings.cors_headers,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["*"] if settings.debug else ["quantis.com", "*.quantis.com"]
-)
-
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
-app.add_middleware(MetricsMiddleware)
-app.add_middleware(AuditMiddleware)
-
-
-# Exception handlers
-@app.exception_handler(HTTPException)
-async def custom_http_exception_handler(request: Request, exc: HTTPException):
-    """Custom HTTP exception handler"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=ErrorResponse(
-            error=exc.__class__.__name__,
-            message=exc.detail,
-            timestamp=time.time(),
-            request_id=getattr(request.state, "request_id", None)
-        ).dict()
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Custom validation exception handler"""
-    return JSONResponse(
-        status_code=422,
-        content=ErrorResponse(
-            error="ValidationError",
-            message="Request validation failed",
-            details=[
-                {
-                    "field": ".".join(str(loc) for loc in error["loc"]),
-                    "message": error["msg"],
-                    "code": error["type"]
-                }
-                for error in exc.errors()
-            ],
-            timestamp=time.time(),
-            request_id=getattr(request.state, "request_id", None)
-        ).dict()
-    )
-
-
-@app.exception_handler(500)
-async def internal_server_error_handler(request: Request, exc: Exception):
-    """Custom internal server error handler"""
-    logger.error("Internal server error", error=str(exc), request_id=getattr(request.state, "request_id", None))
-    
-    return JSONResponse(
-        status_code=500,
-        content=ErrorResponse(
-            error="InternalServerError",
-            message="An internal server error occurred",
-            timestamp=time.time(),
-            request_id=getattr(request.state, "request_id", None)
-        ).dict()
-    )
-
 
 # Health check endpoint
 @app.get("/health", response_model=HealthCheck, tags=["System"])
-async def health_check_endpoint():
-    """System health check"""
-    health_status = health_check()
-    
-    return HealthCheck(
-        status="healthy" if all(health_status.values()) else "unhealthy",
-        timestamp=health_status["timestamp"],
-        database=health_status["database"],
-        redis=health_status["redis"],
-        external_apis={},
-        version=settings.app_version,
-        uptime_seconds=int(time.time())  # Simplified uptime
-    )
-
+async def health_check_endpoint(db=Depends(get_db)):
+    """Performs a health check on the application and its dependencies"""
+    try:
+        db_status = health_check(db)
+        return {
+            "status": "ok",
+            "database": db_status,
+            "redis": "ok" if await close_redis(check_only=True) else "error",
+            "timestamp": time.time()
+        }
+    except Exception as e:
+        logger.error("Health check failed", error=str(e))
+        raise HTTPException(status_code=503, detail=f"Service Unavailable: {str(e)}")
 
 # Metrics endpoint
 @app.get("/metrics", tags=["System"])
@@ -469,6 +426,3 @@ async def websocket_notifications(websocket: WebSocket, user_id: int):
             logger.error("WebSocket error", user_id=user_id, error=str(e))
             websocket_manager.disconnect("notifications", user_id)
             raise HTTPException(status_code=500, detail="WebSocket internal error")
-
-
-
