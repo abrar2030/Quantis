@@ -1,19 +1,18 @@
 """
 Model management endpoints
 """
+
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..middleware.auth import (
-    admin_required, readonly_or_above, user_or_admin_required,
-    validate_api_key
-)
-from ..services.model_service import ModelService
+from ..middleware.auth import (admin_required, readonly_or_above,
+                               user_or_admin_required, validate_api_key)
 from ..services.dataset_service import DatasetService
+from ..services.model_service import ModelService
 from ..services.user_service import UserService
 
 router = APIRouter()
@@ -64,20 +63,20 @@ class ModelMetrics(BaseModel):
 async def create_model(
     model_data: ModelCreate,
     current_user: dict = Depends(user_or_admin_required),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new model."""
     model_service = ModelService(db)
     dataset_service = DatasetService(db)
-    
+
     # Verify dataset exists and user has access
     dataset = dataset_service.get_dataset_by_id(model_data.dataset_id)
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
-    
+
     if current_user["role"] != "admin" and dataset.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied to dataset")
-    
+
     try:
         model = model_service.create_model(
             name=model_data.name,
@@ -85,9 +84,9 @@ async def create_model(
             model_type=model_data.model_type,
             owner_id=current_user["user_id"],
             dataset_id=model_data.dataset_id,
-            hyperparameters=model_data.hyperparameters
+            hyperparameters=model_data.hyperparameters,
         )
-        
+
         return ModelResponse(
             id=model.id,
             name=model.name,
@@ -103,9 +102,9 @@ async def create_model(
             file_path=model.file_path,
             created_at=model.created_at.isoformat(),
             updated_at=model.updated_at.isoformat() if model.updated_at else None,
-            trained_at=model.trained_at.isoformat() if model.trained_at else None
+            trained_at=model.trained_at.isoformat() if model.trained_at else None,
         )
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -117,49 +116,51 @@ async def get_models(
     status: Optional[str] = Query(None),
     model_type: Optional[str] = Query(None),
     current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get models for the current user."""
     model_service = ModelService(db)
     dataset_service = DatasetService(db)
-    
+
     if current_user["role"] == "admin":
         models = model_service.get_all_models(skip, limit)
     else:
         models = model_service.get_models_by_owner(current_user["user_id"], skip, limit)
-    
+
     # Filter by status and model_type if provided
     if status:
         models = [m for m in models if m.status == status]
     if model_type:
         models = [m for m in models if m.model_type == model_type]
-    
+
     # Get additional info
     user_service = UserService(db)
-    
+
     result = []
     for model in models:
         owner = user_service.get_user_by_id(model.owner_id)
         dataset = dataset_service.get_dataset_by_id(model.dataset_id)
-        
-        result.append(ModelResponse(
-            id=model.id,
-            name=model.name,
-            description=model.description,
-            model_type=model.model_type,
-            owner_id=model.owner_id,
-            owner_username=owner.username if owner else "Unknown",
-            dataset_id=model.dataset_id,
-            dataset_name=dataset.name if dataset else "Unknown",
-            hyperparameters=model.hyperparameters,
-            metrics=model.metrics,
-            status=model.status,
-            file_path=model.file_path,
-            created_at=model.created_at.isoformat(),
-            updated_at=model.updated_at.isoformat() if model.updated_at else None,
-            trained_at=model.trained_at.isoformat() if model.trained_at else None
-        ))
-    
+
+        result.append(
+            ModelResponse(
+                id=model.id,
+                name=model.name,
+                description=model.description,
+                model_type=model.model_type,
+                owner_id=model.owner_id,
+                owner_username=owner.username if owner else "Unknown",
+                dataset_id=model.dataset_id,
+                dataset_name=dataset.name if dataset else "Unknown",
+                hyperparameters=model.hyperparameters,
+                metrics=model.metrics,
+                status=model.status,
+                file_path=model.file_path,
+                created_at=model.created_at.isoformat(),
+                updated_at=model.updated_at.isoformat() if model.updated_at else None,
+                trained_at=model.trained_at.isoformat() if model.trained_at else None,
+            )
+        )
+
     return result
 
 
@@ -167,25 +168,25 @@ async def get_models(
 async def get_model(
     model_id: int,
     current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get model by ID."""
     model_service = ModelService(db)
     dataset_service = DatasetService(db)
-    
+
     model = model_service.get_model_by_id(model_id)
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-    
+
     # Check permissions
     if current_user["role"] != "admin" and model.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     # Get additional info
     user_service = UserService(db)
     owner = user_service.get_user_by_id(model.owner_id)
     dataset = dataset_service.get_dataset_by_id(model.dataset_id)
-    
+
     return ModelResponse(
         id=model.id,
         name=model.name,
@@ -201,7 +202,7 @@ async def get_model(
         file_path=model.file_path,
         created_at=model.created_at.isoformat(),
         updated_at=model.updated_at.isoformat() if model.updated_at else None,
-        trained_at=model.trained_at.isoformat() if model.trained_at else None
+        trained_at=model.trained_at.isoformat() if model.trained_at else None,
     )
 
 
@@ -210,35 +211,35 @@ async def update_model(
     model_id: int,
     model_update: ModelCreate,
     current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update model information."""
     model_service = ModelService(db)
     model = model_service.get_model_by_id(model_id)
-    
+
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-    
+
     # Check permissions
     if current_user["role"] != "admin" and model.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     # Update model
     updated_model = model_service.update_model(
         model_id,
         name=model_update.name,
         description=model_update.description,
         model_type=model_update.model_type,
-        hyperparameters=model_update.hyperparameters
+        hyperparameters=model_update.hyperparameters,
     )
-    
+
     if not updated_model:
         raise HTTPException(status_code=500, detail="Failed to update model")
-    
+
     # Get additional info for response
     dataset_service = DatasetService(db)
     dataset = dataset_service.get_dataset_by_id(updated_model.dataset_id)
-    
+
     return ModelResponse(
         id=updated_model.id,
         name=updated_model.name,
@@ -253,8 +254,12 @@ async def update_model(
         status=updated_model.status,
         file_path=updated_model.file_path,
         created_at=updated_model.created_at.isoformat(),
-        updated_at=updated_model.updated_at.isoformat() if updated_model.updated_at else None,
-        trained_at=updated_model.trained_at.isoformat() if updated_model.trained_at else None
+        updated_at=(
+            updated_model.updated_at.isoformat() if updated_model.updated_at else None
+        ),
+        trained_at=(
+            updated_model.trained_at.isoformat() if updated_model.trained_at else None
+        ),
     )
 
 
@@ -262,23 +267,23 @@ async def update_model(
 async def delete_model(
     model_id: int,
     current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Delete model."""
     model_service = ModelService(db)
     model = model_service.get_model_by_id(model_id)
-    
+
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-    
+
     # Check permissions
     if current_user["role"] != "admin" and model.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     success = model_service.delete_model(model_id)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete model")
-    
+
     return {"message": "Model deleted successfully"}
 
 
@@ -289,32 +294,34 @@ async def train_model(
     training_request: ModelTrainingRequest,
     background_tasks: BackgroundTasks,
     current_user: dict = Depends(user_or_admin_required),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Start model training."""
     model_service = ModelService(db)
     model = model_service.get_model_by_id(model_id)
-    
+
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-    
+
     # Check permissions
     if current_user["role"] != "admin" and model.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     if model.status == "training":
         raise HTTPException(status_code=400, detail="Model is already training")
-    
+
     # Update hyperparameters if provided
     if training_request.hyperparameters:
-        model_service.update_model(model_id, hyperparameters=training_request.hyperparameters)
-    
+        model_service.update_model(
+            model_id, hyperparameters=training_request.hyperparameters
+        )
+
     # Start training in background
     def train_model_task():
         model_service.train_dummy_model(model_id)
-    
+
     background_tasks.add_task(train_model_task)
-    
+
     return {"message": "Model training started", "model_id": model_id}
 
 
@@ -322,25 +329,25 @@ async def train_model(
 async def get_training_status(
     model_id: int,
     current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get model training status."""
     model_service = ModelService(db)
     model = model_service.get_model_by_id(model_id)
-    
+
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-    
+
     # Check permissions
     if current_user["role"] != "admin" and model.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     return {
         "model_id": model.id,
         "status": model.status,
         "metrics": model.metrics,
         "trained_at": model.trained_at.isoformat() if model.trained_at else None,
-        "file_path": model.file_path
+        "file_path": model.file_path,
     }
 
 
@@ -348,22 +355,27 @@ async def get_training_status(
 async def get_model_metrics(
     model_id: int,
     current_user: dict = Depends(readonly_or_above),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get model training metrics."""
     model_service = ModelService(db)
     model = model_service.get_model_by_id(model_id)
-    
+
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-    
+
     # Check permissions
-    if current_user["role"] not in ["admin", "readonly"] and model.owner_id != current_user["user_id"]:
+    if (
+        current_user["role"] not in ["admin", "readonly"]
+        and model.owner_id != current_user["user_id"]
+    ):
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     if not model.metrics:
-        raise HTTPException(status_code=404, detail="No metrics available for this model")
-    
+        raise HTTPException(
+            status_code=404, detail="No metrics available for this model"
+        )
+
     return ModelMetrics(**model.metrics)
 
 
@@ -372,49 +384,53 @@ async def get_model_metrics(
 async def compare_models(
     model_ids: str = Query(..., description="Comma-separated list of model IDs"),
     current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Compare multiple models."""
     model_service = ModelService(db)
-    
+
     try:
         model_id_list = [int(id.strip()) for id in model_ids.split(",")]
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid model IDs format")
-    
+
     if len(model_id_list) > 10:
-        raise HTTPException(status_code=400, detail="Cannot compare more than 10 models at once")
-    
+        raise HTTPException(
+            status_code=400, detail="Cannot compare more than 10 models at once"
+        )
+
     comparison_data = []
     for model_id in model_id_list:
         model = model_service.get_model_by_id(model_id)
         if not model:
             continue
-        
+
         # Check permissions
-        if current_user["role"] not in ["admin", "readonly"] and model.owner_id != current_user["user_id"]:
+        if (
+            current_user["role"] not in ["admin", "readonly"]
+            and model.owner_id != current_user["user_id"]
+        ):
             continue
-        
-        comparison_data.append({
-            "id": model.id,
-            "name": model.name,
-            "model_type": model.model_type,
-            "status": model.status,
-            "metrics": model.metrics,
-            "trained_at": model.trained_at.isoformat() if model.trained_at else None
-        })
-    
-    return {
-        "models": comparison_data,
-        "comparison_count": len(comparison_data)
-    }
+
+        comparison_data.append(
+            {
+                "id": model.id,
+                "name": model.name,
+                "model_type": model.model_type,
+                "status": model.status,
+                "metrics": model.metrics,
+                "trained_at": (
+                    model.trained_at.isoformat() if model.trained_at else None
+                ),
+            }
+        )
+
+    return {"models": comparison_data, "comparison_count": len(comparison_data)}
 
 
 # Model types and templates
 @router.get("/models/types")
-async def get_model_types(
-    current_user: dict = Depends(readonly_or_above)
-):
+async def get_model_types(current_user: dict = Depends(readonly_or_above)):
     """Get available model types and their descriptions."""
     return {
         "model_types": [
@@ -422,40 +438,37 @@ async def get_model_types(
                 "type": "tft",
                 "name": "Temporal Fusion Transformer",
                 "description": "Advanced transformer model for time series forecasting with attention mechanisms",
-                "suitable_for": ["time_series", "forecasting", "multivariate"]
+                "suitable_for": ["time_series", "forecasting", "multivariate"],
             },
             {
                 "type": "lstm",
                 "name": "Long Short-Term Memory",
                 "description": "Recurrent neural network for sequence modeling and time series prediction",
-                "suitable_for": ["time_series", "sequence_modeling", "forecasting"]
+                "suitable_for": ["time_series", "sequence_modeling", "forecasting"],
             },
             {
                 "type": "arima",
                 "name": "AutoRegressive Integrated Moving Average",
                 "description": "Statistical model for time series analysis and forecasting",
-                "suitable_for": ["time_series", "univariate", "statistical_analysis"]
+                "suitable_for": ["time_series", "univariate", "statistical_analysis"],
             },
             {
                 "type": "linear",
                 "name": "Linear Regression",
                 "description": "Simple linear model for regression tasks",
-                "suitable_for": ["regression", "baseline", "interpretable"]
+                "suitable_for": ["regression", "baseline", "interpretable"],
             },
             {
                 "type": "random_forest",
                 "name": "Random Forest",
                 "description": "Ensemble method using multiple decision trees",
-                "suitable_for": ["regression", "classification", "feature_importance"]
+                "suitable_for": ["regression", "classification", "feature_importance"],
             },
             {
                 "type": "xgboost",
                 "name": "XGBoost",
                 "description": "Gradient boosting framework for structured data",
-                "suitable_for": ["regression", "classification", "high_performance"]
-            }
+                "suitable_for": ["regression", "classification", "high_performance"],
+            },
         ]
     }
-
-
-

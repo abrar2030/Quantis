@@ -3,12 +3,14 @@
 Enhanced Pydantic schemas for Quantis API with comprehensive validation
 """
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any, Union
 from enum import Enum
-from pydantic import BaseModel, Field, validator, EmailStr, UUID4
-from pydantic.types import constr, confloat, conint
+from typing import Any, Dict, List, Optional, Union
 
-from .models_enhanced import UserRole, ModelStatus, ModelType, DatasetStatus, NotificationType
+from pydantic import UUID4, BaseModel, EmailStr, Field, validator
+from pydantic.types import confloat, conint, constr
+
+from .models_enhanced import (DatasetStatus, ModelStatus, ModelType,
+                              NotificationType, UserRole)
 
 
 # Base schemas

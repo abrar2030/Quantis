@@ -4,11 +4,13 @@ Enhanced prediction endpoints with database integration
 import time
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+import database
+import get_db
+import import
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-import database import get_db
 importmiddleware.auth import (
     prediction_rate_limit, readonly_or_above, user_or_admin_required,
     validate_api_key, admin_required

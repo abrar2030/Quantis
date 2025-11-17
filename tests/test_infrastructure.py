@@ -2,8 +2,8 @@ from unittest.mock import Mock, patch
 
 # import boto3 # F401: Unused import
 import pytest
-
 from models.aws_deploy import deploy_to_aws
+
 from monitoring.metrics_collector import MetricsCollector
 
 

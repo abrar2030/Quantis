@@ -1,21 +1,21 @@
 """
 Enhanced database models for Quantis API with comprehensive features
 """
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
 import hashlib
 import secrets
 import uuid
+from datetime import datetime, timedelta
 from enum import Enum as PyEnum
-from sqlalchemy import (
-    Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text, JSON,
-    Enum, Index, UniqueConstraint, CheckConstraint, event, Table
-)
+from typing import Any, Dict, List, Optional
+
+from passlib.context import CryptContext
+from sqlalchemy import (JSON, Boolean, CheckConstraint, Column, DateTime, Enum,
+                        Float, ForeignKey, Index, Integer, String, Table, Text,
+                        UniqueConstraint, event)
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import UUID
-from passlib.context import CryptContext
 
 Base = declarative_base()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

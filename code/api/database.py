@@ -1,31 +1,38 @@
 """
 Enhanced database configuration and management for Quantis API
 """
+
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
-from sqlalchemy import create_engine, event, pool
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import QueuePool
-from sqlalchemy.engine import Engine
+
 import redis.asyncio as redis
-from redis.asyncio import Redis
 from cryptography.fernet import Fernet
+from redis.asyncio import Redis
+from sqlalchemy import create_engine, event, pool
+from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import QueuePool
 
 from .config import get_settings
-from .models_enhanced import Base, EncryptionKey, DataRetentionPolicy, ConsentRecord, DataMaskingConfig # Import new models
+from .models_enhanced import (Base, ConsentRecord,  # Import new models
+                              DataMaskingConfig, DataRetentionPolicy,
+                              EncryptionKey)
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # Determine database URL based on settings
-database_url = settings.database.get_database_url("postgresql") # Default to postgresql, can be configured
+database_url = settings.database.get_database_url(
+    "postgresql"
+)  # Default to postgresql, can be configured
 
 # Synchronous database engine
 engine = create_engine(
     database_url,
-    echo=settings.logging.log_level == "DEBUG", # Use logging setting for echo
+    echo=settings.logging.log_level == "DEBUG",  # Use logging setting for echo
     poolclass=QueuePool,
     pool_size=settings.database.pool_size,
     max_overflow=settings.database.max_overflow,
@@ -119,17 +126,17 @@ async def close_redis():
 
 class DatabaseManager:
     """Database management utilities"""
-    
+
     @staticmethod
     def create_tables():
         """Create all database tables"""
         Base.metadata.create_all(bind=engine)
-    
+
     @staticmethod
     def drop_tables():
         """Drop all database tables"""
         Base.metadata.drop_all(bind=engine)
-    
+
     @staticmethod
     def get_table_info():
         """Get information about database tables"""
@@ -139,10 +146,10 @@ class DatabaseManager:
             columns = inspector.get_columns(table_name)
             tables[table_name] = {
                 "columns": [col["name"] for col in columns],
-                "column_info": columns
+                "column_info": columns,
             }
         return tables
-    
+
     @staticmethod
     def check_connection():
         """Check database connection health"""
@@ -153,7 +160,7 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Database connection check failed: {e}")
             return False
-    
+
     @staticmethod
     def get_connection_info():
         """Get database connection information"""
@@ -169,10 +176,10 @@ class DatabaseManager:
 
 class CacheManager:
     """Redis cache management utilities"""
-    
+
     def __init__(self, redis_client: Redis):
         self.redis = redis_client
-    
+
     async def get(self, key: str) -> Optional[str]:
         """Get value from cache"""
         try:
@@ -180,7 +187,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache get error for key {key}: {e}")
             return None
-    
+
     async def set(self, key: str, value: str, expire: Optional[int] = None) -> bool:
         """Set value in cache"""
         try:
@@ -188,7 +195,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache set error for key {key}: {e}")
             return False
-    
+
     async def delete(self, key: str) -> bool:
         """Delete key from cache"""
         try:
@@ -196,7 +203,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache delete error for key {key}: {e}")
             return False
-    
+
     async def exists(self, key: str) -> bool:
         """Check if key exists in cache"""
         try:
@@ -204,7 +211,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache exists error for key {key}: {e}")
             return False
-    
+
     async def increment(self, key: str, amount: int = 1) -> Optional[int]:
         """Increment counter in cache"""
         try:
@@ -212,7 +219,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache increment error for key {key}: {e}")
             return None
-    
+
     async def expire(self, key: str, seconds: int) -> bool:
         """Set expiration for key"""
         try:
@@ -220,7 +227,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache expire error for key {key}: {e}")
             return False
-    
+
     async def get_keys(self, pattern: str) -> list:
         """Get keys matching pattern"""
         try:
@@ -228,7 +235,7 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Cache keys error for pattern {pattern}: {e}")
             return []
-    
+
     async def flush_db(self) -> bool:
         """Flush all keys from current database"""
         try:
@@ -240,13 +247,13 @@ class CacheManager:
 
 class TransactionManager:
     """Database transaction management"""
-    
+
     def __init__(self, db: Session):
         self.db = db
-    
+
     def __enter__(self):
         return self.db
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is not None:
             self.db.rollback()
@@ -272,7 +279,7 @@ def create_database_url(
     password: str = "password",
     host: str = "localhost",
     port: int = 5432,
-    database: str = "quantis"
+    database: str = "quantis",
 ) -> str:
     """Create database URL from components"""
     return f"{driver}://{username}:{password}@{host}:{port}/{database}"
@@ -293,12 +300,8 @@ def migrate_database():
 
 def health_check() -> dict:
     """Perform comprehensive health check"""
-    health_status = {
-        "database": False,
-        "redis": False,
-        "timestamp": None
-    }
-    
+    health_status = {"database": False, "redis": False, "timestamp": None}
+
     # Check database
     try:
         with engine.connect() as conn:
@@ -306,22 +309,24 @@ def health_check() -> dict:
         health_status["database"] = True
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
-    
+
     # Check Redis
     try:
         import asyncio
+
         async def check_redis():
             redis_client = await get_redis()
             await redis_client.ping()
             return True
-        
+
         health_status["redis"] = asyncio.run(check_redis())
     except Exception as e:
         logger.error(f"Redis health check failed: {e}")
-    
+
     from datetime import datetime
+
     health_status["timestamp"] = datetime.utcnow().isoformat()
-    
+
     return health_status
 
 
@@ -334,7 +339,11 @@ class EncryptionManager:
     def _get_fernet(self, key_name: str) -> Fernet:
         """Retrieves or generates a Fernet key."""
         if key_name not in _encryption_keys:
-            key_record = self.db.query(EncryptionKey).filter_by(key_name=key_name, is_active=True).first()
+            key_record = (
+                self.db.query(EncryptionKey)
+                .filter_by(key_name=key_name, is_active=True)
+                .first()
+            )
             if not key_record:
                 # In a real KMS integration, this would fetch from KMS
                 # For now, generate a new key and store it
@@ -344,7 +353,8 @@ class EncryptionManager:
                     key_value=new_key_value,
                     key_type="Fernet",
                     is_active=True,
-                    expires_at=datetime.utcnow() + timedelta(days=settings.encryption.key_rotation_interval_days)
+                    expires_at=datetime.utcnow()
+                    + timedelta(days=settings.encryption.key_rotation_interval_days),
                 )
                 self.db.add(key_record)
                 self.db.commit()
@@ -352,10 +362,12 @@ class EncryptionManager:
             _encryption_keys[key_name] = Fernet(key_record.key_value.encode())
         return _encryption_keys[key_name]
 
-    def encrypt(self, data: str, key_name: str = settings.encryption.data_encryption_key_name) -> str:
+    def encrypt(
+        self, data: str, key_name: str = settings.encryption.data_encryption_key_name
+    ) -> str:
         """Encrypts data using the specified key."""
         if not settings.compliance.enable_data_encryption:
-            return data # Return original data if encryption is disabled
+            return data  # Return original data if encryption is disabled
         try:
             f = self._get_fernet(key_name)
             encrypted_data = f.encrypt(data.encode()).decode()
@@ -365,10 +377,14 @@ class EncryptionManager:
             logger.error(f"Encryption failed for key {key_name}: {e}")
             raise
 
-    def decrypt(self, encrypted_data: str, key_name: str = settings.encryption.data_encryption_key_name) -> str:
+    def decrypt(
+        self,
+        encrypted_data: str,
+        key_name: str = settings.encryption.data_encryption_key_name,
+    ) -> str:
         """Decrypts data using the specified key."""
         if not settings.compliance.enable_data_encryption:
-            return encrypted_data # Return original data if encryption is disabled
+            return encrypted_data  # Return original data if encryption is disabled
         try:
             f = self._get_fernet(key_name)
             decrypted_data = f.decrypt(encrypted_data.encode()).decode()
@@ -388,12 +404,20 @@ class DataRetentionManager:
     def apply_retention_policy(self, data_type: str, query):
         """Applies retention policy to a given query."""
         if not settings.compliance.enable_data_retention_policies:
-            return query # Return original query if policies are disabled
+            return query  # Return original query if policies are disabled
 
-        policy = self.db.query(DataRetentionPolicy).filter_by(data_type=data_type, is_active=True).first()
+        policy = (
+            self.db.query(DataRetentionPolicy)
+            .filter_by(data_type=data_type, is_active=True)
+            .first()
+        )
         if policy and policy.retention_period_days > 0:
-            retention_date = datetime.utcnow() - timedelta(days=policy.retention_period_days)
-            return query.filter(DataRetentionPolicy.created_at < retention_date) # Assuming created_at for retention
+            retention_date = datetime.utcnow() - timedelta(
+                days=policy.retention_period_days
+            )
+            return query.filter(
+                DataRetentionPolicy.created_at < retention_date
+            )  # Assuming created_at for retention
         return query
 
     def delete_expired_data(self):
@@ -403,10 +427,20 @@ class DataRetentionManager:
             return
 
         # Example for AuditLog. Extend for other data types.
-        audit_log_policy = self.db.query(DataRetentionPolicy).filter_by(data_type="audit_logs", is_active=True).first()
+        audit_log_policy = (
+            self.db.query(DataRetentionPolicy)
+            .filter_by(data_type="audit_logs", is_active=True)
+            .first()
+        )
         if audit_log_policy and audit_log_policy.retention_period_days > 0:
-            retention_date = datetime.utcnow() - timedelta(days=audit_log_policy.retention_period_days)
-            deleted_count = self.db.query(AuditLog).filter(AuditLog.timestamp < retention_date).delete()
+            retention_date = datetime.utcnow() - timedelta(
+                days=audit_log_policy.retention_period_days
+            )
+            deleted_count = (
+                self.db.query(AuditLog)
+                .filter(AuditLog.timestamp < retention_date)
+                .delete()
+            )
             self.db.commit()
             logger.info(f"Deleted {deleted_count} expired audit logs.")
 
@@ -417,7 +451,9 @@ class ConsentManager:
     def __init__(self, db: Session):
         self.db = db
 
-    def record_consent(self, user_id: int, consent_type: str, details: Dict[str, Any] = None) -> ConsentRecord:
+    def record_consent(
+        self, user_id: int, consent_type: str, details: Dict[str, Any] = None
+    ) -> ConsentRecord:
         """Records a new consent for a user."""
         if not settings.compliance.enable_consent_management:
             logger.warning("Consent management is disabled. Consent not recorded.")
@@ -427,7 +463,7 @@ class ConsentManager:
             user_id=user_id,
             consent_type=consent_type,
             details=details or {},
-            is_active=True
+            is_active=True,
         )
         self.db.add(consent)
         self.db.commit()
@@ -441,7 +477,11 @@ class ConsentManager:
             logger.warning("Consent management is disabled. Consent not revoked.")
             return
 
-        consent = self.db.query(ConsentRecord).filter_by(user_id=user_id, consent_type=consent_type, is_active=True).first()
+        consent = (
+            self.db.query(ConsentRecord)
+            .filter_by(user_id=user_id, consent_type=consent_type, is_active=True)
+            .first()
+        )
         if consent:
             consent.is_active = False
             self.db.commit()
@@ -449,7 +489,11 @@ class ConsentManager:
 
     def get_user_consents(self, user_id: int) -> List[ConsentRecord]:
         """Retrieves all active consents for a user."""
-        return self.db.query(ConsentRecord).filter_by(user_id=user_id, is_active=True).all()
+        return (
+            self.db.query(ConsentRecord)
+            .filter_by(user_id=user_id, is_active=True)
+            .all()
+        )
 
 
 class DataMaskingManager:
@@ -467,11 +511,11 @@ class DataMaskingManager:
     def mask_data(self, field_name: str, data: str) -> str:
         """Applies masking to a given data field based on configuration."""
         if not settings.compliance.enable_data_masking:
-            return data # Return original data if masking is disabled
+            return data  # Return original data if masking is disabled
 
         config = self.masking_configs.get(field_name)
         if not config:
-            return data # No masking config found for this field
+            return data  # No masking config found for this field
 
         method = config.masking_method
         if method == "hash":
@@ -495,7 +539,9 @@ class DataMaskingManager:
         masked_obj = obj.copy()
         for field_name, config in self.masking_configs.items():
             if field_name in masked_obj:
-                masked_obj[field_name] = self.mask_data(field_name, str(masked_obj[field_name]))
+                masked_obj[field_name] = self.mask_data(
+                    field_name, str(masked_obj[field_name])
+                )
         return masked_obj
 
 
@@ -503,16 +549,17 @@ class DataMaskingManager:
 def get_encryption_manager(db: Session = Depends(get_db)) -> EncryptionManager:
     return EncryptionManager(db)
 
+
 # Dependency for DataRetentionManager
 def get_data_retention_manager(db: Session = Depends(get_db)) -> DataRetentionManager:
     return DataRetentionManager(db)
+
 
 # Dependency for ConsentManager
 def get_consent_manager(db: Session = Depends(get_db)) -> ConsentManager:
     return ConsentManager(db)
 
+
 # Dependency for DataMaskingManager
 def get_data_masking_manager(db: Session = Depends(get_db)) -> DataMaskingManager:
     return DataMaskingManager(db)
-
-

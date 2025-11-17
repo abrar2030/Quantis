@@ -3,13 +3,13 @@ Security Scanning Middleware and CI/CD Integration
 Implements SAST, DAST, and dependency scanning integration
 """
 
-import subprocess
 import json
-import os
 import logging
-from typing import Dict, List, Any, Optional
+import os
+import subprocess
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

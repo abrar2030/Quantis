@@ -2,18 +2,26 @@
 Monitoring and system health endpoints
 """
 import os
-import psutil
 from datetime import datetime, timedelta
 from typing import List, Optional
 
+import database
+import get_db
+import import
+import psutil
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
-import database import get_db
 importmiddleware.auth import admin_required, readonly_or_above, validate_api_key
-import models Prediction, Model, Dataset, User, AuditLog, SystemMetrics
+import AuditLog
+import Dataset
+import Model
+import models
+import Prediction
+import SystemMetrics
+import User
 
 router = APIRouter()
 

@@ -1,21 +1,22 @@
 """
 Enhanced model service for machine learning model management
 """
-import os
 import json
-import joblib
+import os
 import pickle
-from datetime import datetime
-from typing import List, Optional, Dict, Any
-from sqlalchemy.orm import Session
-from sqlalchemy import and_
-import pandas as pd
-import numpy as np
 import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import joblib
+import numpy as np
+import pandas as pd
+from sqlalchemy import and_
+from sqlalchemy.orm import Session
 
 from .. import models_enhanced as models
-from ..database_enhanced import EncryptionManager, DataRetentionManager
 from ..config import get_settings
+from ..database_enhanced import DataRetentionManager, EncryptionManager
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

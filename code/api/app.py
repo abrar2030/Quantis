@@ -1,32 +1,39 @@
 """
 Enhanced FastAPI application with comprehensive backend features
 """
+import json  # Kept for WebSocket message parsing
 import time
 from contextlib import asynccontextmanager
-from typing import Dict, Any
-from fastapi import FastAPI, Depends, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
+from typing import Any, Dict
+
+import structlog
+from fastapi import (Depends, FastAPI, HTTPException, Request, Response,
+                     WebSocket, WebSocketDisconnect)
+from fastapi.exception_handlers import (http_exception_handler,
+                                        request_validation_exception_handler)
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse
+from prometheus_client import (CONTENT_TYPE_LATEST, Counter, Histogram,
+                               generate_latest)
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-import structlog
-import json # Kept for WebSocket message parsing
 
-from .config import get_settings, Settings # Import Settings class
-from .database_enhanced import init_db, get_db, health_check, close_redis, AuditLog, get_encryption_manager, get_data_retention_manager, get_consent_manager, get_data_masking_manager # Import new managers and AuditLog
-from .auth_enhanced import get_current_user, AuditLogger, rate_limit
+from .auth_enhanced import AuditLogger, get_current_user, rate_limit
+from .config import Settings, get_settings  # Import Settings class
+from .database_enhanced import (AuditLog,  # Import new managers and AuditLog
+                                close_redis, get_consent_manager,
+                                get_data_masking_manager,
+                                get_data_retention_manager, get_db,
+                                get_encryption_manager, health_check, init_db)
+from .endpoints import (auth_enhanced, datasets_enhanced, financial,
+                        models_enhanced, monitoring_enhanced,
+                        notifications_enhanced, predictions_enhanced,
+                        users_enhanced, websocket_enhanced)
 from .models_enhanced import User
 from .schemas_enhanced import ErrorResponse, HealthCheck, SystemMetricsResponse
-from .endpoints import (
-    auth_enhanced, users_enhanced, datasets_enhanced, 
-    models_enhanced, predictions_enhanced, notifications_enhanced,
-    monitoring_enhanced, websocket_enhanced, financial
-)
 
 # Configure structured logging
 structlog.configure(

@@ -1,7 +1,6 @@
 # import numpy as np # F401: Unused import
 import pytest
 import torch
-
 from models.mlflow_tracking import log_metrics
 from models.train_model import TemporalFusionTransformer, train_model
 

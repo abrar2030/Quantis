@@ -1,17 +1,24 @@
 """
 Enhanced user management endpoints for Quantis API
 """
+
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 
-from ..config import get_settings, Settings
-from ..database_enhanced import get_db, AuditLog, get_data_masking_manager, DataMaskingManager
-from ..auth_enhanced import get_current_user, security_manager, AuditLogger, has_permission, get_current_active_user
-from ..models_enhanced import User, Role, Permission
-from ..schemas_enhanced import UserResponse, UserCreate, UserUpdate, RoleCreate, RoleResponse, PermissionCreate, PermissionResponse
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from ..auth_enhanced import (AuditLogger, get_current_active_user,
+                             get_current_user, has_permission,
+                             security_manager)
+from ..config import Settings, get_settings
+from ..database_enhanced import (AuditLog, DataMaskingManager,
+                                 get_data_masking_manager, get_db)
+from ..models_enhanced import Permission, Role, User
+from ..schemas_enhanced import (PermissionCreate, PermissionResponse,
+                                RoleCreate, RoleResponse, UserCreate,
+                                UserResponse, UserUpdate)
 
 logger = logging.getLogger(__name__)
 settings: Settings = get_settings()
@@ -26,11 +33,11 @@ async def get_all_users(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    data_masking_manager: DataMaskingManager = Depends(get_data_masking_manager)
+    data_masking_manager: DataMaskingManager = Depends(get_data_masking_manager),
 ):
     """Retrieve all users (admin/privileged access only)"""
     users = db.query(User).filter(User.is_deleted == False).all()
-    
+
     # Apply data masking if enabled
     masked_users = []
     for user in users:
@@ -43,7 +50,7 @@ async def get_all_users(
         action="read_all_users",
         resource_type="user",
         resource_name="all_users",
-        request=request
+        request=request,
     )
     return masked_users
 
@@ -55,16 +62,23 @@ async def get_user_by_id(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    data_masking_manager: DataMaskingManager = Depends(get_data_masking_manager)
+    data_masking_manager: DataMaskingManager = Depends(get_data_masking_manager),
 ):
     """Retrieve a user by ID (admin/privileged access or self)"""
     user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     # Ensure user can only access their own data unless they have admin/read_users permission
-    if not (current_user.id == user_id or has_permission("read_all_users")(current_user)):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this user's data")
+    if not (
+        current_user.id == user_id or has_permission("read_all_users")(current_user)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this user's data",
+        )
 
     user_dict = UserResponse.from_orm(user).dict()
     masked_user = data_masking_manager.mask_object(user_dict)
@@ -76,7 +90,7 @@ async def get_user_by_id(
         resource_type="user",
         resource_id=str(user_id),
         resource_name=user.username,
-        request=request
+        request=request,
     )
     return masked_user
 
@@ -88,21 +102,28 @@ async def update_user(
     user_update: UserUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Update a user's information (admin/privileged access or self)"""
     user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     # Ensure user can only update their own data unless they have admin/update_users permission
-    if not (current_user.id == user_id or has_permission("update_all_users")(current_user)):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this user's data")
+    if not (
+        current_user.id == user_id or has_permission("update_all_users")(current_user)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this user's data",
+        )
 
     update_data = user_update.dict(exclude_unset=True)
     for key, value in update_data.items():
         setattr(user, key, value)
-    
+
     db.commit()
     db.refresh(user)
 
@@ -113,7 +134,7 @@ async def update_user(
         resource_type="user",
         resource_id=str(user_id),
         resource_name=user.username,
-        request=request
+        request=request,
     )
     return UserResponse.from_orm(user)
 
@@ -124,16 +145,21 @@ async def delete_user(
     user_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Soft delete a user (admin/privileged access only)"""
     user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     # Prevent self-deletion for admin users
     if current_user.id == user_id and has_permission("admin")(current_user):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin users cannot delete their own account.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin users cannot delete their own account.",
+        )
 
     user.is_deleted = True
     user.deleted_at = datetime.utcnow()
@@ -147,7 +173,7 @@ async def delete_user(
         resource_type="user",
         resource_id=str(user_id),
         resource_name=user.username,
-        request=request
+        request=request,
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -159,24 +185,36 @@ async def create_role(
     role_data: RoleCreate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Create a new role"""
     try:
         # Check if role name already exists
-        existing_role = db.query(Role).filter(Role.role_name == role_data.role_name).first()
+        existing_role = (
+            db.query(Role).filter(Role.role_name == role_data.role_name).first()
+        )
         if existing_role:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role name already exists.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Role name already exists.",
+            )
 
         # Validate permissions
-        permissions = db.query(Permission).filter(Permission.id.in_(role_data.permission_ids)).all()
+        permissions = (
+            db.query(Permission)
+            .filter(Permission.id.in_(role_data.permission_ids))
+            .all()
+        )
         if len(permissions) != len(role_data.permission_ids):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more permission IDs are invalid.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="One or more permission IDs are invalid.",
+            )
 
         new_role = Role(
             role_name=role_data.role_name,
             description=role_data.description,
-            permissions=permissions
+            permissions=permissions,
         )
         db.add(new_role)
         db.commit()
@@ -189,17 +227,23 @@ async def create_role(
             resource_type="role",
             resource_id=str(new_role.id),
             resource_name=new_role.role_name,
-            request=request
+            request=request,
         )
         return RoleResponse.from_orm(new_role)
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role with this name already exists.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Role with this name already exists.",
+        )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error creating role: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create role.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create role.",
+        )
 
 
 @router.get("/roles", response_model=List[RoleResponse])
@@ -207,7 +251,7 @@ async def create_role(
 async def get_all_roles(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Retrieve all roles"""
     roles = db.query(Role).all()
@@ -217,7 +261,7 @@ async def get_all_roles(
         action="read_all_roles",
         resource_type="role",
         resource_name="all_roles",
-        request=request
+        request=request,
     )
     return [RoleResponse.from_orm(role) for role in roles]
 
@@ -229,18 +273,27 @@ async def update_role(
     role_update: RoleCreate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Update an existing role"""
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found."
+        )
 
     update_data = role_update.dict(exclude_unset=True)
     if "permission_ids" in update_data:
-        permissions = db.query(Permission).filter(Permission.id.in_(update_data["permission_ids"])).all()
+        permissions = (
+            db.query(Permission)
+            .filter(Permission.id.in_(update_data["permission_ids"]))
+            .all()
+        )
         if len(permissions) != len(update_data["permission_ids"]):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more permission IDs are invalid.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="One or more permission IDs are invalid.",
+            )
         role.permissions = permissions
         del update_data["permission_ids"]
 
@@ -257,7 +310,7 @@ async def update_role(
         resource_type="role",
         resource_id=str(role_id),
         resource_name=role.role_name,
-        request=request
+        request=request,
     )
     return RoleResponse.from_orm(role)
 
@@ -268,16 +321,21 @@ async def delete_role(
     role_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Delete a role"""
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found."
+        )
 
     # Prevent deletion of roles that have associated users
     if db.query(User).filter(User.role_id == role_id).first():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete role: users are assigned to this role.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete role: users are assigned to this role.",
+        )
 
     db.delete(role)
     db.commit()
@@ -289,25 +347,29 @@ async def delete_role(
         resource_type="role",
         resource_id=str(role_id),
         resource_name=role.role_name,
-        request=request
+        request=request,
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # Permission Endpoints
-@router.post("/permissions", response_model=PermissionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/permissions",
+    response_model=PermissionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @has_permission("create_permission")
 async def create_permission(
     permission_data: PermissionCreate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Create a new permission"""
     try:
         new_permission = Permission(
             permission_name=permission_data.permission_name,
-            description=permission_data.description
+            description=permission_data.description,
         )
         db.add(new_permission)
         db.commit()
@@ -320,15 +382,21 @@ async def create_permission(
             resource_type="permission",
             resource_id=str(new_permission.id),
             resource_name=new_permission.permission_name,
-            request=request
+            request=request,
         )
         return PermissionResponse.from_orm(new_permission)
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Permission with this name already exists.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Permission with this name already exists.",
+        )
     except Exception as e:
         logger.error(f"Error creating permission: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create permission.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create permission.",
+        )
 
 
 @router.get("/permissions", response_model=List[PermissionResponse])
@@ -336,7 +404,7 @@ async def create_permission(
 async def get_all_permissions(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Retrieve all permissions"""
     permissions = db.query(Permission).all()
@@ -346,7 +414,7 @@ async def get_all_permissions(
         action="read_all_permissions",
         resource_type="permission",
         resource_name="all_permissions",
-        request=request
+        request=request,
     )
     return [PermissionResponse.from_orm(permission) for permission in permissions]
 
@@ -357,16 +425,21 @@ async def delete_permission(
     permission_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Delete a permission"""
     permission = db.query(Permission).filter(Permission.id == permission_id).first()
     if not permission:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Permission not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Permission not found."
+        )
 
     # Prevent deletion of permissions that are assigned to roles
     if permission.roles:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete permission: it is assigned to one or more roles.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete permission: it is assigned to one or more roles.",
+        )
 
     db.delete(permission)
     db.commit()
@@ -378,8 +451,6 @@ async def delete_permission(
         resource_type="permission",
         resource_id=str(permission_id),
         resource_name=permission.permission_name,
-        request=request
+        request=request,
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
