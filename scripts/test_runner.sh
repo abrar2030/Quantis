@@ -67,33 +67,33 @@ command_exists() {
 # Function to check required dependencies
 check_dependencies() {
     echo -e "${BLUE}Checking testing dependencies...${NC}"
-    
+
     # Check Python dependencies
     if [ "$COMPONENT" = "api" ] || [ "$COMPONENT" = "models" ] || [ "$COMPONENT" = "all" ]; then
         if ! command_exists python3; then
             echo -e "${RED}Error: Python 3 is required but not installed.${NC}"
             exit 1
         fi
-        
+
         if ! python3 -c "import pytest" &>/dev/null; then
             echo -e "${YELLOW}Warning: pytest is not installed. Installing...${NC}"
             pip install pytest pytest-cov pytest-html
         fi
     fi
-    
+
     # Check Node.js dependencies
     if [ "$COMPONENT" = "web" ] || [ "$COMPONENT" = "mobile" ] || [ "$COMPONENT" = "all" ]; then
         if ! command_exists node; then
             echo -e "${RED}Error: Node.js is required but not installed.${NC}"
             exit 1
         fi
-        
+
         if ! command_exists npm; then
             echo -e "${RED}Error: npm is required but not installed.${NC}"
             exit 1
         fi
     fi
-    
+
     echo -e "${GREEN}All required testing dependencies are installed.${NC}"
 }
 
@@ -110,36 +110,36 @@ prepare_report_dir() {
 run_python_unit_tests() {
     local component=$1
     echo -e "${BLUE}Running $component unit tests...${NC}"
-    
+
     if [ ! -d "$PROJECT_ROOT/$component" ]; then
         echo -e "${YELLOW}Warning: $component directory not found. Skipping unit tests.${NC}"
         return
     fi
-    
+
     cd "$PROJECT_ROOT/$component"
-    
+
     # Create virtual environment if it doesn't exist
     if [ ! -d "venv" ]; then
         echo "Creating virtual environment..."
         python3 -m venv venv
     fi
-    
+
     # Activate virtual environment
     source venv/bin/activate
-    
+
     # Install test dependencies
     pip install pytest pytest-cov pytest-html
-    
+
     # Install project dependencies
     if [ -f "requirements.txt" ]; then
         pip install -r requirements.txt
     fi
-    
+
     # Install development dependencies
     if [ -f "requirements-dev.txt" ]; then
         pip install -r requirements-dev.txt
     fi
-    
+
     # Run unit tests
     if $GENERATE_REPORT; then
         mkdir -p "$REPORT_DIR/$component/unit"
@@ -147,10 +147,10 @@ run_python_unit_tests() {
     else
         pytest tests/unit -v || true
     fi
-    
+
     # Deactivate virtual environment
     deactivate
-    
+
     echo -e "${GREEN}$component unit tests completed.${NC}"
 }
 
@@ -158,36 +158,36 @@ run_python_unit_tests() {
 run_python_integration_tests() {
     local component=$1
     echo -e "${BLUE}Running $component integration tests...${NC}"
-    
+
     if [ ! -d "$PROJECT_ROOT/$component" ]; then
         echo -e "${YELLOW}Warning: $component directory not found. Skipping integration tests.${NC}"
         return
     fi
-    
+
     cd "$PROJECT_ROOT/$component"
-    
+
     # Create virtual environment if it doesn't exist
     if [ ! -d "venv" ]; then
         echo "Creating virtual environment..."
         python3 -m venv venv
     fi
-    
+
     # Activate virtual environment
     source venv/bin/activate
-    
+
     # Install test dependencies
     pip install pytest pytest-cov pytest-html
-    
+
     # Install project dependencies
     if [ -f "requirements.txt" ]; then
         pip install -r requirements.txt
     fi
-    
+
     # Install development dependencies
     if [ -f "requirements-dev.txt" ]; then
         pip install -r requirements-dev.txt
     fi
-    
+
     # Run integration tests
     if $GENERATE_REPORT; then
         mkdir -p "$REPORT_DIR/$component/integration"
@@ -195,10 +195,10 @@ run_python_integration_tests() {
     else
         pytest tests/integration -v || true
     fi
-    
+
     # Deactivate virtual environment
     deactivate
-    
+
     echo -e "${GREEN}$component integration tests completed.${NC}"
 }
 
@@ -206,22 +206,22 @@ run_python_integration_tests() {
 run_js_unit_tests() {
     local component=$1
     echo -e "${BLUE}Running $component unit tests...${NC}"
-    
+
     if [ ! -d "$PROJECT_ROOT/$component" ]; then
         echo -e "${YELLOW}Warning: $component directory not found. Skipping unit tests.${NC}"
         return
     fi
-    
+
     cd "$PROJECT_ROOT/$component"
-    
+
     # Install dependencies
     npm install
-    
+
     # Run unit tests
     if $GENERATE_REPORT; then
         mkdir -p "$REPORT_DIR/$component/unit"
         npm test -- --coverage --coverageDirectory=$REPORT_DIR/$component/unit/coverage --reporters=default --reporters=jest-html-reporter --testResultsProcessor=jest-html-reporter || true
-        
+
         # Move HTML report to report directory
         if [ -f "test-report.html" ]; then
             mv test-report.html $REPORT_DIR/$component/unit/report.html
@@ -229,7 +229,7 @@ run_js_unit_tests() {
     else
         npm test || true
     fi
-    
+
     echo -e "${GREEN}$component unit tests completed.${NC}"
 }
 
@@ -237,22 +237,22 @@ run_js_unit_tests() {
 run_js_integration_tests() {
     local component=$1
     echo -e "${BLUE}Running $component integration tests...${NC}"
-    
+
     if [ ! -d "$PROJECT_ROOT/$component" ]; then
         echo -e "${YELLOW}Warning: $component directory not found. Skipping integration tests.${NC}"
         return
     fi
-    
+
     cd "$PROJECT_ROOT/$component"
-    
+
     # Install dependencies
     npm install
-    
+
     # Run integration tests
     if $GENERATE_REPORT; then
         mkdir -p "$REPORT_DIR/$component/integration"
         npm run test:integration -- --coverage --coverageDirectory=$REPORT_DIR/$component/integration/coverage --reporters=default --reporters=jest-html-reporter --testResultsProcessor=jest-html-reporter || true
-        
+
         # Move HTML report to report directory
         if [ -f "test-report.html" ]; then
             mv test-report.html $REPORT_DIR/$component/integration/report.html
@@ -260,37 +260,37 @@ run_js_integration_tests() {
     else
         npm run test:integration || true
     fi
-    
+
     echo -e "${GREEN}$component integration tests completed.${NC}"
 }
 
 # Function to run end-to-end tests
 run_e2e_tests() {
     echo -e "${BLUE}Running end-to-end tests...${NC}"
-    
+
     if [ ! -d "$PROJECT_ROOT/tests/e2e" ]; then
         echo -e "${YELLOW}Warning: End-to-end test directory not found. Skipping E2E tests.${NC}"
         return
     fi
-    
+
     cd "$PROJECT_ROOT/tests/e2e"
-    
+
     # Check if using Cypress or Playwright
     if [ -f "package.json" ]; then
         # Install dependencies
         npm install
-        
+
         # Run E2E tests
         if $GENERATE_REPORT; then
             mkdir -p "$REPORT_DIR/e2e"
-            
+
             # Check if using Cypress
             if grep -q "cypress" package.json; then
                 npm run cypress:run -- --reporter mochawesome --reporter-options reportDir=$REPORT_DIR/e2e,reportFilename=report || true
             # Check if using Playwright
             elif grep -q "playwright" package.json; then
                 npx playwright test --reporter=html || true
-                
+
                 # Move Playwright report to report directory
                 if [ -d "playwright-report" ]; then
                     cp -r playwright-report/* $REPORT_DIR/e2e/
@@ -307,13 +307,13 @@ run_e2e_tests() {
             echo "Creating virtual environment..."
             python3 -m venv venv
         fi
-        
+
         # Activate virtual environment
         source venv/bin/activate
-        
+
         # Install dependencies
         pip install -r requirements.txt
-        
+
         # Run E2E tests
         if $GENERATE_REPORT; then
             mkdir -p "$REPORT_DIR/e2e"
@@ -321,27 +321,27 @@ run_e2e_tests() {
         else
             pytest -v || true
         fi
-        
+
         # Deactivate virtual environment
         deactivate
     else
         echo -e "${YELLOW}Warning: No package.json or requirements.txt found in E2E test directory. Skipping E2E tests.${NC}"
     fi
-    
+
     echo -e "${GREEN}End-to-end tests completed.${NC}"
 }
 
 # Function to run performance tests
 run_performance_tests() {
     echo -e "${BLUE}Running performance tests...${NC}"
-    
+
     if [ ! -d "$PROJECT_ROOT/tests/performance" ]; then
         echo -e "${YELLOW}Warning: Performance test directory not found. Skipping performance tests.${NC}"
         return
     fi
-    
+
     cd "$PROJECT_ROOT/tests/performance"
-    
+
     # Check if using JMeter, Locust, or k6
     if [ -f "*.jmx" ]; then
         # JMeter tests
@@ -382,7 +382,7 @@ run_performance_tests() {
     else
         echo -e "${YELLOW}Warning: No recognized performance test files found. Skipping performance tests.${NC}"
     fi
-    
+
     echo -e "${GREEN}Performance tests completed.${NC}"
 }
 
@@ -390,7 +390,7 @@ run_performance_tests() {
 generate_report_index() {
     if $GENERATE_REPORT; then
         echo -e "${BLUE}Generating report index...${NC}"
-        
+
         # Create index.html
         cat > "$REPORT_DIR/index.html" << EOF
 <!DOCTYPE html>
@@ -435,9 +435,9 @@ generate_report_index() {
 <body>
     <h1>Quantis Test Reports</h1>
     <div class="timestamp">Generated on $(date)</div>
-    
+
 EOF
-        
+
         # Add API reports
         if [ -d "$REPORT_DIR/api" ]; then
             cat >> "$REPORT_DIR/index.html" << EOF
@@ -445,29 +445,29 @@ EOF
         <h2>API Tests</h2>
         <div class="report-links">
 EOF
-            
+
             if [ -f "$REPORT_DIR/api/unit/report.html" ]; then
                 echo '            <p><a href="api/unit/report.html">Unit Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -d "$REPORT_DIR/api/unit/coverage" ]; then
                 echo '            <p><a href="api/unit/coverage/index.html">Unit Test Coverage</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -f "$REPORT_DIR/api/integration/report.html" ]; then
                 echo '            <p><a href="api/integration/report.html">Integration Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -d "$REPORT_DIR/api/integration/coverage" ]; then
                 echo '            <p><a href="api/integration/coverage/index.html">Integration Test Coverage</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             cat >> "$REPORT_DIR/index.html" << EOF
         </div>
     </div>
 EOF
         fi
-        
+
         # Add Models reports
         if [ -d "$REPORT_DIR/models" ]; then
             cat >> "$REPORT_DIR/index.html" << EOF
@@ -475,29 +475,29 @@ EOF
         <h2>Models Tests</h2>
         <div class="report-links">
 EOF
-            
+
             if [ -f "$REPORT_DIR/models/unit/report.html" ]; then
                 echo '            <p><a href="models/unit/report.html">Unit Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -d "$REPORT_DIR/models/unit/coverage" ]; then
                 echo '            <p><a href="models/unit/coverage/index.html">Unit Test Coverage</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -f "$REPORT_DIR/models/integration/report.html" ]; then
                 echo '            <p><a href="models/integration/report.html">Integration Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -d "$REPORT_DIR/models/integration/coverage" ]; then
                 echo '            <p><a href="models/integration/coverage/index.html">Integration Test Coverage</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             cat >> "$REPORT_DIR/index.html" << EOF
         </div>
     </div>
 EOF
         fi
-        
+
         # Add Web Frontend reports
         if [ -d "$REPORT_DIR/web-frontend" ]; then
             cat >> "$REPORT_DIR/index.html" << EOF
@@ -505,29 +505,29 @@ EOF
         <h2>Web Frontend Tests</h2>
         <div class="report-links">
 EOF
-            
+
             if [ -f "$REPORT_DIR/web-frontend/unit/report.html" ]; then
                 echo '            <p><a href="web-frontend/unit/report.html">Unit Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -d "$REPORT_DIR/web-frontend/unit/coverage" ]; then
                 echo '            <p><a href="web-frontend/unit/coverage/lcov-report/index.html">Unit Test Coverage</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -f "$REPORT_DIR/web-frontend/integration/report.html" ]; then
                 echo '            <p><a href="web-frontend/integration/report.html">Integration Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -d "$REPORT_DIR/web-frontend/integration/coverage" ]; then
                 echo '            <p><a href="web-frontend/integration/coverage/lcov-report/index.html">Integration Test Coverage</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             cat >> "$REPORT_DIR/index.html" << EOF
         </div>
     </div>
 EOF
         fi
-        
+
         # Add Mobile Frontend reports
         if [ -d "$REPORT_DIR/mobile-frontend" ]; then
             cat >> "$REPORT_DIR/index.html" << EOF
@@ -535,29 +535,29 @@ EOF
         <h2>Mobile Frontend Tests</h2>
         <div class="report-links">
 EOF
-            
+
             if [ -f "$REPORT_DIR/mobile-frontend/unit/report.html" ]; then
                 echo '            <p><a href="mobile-frontend/unit/report.html">Unit Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -d "$REPORT_DIR/mobile-frontend/unit/coverage" ]; then
                 echo '            <p><a href="mobile-frontend/unit/coverage/lcov-report/index.html">Unit Test Coverage</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -f "$REPORT_DIR/mobile-frontend/integration/report.html" ]; then
                 echo '            <p><a href="mobile-frontend/integration/report.html">Integration Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -d "$REPORT_DIR/mobile-frontend/integration/coverage" ]; then
                 echo '            <p><a href="mobile-frontend/integration/coverage/lcov-report/index.html">Integration Test Coverage</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             cat >> "$REPORT_DIR/index.html" << EOF
         </div>
     </div>
 EOF
         fi
-        
+
         # Add E2E reports
         if [ -d "$REPORT_DIR/e2e" ]; then
             cat >> "$REPORT_DIR/index.html" << EOF
@@ -565,21 +565,21 @@ EOF
         <h2>End-to-End Tests</h2>
         <div class="report-links">
 EOF
-            
+
             if [ -f "$REPORT_DIR/e2e/report.html" ]; then
                 echo '            <p><a href="e2e/report.html">E2E Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -f "$REPORT_DIR/e2e/index.html" ]; then
                 echo '            <p><a href="e2e/index.html">E2E Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             cat >> "$REPORT_DIR/index.html" << EOF
         </div>
     </div>
 EOF
         fi
-        
+
         # Add Performance reports
         if [ -d "$REPORT_DIR/performance" ]; then
             cat >> "$REPORT_DIR/index.html" << EOF
@@ -587,28 +587,28 @@ EOF
         <h2>Performance Tests</h2>
         <div class="report-links">
 EOF
-            
+
             if [ -f "$REPORT_DIR/performance/report.html" ]; then
                 echo '            <p><a href="performance/report.html">Performance Test Report</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -d "$REPORT_DIR/performance/dashboard" ]; then
                 echo '            <p><a href="performance/dashboard/index.html">Performance Dashboard</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             if [ -f "$REPORT_DIR/performance/summary.json" ]; then
                 echo '            <p><a href="performance/summary.json">Performance Summary</a></p>' >> "$REPORT_DIR/index.html"
             fi
-            
+
             cat >> "$REPORT_DIR/index.html" << EOF
         </div>
     </div>
 EOF
         fi
-        
+
         # Close HTML
         echo "</body></html>" >> "$REPORT_DIR/index.html"
-        
+
         echo -e "${GREEN}Report index generated: $REPORT_DIR/index.html${NC}"
     fi
 }
@@ -661,15 +661,15 @@ if $RUN_UNIT; then
     if [ "$COMPONENT" = "api" ] || [ "$COMPONENT" = "all" ]; then
         run_python_unit_tests "api"
     fi
-    
+
     if [ "$COMPONENT" = "models" ] || [ "$COMPONENT" = "all" ]; then
         run_python_unit_tests "models"
     fi
-    
+
     if [ "$COMPONENT" = "web" ] || [ "$COMPONENT" = "all" ]; then
         run_js_unit_tests "web-frontend"
     fi
-    
+
     if [ "$COMPONENT" = "mobile" ] || [ "$COMPONENT" = "all" ]; then
         run_js_unit_tests "mobile-frontend"
     fi
@@ -679,15 +679,15 @@ if $RUN_INTEGRATION; then
     if [ "$COMPONENT" = "api" ] || [ "$COMPONENT" = "all" ]; then
         run_python_integration_tests "api"
     fi
-    
+
     if [ "$COMPONENT" = "models" ] || [ "$COMPONENT" = "all" ]; then
         run_python_integration_tests "models"
     fi
-    
+
     if [ "$COMPONENT" = "web" ] || [ "$COMPONENT" = "all" ]; then
         run_js_integration_tests "web-frontend"
     fi
-    
+
     if [ "$COMPONENT" = "mobile" ] || [ "$COMPONENT" = "all" ]; then
         run_js_integration_tests "mobile-frontend"
     fi

@@ -1,6 +1,7 @@
 import asyncio
 
 import pytest
+
 # from api.endpoints.predict import predict_endpoint # F401: Unused import
 from api.middleware.auth import validate_api_key
 from fastapi import HTTPException

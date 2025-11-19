@@ -9,14 +9,19 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import UUID4, BaseModel, EmailStr, Field, validator
 from pydantic.types import confloat, conint, constr
 
-from .models_enhanced import (DatasetStatus, ModelStatus, ModelType,
-                              NotificationType, UserRole)
+from .models_enhanced import (
+    DatasetStatus,
+    ModelStatus,
+    ModelType,
+    NotificationType,
+    UserRole,
+)
 
 
 # Base schemas
 class BaseSchema(BaseModel):
     """Base schema with common configuration"""
-    
+
     class Config:
         from_attributes = True
         use_enum_values = True
@@ -55,13 +60,13 @@ class UserCreate(UserBase):
         ..., description="Password (minimum 12 characters, strong complexity required)"
     )
     confirm_password: str = Field(..., description="Password confirmation")
-    
+
     @validator('confirm_password')
     def passwords_match(cls, v, values):
         if 'password' in values and v != values['password']:
             raise ValueError('Passwords do not match')
         return v
-    
+
     @validator('password')
     def validate_password_strength(cls, v):
         if len(v) < 12:
@@ -97,7 +102,7 @@ class UserResponse(UserBase, TimestampMixin, UUIDMixin):
     full_name: Optional[str] = None
     role: Optional[str] = Field(None, description="User's role name") # Added role name
     permissions: Optional[List[str]] = Field(None, description="List of permissions associated with the user's role") # Added permissions
-    
+
     @validator('full_name', always=True)
     def compute_full_name(cls, v, values):
         if values.get('first_name') and values.get('last_name'):
@@ -120,13 +125,13 @@ class PasswordChange(BaseSchema):
         ..., description="New password (minimum 12 characters, strong complexity required)"
     )
     confirm_password: str = Field(..., description="New password confirmation")
-    
+
     @validator('confirm_password')
     def passwords_match(cls, v, values):
         if 'new_password' in values and v != values['new_password']:
             raise ValueError('Passwords do not match')
         return v
-    
+
     @validator('new_password')
     def validate_new_password_strength(cls, v):
         if len(v) < 12:
@@ -616,4 +621,3 @@ class ComplianceLimitsResponse(BaseSchema):
     daily_limits: Dict[str, str] = Field(..., description="Daily transaction limits and usage")
     monthly_limits: Dict[str, str] = Field(..., description="Monthly transaction limits and usage")
     compliance_status: str = Field(..., description="Overall compliance status")
-

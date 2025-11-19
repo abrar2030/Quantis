@@ -215,7 +215,7 @@ resource "aws_db_instance" "main" {
   # Monitoring and logging
   monitoring_interval = var.enhanced_monitoring_interval
   monitoring_role_arn = var.enhanced_monitoring_interval > 0 ? aws_iam_role.rds_enhanced_monitoring[0].arn : null
-  
+
   enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
 
   # Performance Insights
@@ -570,4 +570,3 @@ resource "aws_iam_role_policy" "db_proxy" {
     ]
   })
 }
-

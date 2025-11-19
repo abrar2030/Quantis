@@ -429,4 +429,3 @@ variable "cost_optimization" {
     schedule_non_prod_shutdown = true
   }
 }
-

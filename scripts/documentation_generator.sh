@@ -63,14 +63,14 @@ command_exists() {
 # Function to check required dependencies
 check_dependencies() {
     echo -e "${BLUE}Checking documentation dependencies...${NC}"
-    
+
     if $GEN_API || $GEN_ALL; then
         if ! command_exists swagger-cli; then
             echo -e "${YELLOW}Warning: swagger-cli is not installed. Installing...${NC}"
             npm install -g swagger-cli
         fi
     fi
-    
+
     if $GEN_CODE || $GEN_ALL; then
         if [ -d "$PROJECT_ROOT/web-frontend" ] || [ -d "$PROJECT_ROOT/mobile-frontend" ]; then
             if ! command_exists jsdoc; then
@@ -78,7 +78,7 @@ check_dependencies() {
                 npm install -g jsdoc
             fi
         fi
-        
+
         if [ -d "$PROJECT_ROOT/api" ] || [ -d "$PROJECT_ROOT/models" ]; then
             if ! command_exists sphinx-build; then
                 echo -e "${YELLOW}Warning: sphinx is not installed. Installing...${NC}"
@@ -86,7 +86,7 @@ check_dependencies() {
             fi
         fi
     fi
-    
+
     if $GEN_README || $GEN_GUIDES || $GEN_ALL; then
         if ! command_exists pandoc; then
             echo -e "${YELLOW}Warning: pandoc is not installed. Installing...${NC}"
@@ -100,40 +100,40 @@ check_dependencies() {
             fi
         fi
     fi
-    
+
     echo -e "${GREEN}All required documentation dependencies are installed.${NC}"
 }
 
 # Function to prepare output directory
 prepare_output_dir() {
     echo -e "${BLUE}Preparing output directory...${NC}"
-    
+
     mkdir -p "$OUTPUT_DIR"
     mkdir -p "$OUTPUT_DIR/api"
     mkdir -p "$OUTPUT_DIR/code"
     mkdir -p "$OUTPUT_DIR/readme"
     mkdir -p "$OUTPUT_DIR/guides"
-    
+
     echo -e "${GREEN}Output directory prepared: $OUTPUT_DIR${NC}"
 }
 
 # Function to generate API documentation
 generate_api_docs() {
     echo -e "${BLUE}Generating API documentation...${NC}"
-    
+
     if [ -d "$PROJECT_ROOT/api" ]; then
         cd "$PROJECT_ROOT/api"
-        
+
         # Look for OpenAPI/Swagger files
         SWAGGER_FILES=$(find . -name "swagger.yaml" -o -name "swagger.json" -o -name "openapi.yaml" -o -name "openapi.json")
-        
+
         if [ -z "$SWAGGER_FILES" ]; then
             echo -e "${YELLOW}Warning: No OpenAPI/Swagger files found. Generating from code...${NC}"
-            
+
             # Check if FastAPI is used (can auto-generate OpenAPI docs)
             if grep -q "fastapi" requirements.txt 2>/dev/null; then
                 echo "Detected FastAPI. Generating OpenAPI schema..."
-                
+
                 # Create a temporary script to extract OpenAPI schema
                 cat > extract_openapi.py << EOF
 from fastapi.openapi.utils import get_openapi
@@ -148,13 +148,13 @@ for module_name in ["app", "main", "api"]:
         spec = importlib.util.spec_from_file_location(module_name, f"{module_name}.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        
+
         # Look for FastAPI app instance
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
             if str(type(attr)).endswith("fastapi.applications.FastAPI'>"):
                 app = attr
-                
+
                 # Generate OpenAPI schema
                 openapi_schema = get_openapi(
                     title="Quantis API",
@@ -162,11 +162,11 @@ for module_name in ["app", "main", "api"]:
                     description="Quantis API Documentation",
                     routes=app.routes,
                 )
-                
+
                 # Write to file
                 with open("openapi.json", "w") as f:
                     json.dump(openapi_schema, f, indent=2)
-                
+
                 print("OpenAPI schema generated successfully.")
                 sys.exit(0)
     except Exception as e:
@@ -175,23 +175,23 @@ for module_name in ["app", "main", "api"]:
 print("Could not find FastAPI app instance.")
 sys.exit(1)
 EOF
-                
+
                 # Run the script to extract OpenAPI schema
                 python extract_openapi.py
                 rm extract_openapi.py
-                
+
                 SWAGGER_FILES="openapi.json"
             fi
         fi
-        
+
         # Generate HTML documentation from OpenAPI/Swagger files
         if [ -n "$SWAGGER_FILES" ]; then
             for file in $SWAGGER_FILES; do
                 echo "Generating HTML documentation from $file..."
-                
+
                 # Use swagger-cli to validate
                 swagger-cli validate "$file"
-                
+
                 # Use Redoc to generate HTML documentation
                 npx redoc-cli bundle "$file" -o "$OUTPUT_DIR/api/index.html"
             done
@@ -201,19 +201,19 @@ EOF
     else
         echo -e "${YELLOW}Warning: API directory not found.${NC}"
     fi
-    
+
     echo -e "${GREEN}API documentation generation completed.${NC}"
 }
 
 # Function to generate code documentation
 generate_code_docs() {
     echo -e "${BLUE}Generating code documentation...${NC}"
-    
+
     # Generate JavaScript/TypeScript documentation using JSDoc
     if [ -d "$PROJECT_ROOT/web-frontend" ]; then
         echo "Generating web frontend code documentation..."
         cd "$PROJECT_ROOT/web-frontend"
-        
+
         # Create JSDoc configuration if it doesn't exist
         if [ ! -f "jsdoc.json" ]; then
             cat > jsdoc.json << EOF
@@ -232,15 +232,15 @@ generate_code_docs() {
 }
 EOF
         fi
-        
+
         # Run JSDoc
         jsdoc -c jsdoc.json
     fi
-    
+
     if [ -d "$PROJECT_ROOT/mobile-frontend" ]; then
         echo "Generating mobile frontend code documentation..."
         cd "$PROJECT_ROOT/mobile-frontend"
-        
+
         # Create JSDoc configuration if it doesn't exist
         if [ ! -f "jsdoc.json" ]; then
             cat > jsdoc.json << EOF
@@ -259,25 +259,25 @@ EOF
 }
 EOF
         fi
-        
+
         # Run JSDoc
         jsdoc -c jsdoc.json
     fi
-    
+
     # Generate Python documentation using Sphinx
     if [ -d "$PROJECT_ROOT/api" ] || [ -d "$PROJECT_ROOT/models" ]; then
         echo "Generating Python code documentation..."
-        
+
         # Create Sphinx documentation directory
         mkdir -p "$OUTPUT_DIR/code/python"
         cd "$OUTPUT_DIR/code/python"
-        
+
         # Initialize Sphinx
         sphinx-quickstart -q -p "Quantis" -a "Quantis Team" -v "1.0" --ext-autodoc --ext-viewcode --ext-todo
-        
+
         # Update conf.py to include autodoc
         sed -i "s/extensions = \[/extensions = \['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.todo',/g" source/conf.py
-        
+
         # Create modules.rst
         cat > source/modules.rst << EOF
 API Modules
@@ -289,32 +289,32 @@ API Modules
    api
    models
 EOF
-        
+
         # Generate API module documentation
         if [ -d "$PROJECT_ROOT/api" ]; then
             sphinx-apidoc -o source/api "$PROJECT_ROOT/api" -H "API" -M -e -f
         fi
-        
+
         # Generate Models module documentation
         if [ -d "$PROJECT_ROOT/models" ]; then
             sphinx-apidoc -o source/models "$PROJECT_ROOT/models" -H "Models" -M -e -f
         fi
-        
+
         # Build HTML documentation
         make html
     fi
-    
+
     echo -e "${GREEN}Code documentation generation completed.${NC}"
 }
 
 # Function to generate README files
 generate_readme_files() {
     echo -e "${BLUE}Generating README files...${NC}"
-    
+
     # Create main README if it doesn't exist
     if [ ! -f "$PROJECT_ROOT/README.md" ]; then
         echo "Creating main README.md..."
-        
+
         cat > "$PROJECT_ROOT/README.md" << EOF
 # Quantis
 
@@ -398,15 +398,15 @@ For detailed documentation, see the \`docs\` directory.
 This project is licensed under the MIT License - see the LICENSE file for details.
 EOF
     fi
-    
+
     # Copy main README to output directory
     cp "$PROJECT_ROOT/README.md" "$OUTPUT_DIR/readme/"
-    
+
     # Generate component-specific READMEs
     for component in api models web-frontend mobile-frontend infrastructure monitoring; do
         if [ -d "$PROJECT_ROOT/$component" ] && [ ! -f "$PROJECT_ROOT/$component/README.md" ]; then
             echo "Creating README.md for $component..."
-            
+
             case $component in
                 api)
                     cat > "$PROJECT_ROOT/$component/README.md" << EOF
@@ -566,7 +566,7 @@ The monitoring configuration defines the metrics collection, visualization, and 
 EOF
                     ;;
             esac
-            
+
             # Copy component README to output directory
             cp "$PROJECT_ROOT/$component/README.md" "$OUTPUT_DIR/readme/$component.md"
         elif [ -f "$PROJECT_ROOT/$component/README.md" ]; then
@@ -574,7 +574,7 @@ EOF
             cp "$PROJECT_ROOT/$component/README.md" "$OUTPUT_DIR/readme/$component.md"
         fi
     done
-    
+
     # Generate index file for READMEs
     cat > "$OUTPUT_DIR/readme/index.md" << EOF
 # Quantis Documentation
@@ -583,23 +583,23 @@ EOF
 
 - [Main README](README.md)
 EOF
-    
+
     for component in api models web-frontend mobile-frontend infrastructure monitoring; do
         if [ -f "$OUTPUT_DIR/readme/$component.md" ]; then
             echo "- [$component]($component.md)" >> "$OUTPUT_DIR/readme/index.md"
         fi
     done
-    
+
     echo -e "${GREEN}README files generation completed.${NC}"
 }
 
 # Function to generate user guides
 generate_user_guides() {
     echo -e "${BLUE}Generating user guides...${NC}"
-    
+
     # Create user guides directory
     mkdir -p "$OUTPUT_DIR/guides"
-    
+
     # Generate installation guide
     cat > "$OUTPUT_DIR/guides/installation_guide.md" << EOF
 # Quantis Installation Guide
@@ -686,7 +686,7 @@ Check the following:
 
 After installation, refer to the [User Guide](user_guide.md) for information on using the Quantis platform.
 EOF
-    
+
     # Generate user guide
     cat > "$OUTPUT_DIR/guides/user_guide.md" << EOF
 # Quantis User Guide
@@ -842,7 +842,7 @@ The dashboard provides an overview of your portfolio and trading strategies:
 2. Click "Feedback"
 3. Enter feedback and click "Submit"
 EOF
-    
+
     # Generate API guide
     cat > "$OUTPUT_DIR/guides/api_guide.md" << EOF
 # Quantis API Guide
@@ -1086,7 +1086,7 @@ The API enforces rate limits to prevent abuse. Rate limit information is include
 
 If you exceed the rate limit, you will receive a 429 Too Many Requests response.
 EOF
-    
+
     # Generate index file for guides
     cat > "$OUTPUT_DIR/guides/index.md" << EOF
 # Quantis User Guides
@@ -1102,24 +1102,24 @@ EOF
 - [API Documentation](../api/index.html)
 - [Code Documentation](../code/index.html)
 EOF
-    
+
     # Convert Markdown to HTML
     if command_exists pandoc; then
         echo "Converting Markdown guides to HTML..."
-        
+
         for guide in "$OUTPUT_DIR/guides"/*.md; do
             basename=$(basename "$guide" .md)
             pandoc "$guide" -o "$OUTPUT_DIR/guides/$basename.html" --standalone --metadata title="Quantis - $(echo $basename | sed 's/_/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2)} 1')"
         done
     fi
-    
+
     echo -e "${GREEN}User guides generation completed.${NC}"
 }
 
 # Function to generate index file
 generate_index() {
     echo -e "${BLUE}Generating index file...${NC}"
-    
+
     cat > "$OUTPUT_DIR/index.html" << EOF
 <!DOCTYPE html>
 <html lang="en">
@@ -1185,7 +1185,7 @@ generate_index() {
     <div class="container">
         <h1>Quantis Documentation</h1>
         <p>Welcome to the Quantis documentation. This page provides links to various documentation resources for the Quantis platform.</p>
-        
+
         <div class="section">
             <h2 class="section-title">API Documentation</h2>
             <div class="section-content">
@@ -1196,7 +1196,7 @@ generate_index() {
                 </div>
             </div>
         </div>
-        
+
         <div class="section">
             <h2 class="section-title">Code Documentation</h2>
             <div class="section-content">
@@ -1217,7 +1217,7 @@ generate_index() {
                 </div>
             </div>
         </div>
-        
+
         <div class="section">
             <h2 class="section-title">README Files</h2>
             <div class="section-content">
@@ -1228,7 +1228,7 @@ generate_index() {
                 </div>
             </div>
         </div>
-        
+
         <div class="section">
             <h2 class="section-title">User Guides</h2>
             <div class="section-content">
@@ -1249,7 +1249,7 @@ generate_index() {
                 </div>
             </div>
         </div>
-        
+
         <div class="footer">
             <p>Generated on $(date) by documentation_generator.sh</p>
         </div>
@@ -1257,7 +1257,7 @@ generate_index() {
 </body>
 </html>
 EOF
-    
+
     echo -e "${GREEN}Index file generation completed.${NC}"
 }
 

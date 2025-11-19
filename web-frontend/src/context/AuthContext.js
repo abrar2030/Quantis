@@ -43,22 +43,22 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await authAPI.login(credentials);
-      
+
       if (response.data.access_token) {
         setAuthToken(response.data.access_token);
       } else if (response.data.api_key) {
         setApiKey(response.data.api_key);
       }
-      
+
       setUser(response.data.user);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      
+
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Login failed:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Login failed' 
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Login failed'
       };
     }
   };
@@ -66,22 +66,22 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authAPI.register(userData);
-      
+
       if (response.data.access_token) {
         setAuthToken(response.data.access_token);
       } else if (response.data.api_key) {
         setApiKey(response.data.api_key);
       }
-      
+
       setUser(response.data.user);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      
+
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Registration failed:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Registration failed' 
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Registration failed'
       };
     }
   };
@@ -112,4 +112,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-

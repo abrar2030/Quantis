@@ -542,4 +542,3 @@ resource "aws_autoscaling_schedule" "scale_up_morning" {
   recurrence            = "0 8 * * MON-FRI"   # 8 AM weekdays
   autoscaling_group_name = aws_autoscaling_group.main.name
 }
-

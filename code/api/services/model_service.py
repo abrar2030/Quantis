@@ -25,7 +25,7 @@ class ModelService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_model_record(self, name: str, description: str, model_type: str, 
+    def create_model_record(self, name: str, description: str, model_type: str,
                             owner_id: int, dataset_id: int, hyperparameters: Dict = None,
                             tags: Optional[List[str]] = None) -> models.Model:
         """Create a new model record in the database."""
@@ -33,13 +33,13 @@ class ModelService:
         owner = self.db.query(models.User).filter(models.User.id == owner_id).first()
         if not owner:
             raise ValueError("Owner not found")
-        
+
         dataset = self.db.query(models.Dataset).filter(
             and_(models.Dataset.id == dataset_id, models.Dataset.is_deleted == False)
         ).first()
         if not dataset:
             raise ValueError("Dataset not found or is deleted")
-        
+
         # Create model record
         model = models.Model(
             name=name,
@@ -51,7 +51,7 @@ class ModelService:
             status=models.ModelStatus.CREATED,
             tags=tags or []
         )
-        
+
         self.db.add(model)
         self.db.commit()
         self.db.refresh(model)
@@ -78,11 +78,11 @@ class ModelService:
         model = self.get_model_by_id(model_id)
         if not model:
             return None
-        
+
         for key, value in kwargs.items():
             if hasattr(model, key) and key not in ["id", "owner_id", "created_at", "dataset_id", "file_path", "metrics", "status", "trained_at"]:
                 setattr(model, key, value)
-        
+
         self.db.commit()
         self.db.refresh(model)
         return model
@@ -92,7 +92,7 @@ class ModelService:
         model = self.get_model_by_id(model_id)
         if not model:
             return False
-        
+
         model.is_deleted = True
         model.deleted_at = datetime.utcnow()
         model.deleted_by_id = deleted_by_id
@@ -104,22 +104,22 @@ class ModelService:
         model = self.get_model_by_id(model_id)
         if not model:
             return False
-        
+
         try:
             # Create models directory if it doesn't exist
             os.makedirs(settings.model_storage_directory, exist_ok=True)
-            
+
             # Save model to file
             file_path = os.path.join(settings.model_storage_directory, f"model_{model_id}.pkl")
             joblib.dump(trained_model, file_path)
-            
+
             # Update model record
             model.file_path = file_path
             model.status = models.ModelStatus.TRAINED
             model.trained_at = datetime.utcnow()
             if metrics:
                 model.metrics = metrics
-            
+
             self.db.commit()
             logger.info(f"Model {model_id} saved and status updated to TRAINED.")
             return True
@@ -135,7 +135,7 @@ class ModelService:
         if not model or not model.file_path or model.status != models.ModelStatus.TRAINED:
             logger.warning(f"Model {model_id} not found, not trained, or file path missing.")
             return None
-        
+
         try:
             return joblib.load(model.file_path)
         except Exception as e:
@@ -148,7 +148,7 @@ class ModelService:
         if not model:
             logger.error(f"Model {model_id} not found for training.")
             return False
-        
+
         try:
             # Update status to training
             model.status = models.ModelStatus.TRAINING
@@ -157,7 +157,7 @@ class ModelService:
 
             # Simulate training process
             time.sleep(np.random.uniform(5, 15)) # Simulate training time
-            
+
             # Prepare data (dummy for now, in real scenario, this would involve feature engineering)
             X = data.select_dtypes(include=np.number).fillna(0) # Simple numeric features
             if X.empty:
@@ -199,10 +199,10 @@ class ModelService:
                 metrics.update(dummy_metrics)
             else:
                 raise ValueError(f"Unsupported model type for training: {model.model_type}")
-            
+
             # Save the trained model and update status
             return self.save_trained_model(model_id, trained_model, metrics)
-            
+
         except Exception as e:
             logger.error(f"Error training model {model_id}: {e}")
             model.status = models.ModelStatus.FAILED
@@ -216,11 +216,11 @@ class ModelService:
         if not model or model.status != models.ModelStatus.TRAINED:
             logger.error(f"Model {model_id} not found or not trained for prediction.")
             return None
-        
+
         trained_model = self.load_trained_model(model_id)
         if not trained_model:
             return None
-        
+
         try:
             predictions = trained_model.predict(input_data)
             return pd.DataFrame(predictions, columns=["prediction"])
@@ -234,7 +234,7 @@ class DummyTFTModel:
     def __init__(self):
         self.model_type = "TFT"
         self.weights = np.random.randn(10, 5)
-    
+
     def train(self, X, y, hyperparameters: Dict = None):
         logger.info(f"Training Dummy TFT Model with hyperparameters: {hyperparameters}")
         time.sleep(1) # Simulate training
@@ -275,7 +275,7 @@ class DummyLSTMModel:
             "training_time": np.random.uniform(10, 300),
             "epochs": hyperparameters.get("epochs", 50) if hyperparameters else 50
         }
-    
+
     def predict(self, X):
         if isinstance(X, pd.DataFrame):
             X = X.values
@@ -302,7 +302,7 @@ class DummyARIMAModel:
             "rmse": np.random.uniform(0.2, 0.7),
             "training_time": np.random.uniform(5, 60)
         }
-    
+
     def predict(self, X):
         if isinstance(X, pd.DataFrame):
             X = X.values
@@ -328,7 +328,7 @@ class DummyLinearModel:
             "r2_score": np.random.uniform(0.7, 0.95),
             "training_time": np.random.uniform(1, 30)
         }
-    
+
     def predict(self, X):
         if isinstance(X, pd.DataFrame):
             X = X.values
@@ -387,5 +387,3 @@ class DummyXGBoostModel:
         if isinstance(X, pd.DataFrame):
             X = X[self.features].values if self.features else X.values
         return np.random.rand(X.shape[0], 1) * 100 # Dummy prediction
-
-

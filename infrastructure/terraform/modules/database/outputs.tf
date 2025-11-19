@@ -314,4 +314,3 @@ output "resource_tags" {
   description = "Tags applied to database resources"
   value       = var.common_tags
 }
-

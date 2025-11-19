@@ -67,7 +67,7 @@ def test_predict_endpoint_success(test_client, sample_data):
     response = test_client.post("/predict", json=sample_data)
     assert response.status_code == 200
     assert "prediction" in response.json()
-    
+
 def test_predict_endpoint_invalid_data(test_client):
     response = test_client.post(
         "/predict", json={"features": [0.1], "api_key": "test_key"}
@@ -122,7 +122,7 @@ def test_model_with_different_input_sizes():
     min_input = torch.randn(1, 64)
     min_output = min_model(min_input)
     assert min_output.shape == (1, 1)
-    
+
     # Test with maximum input size
     max_model = TemporalFusionTransformer(input_size=256)
     max_input = torch.randn(1, 256)
@@ -154,9 +154,9 @@ def test_model_deployment_to_s3(mock_s3):
     model_path = "models/test_model.pt"
     bucket = "quantis-models"
     key = "production/test_model.pt"
-    
+
     deploy_to_aws(model_path, bucket, key)
-    
+
     mock_s3.upload_file.assert_called_once_with(
         model_path, bucket, key
     )
@@ -272,10 +272,10 @@ Example:
 def test_feature_calculation():
     # Arrange
     data = [1, 2, 3, 4, 5]
-    
+
     # Act
     result = calculate_feature(data)
-    
+
     # Assert
     assert result == 15
 ```
@@ -301,9 +301,9 @@ def test_external_api_call(mock_get):
     mock_response.status_code = 200
     mock_response.json.return_value = {'data': 'test'}
     mock_get.return_value = mock_response
-    
+
     result = call_external_api()
-    
+
     assert result == {'data': 'test'}
     mock_get.assert_called_once_with('https://api.example.com/data')
 ```
@@ -382,7 +382,7 @@ def test_api_response_time():
     start_time = time.time()
     response = test_client.get("/api/data")
     end_time = time.time()
-    
+
     assert response.status_code == 200
     assert end_time - start_time < 0.1  # Response time under 100ms
 ```
@@ -394,20 +394,20 @@ Load tests verify system behavior under various load conditions:
 ```python
 def test_concurrent_requests():
     results = []
-    
+
     def make_request():
         response = test_client.get("/api/data")
         results.append(response.status_code)
-    
+
     threads = []
     for _ in range(100):
         thread = threading.Thread(target=make_request)
         threads.append(thread)
         thread.start()
-    
+
     for thread in threads:
         thread.join()
-    
+
     assert all(status == 200 for status in results)
 ```
 

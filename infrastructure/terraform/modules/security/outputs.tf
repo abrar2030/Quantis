@@ -260,4 +260,3 @@ output "disaster_recovery_configuration" {
     automated_failover          = var.auto_scaling_enabled
   }
 }
-

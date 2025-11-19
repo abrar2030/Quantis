@@ -1,6 +1,5 @@
 import numpy as np
-from prometheus_client import \
-    Gauge  # , start_http_server # F401: Unused import
+from prometheus_client import Gauge  # , start_http_server # F401: Unused import
 
 
 class ModelMonitor:

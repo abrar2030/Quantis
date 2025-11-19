@@ -429,4 +429,3 @@ This infrastructure code is proprietary and confidential. Unauthorized use, dist
 **⚠️ Important Security Notice**: This infrastructure contains financial-grade security controls. Any modifications should be reviewed by the security team and tested in a non-production environment before deployment to production.
 
 **🏛️ Compliance Notice**: This infrastructure is designed to meet financial industry compliance requirements. Maintain all audit trails and documentation for regulatory purposes.
-

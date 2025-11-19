@@ -80,7 +80,7 @@ import styles from './Header.module.css';
 
 const Header = () => {
   const { theme, toggleTheme } = useContext(ThemeContext);
-  
+
   return (
     <header className={`${styles.header} ${styles[theme]}`}>
       <div className={styles.logo}>
@@ -122,10 +122,10 @@ const Sidebar = ({ items }) => {
     <aside className={styles.sidebar}>
       <nav className={styles.sidebarNav}>
         {items.map((item, index) => (
-          <NavLink 
+          <NavLink
             key={index}
             to={item.path}
-            className={({ isActive }) => 
+            className={({ isActive }) =>
               isActive ? styles.activeLink : styles.link
             }
           >
@@ -183,28 +183,28 @@ const Dashboard = () => {
   return (
     <Layout title="Dashboard">
       <div className={styles.statsContainer}>
-        <StatCard 
-          title="Active Models" 
-          value={dashboardData.activeModels} 
-          trend={dashboardData.modelTrend} 
+        <StatCard
+          title="Active Models"
+          value={dashboardData.activeModels}
+          trend={dashboardData.modelTrend}
         />
-        <StatCard 
-          title="Predictions Today" 
-          value={dashboardData.predictionsToday} 
-          trend={dashboardData.predictionsTrend} 
+        <StatCard
+          title="Predictions Today"
+          value={dashboardData.predictionsToday}
+          trend={dashboardData.predictionsTrend}
         />
-        <StatCard 
-          title="Avg. Accuracy" 
-          value={`${dashboardData.avgAccuracy}%`} 
-          trend={dashboardData.accuracyTrend} 
+        <StatCard
+          title="Avg. Accuracy"
+          value={`${dashboardData.avgAccuracy}%`}
+          trend={dashboardData.accuracyTrend}
         />
-        <StatCard 
-          title="Data Points" 
-          value={dashboardData.dataPoints} 
-          trend={dashboardData.dataPointsTrend} 
+        <StatCard
+          title="Data Points"
+          value={dashboardData.dataPoints}
+          trend={dashboardData.dataPointsTrend}
         />
       </div>
-      
+
       <div className={styles.chartsContainer}>
         <div className={styles.chartCard}>
           <h3>Recent Forecast Performance</h3>
@@ -215,7 +215,7 @@ const Dashboard = () => {
           <BarChart data={dashboardData.modelComparison} />
         </div>
       </div>
-      
+
       <div className={styles.recentActivity}>
         <h3>Recent Activity</h3>
         <ul className={styles.activityList}>
@@ -295,9 +295,9 @@ const Predictions = () => {
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGroup}>
               <label htmlFor="datasetId">Dataset</label>
-              <select 
-                id="datasetId" 
-                name="datasetId" 
+              <select
+                id="datasetId"
+                name="datasetId"
                 value={formData.datasetId}
                 onChange={handleInputChange}
                 required
@@ -308,26 +308,26 @@ const Predictions = () => {
                 <option value="3">Energy Consumption</option>
               </select>
             </div>
-            
+
             <div className={styles.formGroup}>
               <label htmlFor="forecastHorizon">Forecast Horizon (Days)</label>
-              <input 
-                type="number" 
-                id="forecastHorizon" 
-                name="forecastHorizon" 
-                min="1" 
-                max="365" 
+              <input
+                type="number"
+                id="forecastHorizon"
+                name="forecastHorizon"
+                min="1"
+                max="365"
                 value={formData.forecastHorizon}
                 onChange={handleInputChange}
                 required
               />
             </div>
-            
+
             <div className={styles.formGroup}>
               <label htmlFor="modelId">Model</label>
-              <select 
-                id="modelId" 
-                name="modelId" 
+              <select
+                id="modelId"
+                name="modelId"
                 value={formData.modelId}
                 onChange={handleInputChange}
                 required
@@ -338,13 +338,13 @@ const Predictions = () => {
                 <option value="xgboost">XGBoost</option>
               </select>
             </div>
-            
+
             <button type="submit" className={styles.submitButton}>
               Generate Forecast
             </button>
           </form>
         </div>
-        
+
         <div className={styles.predictionsContainer}>
           <h2>Recent Predictions</h2>
           {loading ? (
@@ -616,14 +616,14 @@ The frontend uses CSS Modules for component-scoped styling:
   --background-light: #FFFFFF;
   --background-dark: #202124;
   --border-color: #DADCE0;
-  
+
   /* Spacing variables */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
-  
+
   /* Font variables */
   --font-family: 'Roboto', sans-serif;
   --font-size-xs: 12px;
@@ -631,12 +631,12 @@ The frontend uses CSS Modules for component-scoped styling:
   --font-size-md: 16px;
   --font-size-lg: 18px;
   --font-size-xl: 24px;
-  
+
   /* Border radius */
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
   --border-radius-lg: 16px;
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -793,16 +793,16 @@ The frontend is designed to be responsive across different screen sizes:
   .container {
     max-width: 720px;
   }
-  
+
   /* Adjust layout for tablets */
   .statsContainer {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .chartsContainer {
     flex-direction: column;
   }
-  
+
   .chartCard {
     width: 100%;
     margin-right: 0;
@@ -814,27 +814,27 @@ The frontend is designed to be responsive across different screen sizes:
   .container {
     max-width: 540px;
   }
-  
+
   /* Adjust layout for mobile */
   .header {
     flex-direction: column;
     padding: var(--spacing-md);
   }
-  
+
   .navigation {
     margin: var(--spacing-md) 0;
   }
-  
+
   .sidebar {
     width: 100%;
     position: static;
     height: auto;
   }
-  
+
   .mainContent {
     margin-left: 0;
   }
-  
+
   .statsContainer {
     grid-template-columns: 1fr;
   }
@@ -845,17 +845,17 @@ The frontend is designed to be responsive across different screen sizes:
     max-width: 100%;
     padding: 0 var(--spacing-sm);
   }
-  
+
   /* Further adjustments for small mobile */
   .navigation a {
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: var(--font-size-sm);
   }
-  
+
   h1 {
     font-size: var(--font-size-lg);
   }
-  
+
   h2 {
     font-size: var(--font-size-md);
   }
@@ -1052,7 +1052,7 @@ const renderWithContext = (ui, { theme = 'light', toggleTheme = jest.fn() } = {}
 describe('Header Component', () => {
   test('renders correctly', () => {
     renderWithContext(<Header />);
-    
+
     expect(screen.getByText('Quantis')).toBeInTheDocument();
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Predictions')).toBeInTheDocument();
@@ -1063,17 +1063,17 @@ describe('Header Component', () => {
   test('toggles theme when button is clicked', () => {
     const toggleTheme = jest.fn();
     renderWithContext(<Header />, { toggleTheme });
-    
+
     const themeButton = screen.getByText('Dark Mode');
     fireEvent.click(themeButton);
-    
+
     expect(toggleTheme).toHaveBeenCalledTimes(1);
   });
 
   test('displays correct theme button text based on current theme', () => {
     renderWithContext(<Header />, { theme: 'light' });
     expect(screen.getByText('Dark Mode')).toBeInTheDocument();
-    
+
     renderWithContext(<Header />, { theme: 'dark' });
     expect(screen.getByText('Light Mode')).toBeInTheDocument();
   });
@@ -1165,36 +1165,36 @@ describe('Dashboard Page', () => {
 
   test('fetches and displays dashboard data', async () => {
     renderWithProviders(<Dashboard />);
-    
+
     await waitFor(() => {
       expect(fetchDashboardData).toHaveBeenCalledTimes(1);
     });
-    
+
     expect(screen.getByText('Active Models')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
-    
+
     expect(screen.getByText('Predictions Today')).toBeInTheDocument();
     expect(screen.getByText('120')).toBeInTheDocument();
-    
+
     expect(screen.getByText('Avg. Accuracy')).toBeInTheDocument();
     expect(screen.getByText('92.5%')).toBeInTheDocument();
-    
+
     expect(screen.getByText('Recent Forecast Performance')).toBeInTheDocument();
     expect(screen.getByText('Model Accuracy Comparison')).toBeInTheDocument();
-    
+
     expect(screen.getByText('Recent Activity')).toBeInTheDocument();
     expect(screen.getByText('New prediction created for Sales Data')).toBeInTheDocument();
   });
 
   test('displays error message when API call fails', async () => {
     fetchDashboardData.mockRejectedValue(new Error('Failed to fetch data'));
-    
+
     renderWithProviders(<Dashboard />);
-    
+
     await waitFor(() => {
       expect(fetchDashboardData).toHaveBeenCalledTimes(1);
     });
-    
+
     expect(screen.getByText('Error loading dashboard: Failed to fetch data')).toBeInTheDocument();
   });
 });

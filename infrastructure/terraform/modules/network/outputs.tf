@@ -363,4 +363,3 @@ output "resource_tags" {
   description = "Tags applied to network resources"
   value       = var.common_tags
 }
-

@@ -18,8 +18,16 @@ from sqlalchemy.orm import Session
 
 from .config import get_settings
 from .database_enhanced import SessionLocal
-from .models_enhanced import (DataQualityReport, Dataset, Model, ModelStatus,
-                              Notification, NotificationType, Prediction, User)
+from .models_enhanced import (
+    DataQualityReport,
+    Dataset,
+    Model,
+    ModelStatus,
+    Notification,
+    NotificationType,
+    Prediction,
+    User,
+)
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

@@ -11,15 +11,18 @@ from cryptography.fernet import Fernet
 from redis.asyncio import Redis
 from sqlalchemy import create_engine, event, pool
 from sqlalchemy.engine import Engine
-from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
-                                    create_async_engine)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 
 from .config import get_settings
-from .models_enhanced import (Base, ConsentRecord,  # Import new models
-                              DataMaskingConfig, DataRetentionPolicy,
-                              EncryptionKey)
+from .models_enhanced import ConsentRecord  # Import new models
+from .models_enhanced import (
+    Base,
+    DataMaskingConfig,
+    DataRetentionPolicy,
+    EncryptionKey,
+)
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

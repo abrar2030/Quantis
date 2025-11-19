@@ -272,4 +272,3 @@ output "resource_tags" {
   description = "Tags applied to compute resources"
   value       = var.common_tags
 }
-

@@ -354,4 +354,3 @@ variable "security_hardening" {
     enable_source_dest_check   = false
   }
 }
-

@@ -210,7 +210,7 @@ The monitoring system integrates with:
    # Install Prometheus
    wget https://github.com/prometheus/prometheus/releases/download/v2.37.0/prometheus-2.37.0.linux-amd64.tar.gz
    tar xvfz prometheus-2.37.0.linux-amd64.tar.gz
-   
+
    # Install Grafana
    wget https://dl.grafana.com/oss/release/grafana-9.0.2.linux-amd64.tar.gz
    tar xvfz grafana-9.0.2.linux-amd64.tar.gz
@@ -364,11 +364,11 @@ The monitoring system is designed for minimal performance impact:
 1. **Instrument Application Code**:
    ```python
    from prometheus_client import Counter, Gauge, Histogram
-   
+
    # Define metrics
    request_counter = Counter('http_requests_total', 'Total HTTP Requests', ['method', 'endpoint'])
    request_latency = Histogram('http_request_duration_seconds', 'HTTP request latency', ['method', 'endpoint'])
-   
+
    # Use metrics
    @app.route('/api/data')
    def get_data():

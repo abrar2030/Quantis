@@ -275,4 +275,3 @@ variable "common_tags" {
     DataClass   = "confidential"
   }
 }
-

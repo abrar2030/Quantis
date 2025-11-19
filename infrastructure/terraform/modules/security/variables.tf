@@ -381,4 +381,3 @@ variable "recovery_point_objective_hours" {
   type        = number
   default     = 1
 }
-

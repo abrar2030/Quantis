@@ -304,16 +304,16 @@ if [ -b /dev/xvdf ]; then
     if ! blkid /dev/xvdf; then
         mkfs.ext4 /dev/xvdf
     fi
-    
+
     # Create mount point
     mkdir -p /opt/app-data
-    
+
     # Add to fstab
     echo "/dev/xvdf /opt/app-data ext4 defaults,noatime 0 2" >> /etc/fstab
-    
+
     # Mount the volume
     mount /opt/app-data
-    
+
     # Set proper ownership and permissions
     chown ec2-user:ec2-user /opt/app-data
     chmod 750 /opt/app-data
@@ -551,17 +551,17 @@ def health_check():
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
-        
+
         # Basic health checks
         if cpu_percent > 90:
             return jsonify({'status': 'unhealthy', 'reason': 'high_cpu'}), 503
-        
+
         if memory.percent > 90:
             return jsonify({'status': 'unhealthy', 'reason': 'high_memory'}), 503
-        
+
         if disk.percent > 90:
             return jsonify({'status': 'unhealthy', 'reason': 'high_disk'}), 503
-        
+
         return jsonify({
             'status': 'healthy',
             'cpu_percent': cpu_percent,
@@ -612,4 +612,3 @@ aws logs put-log-events \
     --region $(curl -s http://169.254.169.254/latest/meta-data/placement/region) || true
 
 exit 0
-

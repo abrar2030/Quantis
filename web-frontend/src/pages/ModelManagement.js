@@ -486,4 +486,3 @@ const ModelManagement = () => {
 };
 
 export default ModelManagement;
-

@@ -62,32 +62,32 @@ command_exists() {
 # Function to check required dependencies
 check_dependencies() {
     echo -e "${BLUE}Checking monitoring dependencies...${NC}"
-    
+
     # Check Docker
     if ! command_exists docker; then
         echo -e "${RED}Error: Docker is required but not installed.${NC}"
         echo "Please install Docker and try again."
         exit 1
     fi
-    
+
     # Check Docker Compose
     if ! command_exists docker-compose; then
         echo -e "${RED}Error: Docker Compose is required but not installed.${NC}"
         echo "Please install Docker Compose and try again."
         exit 1
     fi
-    
+
     echo -e "${GREEN}All required monitoring dependencies are installed.${NC}"
 }
 
 # Function to setup monitoring stack
 setup_monitoring() {
     echo -e "${BLUE}Setting up monitoring stack...${NC}"
-    
+
     # Create monitoring directory if it doesn't exist
     mkdir -p "$MONITORING_DIR"
     mkdir -p "$GRAFANA_DIR"
-    
+
     # Create Docker Compose file for monitoring stack
     cat > "$MONITORING_DIR/docker-compose.yml" << EOF
 version: '3'
@@ -129,7 +129,7 @@ volumes:
   prometheus_data:
   grafana_data:
 EOF
-    
+
     # Create Prometheus configuration file
     cat > "$MONITORING_DIR/prometheus.yml" << EOF
 global:
@@ -165,11 +165,11 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:9100']
 EOF
-    
+
     # Create Grafana provisioning directories
     mkdir -p "$MONITORING_DIR/grafana_provisioning/datasources"
     mkdir -p "$MONITORING_DIR/grafana_provisioning/dashboards"
-    
+
     # Create Grafana datasource configuration
     cat > "$MONITORING_DIR/grafana_provisioning/datasources/prometheus.yml" << EOF
 apiVersion: 1
@@ -182,7 +182,7 @@ datasources:
     isDefault: true
     editable: false
 EOF
-    
+
     # Create Grafana dashboard provisioning configuration
     cat > "$MONITORING_DIR/grafana_provisioning/dashboards/dashboards.yml" << EOF
 apiVersion: 1
@@ -199,7 +199,7 @@ providers:
       path: /var/lib/grafana/dashboards
       foldersFromFilesStructure: true
 EOF
-    
+
     # Create sample Grafana dashboard for Quantis API
     cat > "$GRAFANA_DIR/quantis_api_dashboard.json" << EOF
 {
@@ -430,7 +430,7 @@ EOF
   "version": 1
 }
 EOF
-    
+
     # Create sample Grafana dashboard for Quantis Models
     cat > "$GRAFANA_DIR/quantis_models_dashboard.json" << EOF
 {
@@ -661,48 +661,48 @@ EOF
   "version": 1
 }
 EOF
-    
+
     echo -e "${GREEN}Monitoring stack setup completed.${NC}"
 }
 
 # Function to update monitoring configuration
 update_monitoring() {
     echo -e "${BLUE}Updating monitoring configuration...${NC}"
-    
+
     if [ ! -d "$MONITORING_DIR" ]; then
         echo -e "${RED}Error: Monitoring directory not found. Please run setup first.${NC}"
         exit 1
     fi
-    
+
     # Update Prometheus configuration
     if [ -f "$MONITORING_DIR/prometheus.yml" ]; then
         echo "Updating Prometheus configuration..."
         # Here you would typically update the prometheus.yml file
         # based on the current state of the project
     fi
-    
+
     # Update Grafana dashboards
     if [ -d "$GRAFANA_DIR" ]; then
         echo "Updating Grafana dashboards..."
         # Here you would typically update the Grafana dashboard files
         # based on the current state of the project
     fi
-    
+
     echo -e "${GREEN}Monitoring configuration updated.${NC}"
 }
 
 # Function to start monitoring services
 start_monitoring() {
     echo -e "${BLUE}Starting monitoring services...${NC}"
-    
+
     if [ ! -f "$MONITORING_DIR/docker-compose.yml" ]; then
         echo -e "${RED}Error: docker-compose.yml not found. Please run setup first.${NC}"
         exit 1
     fi
-    
+
     cd "$MONITORING_DIR"
     docker-compose up -d
-    
+
     echo -e "${GREEN}Monitoring services started.${NC}"
     echo -e "Prometheus: http://localhost:$PROMETHEUS_PORT"
     echo -e "Grafana: http://localhost:$GRAFANA_PORT (admin/quantis_admin)"
@@ -711,27 +711,27 @@ start_monitoring() {
 # Function to stop monitoring services
 stop_monitoring() {
     echo -e "${BLUE}Stopping monitoring services...${NC}"
-    
+
     if [ ! -f "$MONITORING_DIR/docker-compose.yml" ]; then
         echo -e "${RED}Error: docker-compose.yml not found. Please run setup first.${NC}"
         exit 1
     fi
-    
+
     cd "$MONITORING_DIR"
     docker-compose down
-    
+
     echo -e "${GREEN}Monitoring services stopped.${NC}"
 }
 
 # Function to check status of monitoring services
 check_status() {
     echo -e "${BLUE}Checking status of monitoring services...${NC}"
-    
+
     if [ ! -f "$MONITORING_DIR/docker-compose.yml" ]; then
         echo -e "${RED}Error: docker-compose.yml not found. Please run setup first.${NC}"
         exit 1
     fi
-    
+
     cd "$MONITORING_DIR"
     docker-compose ps
 }
@@ -739,48 +739,48 @@ check_status() {
 # Function to backup monitoring configuration and data
 backup_monitoring() {
     echo -e "${BLUE}Backing up monitoring configuration and data...${NC}"
-    
+
     if [ ! -d "$MONITORING_DIR" ]; then
         echo -e "${RED}Error: Monitoring directory not found. Please run setup first.${NC}"
         exit 1
     fi
-    
+
     # Create backup directory if it doesn't exist
     mkdir -p "$BACKUP_DIR"
-    
+
     # Create backup filename with timestamp
     TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
     BACKUP_FILE="$BACKUP_DIR/monitoring_backup_$TIMESTAMP.tar.gz"
-    
+
     # Create backup
     tar -czf "$BACKUP_FILE" -C "$PROJECT_ROOT" monitoring
-    
+
     echo -e "${GREEN}Monitoring backup created: $BACKUP_FILE${NC}"
 }
 
 # Function to restore monitoring configuration from backup
 restore_monitoring() {
     echo -e "${BLUE}Restoring monitoring configuration from backup...${NC}"
-    
+
     if [ -z "$1" ]; then
         echo -e "${RED}Error: Backup file not specified.${NC}"
         echo "Usage: ./monitoring_dashboard.sh --restore BACKUP_FILE"
         exit 1
     fi
-    
+
     BACKUP_FILE="$1"
-    
+
     if [ ! -f "$BACKUP_FILE" ]; then
         echo -e "${RED}Error: Backup file not found: $BACKUP_FILE${NC}"
         exit 1
     fi
-    
+
     # Stop monitoring services if running
     if [ -f "$MONITORING_DIR/docker-compose.yml" ]; then
         cd "$MONITORING_DIR"
         docker-compose down
     fi
-    
+
     # Backup current configuration
     if [ -d "$MONITORING_DIR" ]; then
         TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
@@ -788,13 +788,13 @@ restore_monitoring() {
         tar -czf "$CURRENT_BACKUP" -C "$PROJECT_ROOT" monitoring
         echo -e "${YELLOW}Current configuration backed up to: $CURRENT_BACKUP${NC}"
     fi
-    
+
     # Remove current monitoring directory
     rm -rf "$MONITORING_DIR"
-    
+
     # Extract backup
     tar -xzf "$BACKUP_FILE" -C "$PROJECT_ROOT"
-    
+
     echo -e "${GREEN}Monitoring configuration restored from: $BACKUP_FILE${NC}"
 }
 

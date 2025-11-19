@@ -7,21 +7,43 @@ import tempfile
 from typing import List, Optional
 
 import pandas as pd
-from fastapi import (APIRouter, Depends, File, HTTPException, Query, Request,
-                     UploadFile, status)
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
-from ..auth_enhanced import (AuditLogger, get_current_active_user,
-                             get_current_user, has_permission)
+from ..auth_enhanced import (
+    AuditLogger,
+    get_current_active_user,
+    get_current_user,
+    has_permission,
+)
 from ..config import Settings, get_settings
-from ..database_enhanced import (AuditLog, DataMaskingManager,
-                                 DataRetentionManager, EncryptionManager,
-                                 get_data_masking_manager,
-                                 get_data_retention_manager, get_db,
-                                 get_encryption_manager)
+from ..database_enhanced import (
+    AuditLog,
+    DataMaskingManager,
+    DataRetentionManager,
+    EncryptionManager,
+    get_data_masking_manager,
+    get_data_retention_manager,
+    get_db,
+    get_encryption_manager,
+)
 from ..models_enhanced import Dataset, DatasetStatus, User
-from ..schemas_enhanced import (DatasetCreate, DatasetResponse, DatasetStats,
-                                DatasetUpdate, DatasetUpload)
+from ..schemas_enhanced import (
+    DatasetCreate,
+    DatasetResponse,
+    DatasetStats,
+    DatasetUpdate,
+    DatasetUpload,
+)
 from ..services.dataset_service import DatasetService
 
 logger = logging.getLogger(__name__)
@@ -41,7 +63,7 @@ async def create_dataset(
 ):
     """Create a new dataset record (metadata only)."""
     dataset_service = DatasetService(db)
-    
+
     try:
         dataset = dataset_service.create_dataset_record(
             name=dataset_data.name,
@@ -51,7 +73,7 @@ async def create_dataset(
             source=dataset_data.source,
             frequency=dataset_data.frequency
         )
-        
+
         AuditLogger.log_event(
             db=db,
             user_id=current_user.id,
@@ -63,7 +85,7 @@ async def create_dataset(
         )
         logger.info(f"Dataset record created: {dataset.name} by user {current_user.username}")
         return DatasetResponse.from_orm(dataset)
-        
+
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
@@ -83,7 +105,7 @@ async def upload_dataset(
 ):
     """Upload a dataset file and create/update its record."""
     dataset_service = DatasetService(db)
-    
+
     # Validate file type and size
     file_extension = os.path.splitext(file.filename)[1].lower()
     if file_extension not in settings.allowed_file_types:
@@ -91,7 +113,7 @@ async def upload_dataset(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported file type. Allowed: {', '.join(settings.allowed_file_types)}"
         )
-    
+
     file_content = await file.read()
     if len(file_content) > settings.max_upload_size:
         raise HTTPException(
@@ -101,11 +123,11 @@ async def upload_dataset(
 
     # Create datasets directory if it doesn't exist
     os.makedirs(settings.upload_directory, exist_ok=True)
-    
+
     # Generate a unique filename to prevent collisions
     unique_filename = f"{current_user.id}_{dataset_upload.name}_{os.urandom(8).hex()}{file_extension}"
     file_path = os.path.join(settings.upload_directory, unique_filename)
-    
+
     try:
         # Encrypt file content before saving if encryption is enabled
         if settings.compliance.enable_data_encryption:
@@ -129,7 +151,7 @@ async def upload_dataset(
             elif file_extension in [".xlsx", ".xls"]:
                 df = pd.read_excel(file_path)
             # Add other formats as needed
-            
+
             columns_info = {col: str(df[col].dtype) for col in df.columns}
             row_count = len(df)
         except Exception as e:
@@ -152,7 +174,7 @@ async def upload_dataset(
             source=dataset_upload.source,
             frequency=dataset_upload.frequency
         )
-        
+
         AuditLogger.log_event(
             db=db,
             user_id=current_user.id,
@@ -164,7 +186,7 @@ async def upload_dataset(
         )
         logger.info(f"Dataset uploaded and processed: {dataset.name} by user {current_user.username}")
         return DatasetResponse.from_orm(dataset)
-        
+
     except Exception as e:
         # Clean up file if dataset creation failed
         if os.path.exists(file_path):
@@ -185,17 +207,17 @@ async def get_datasets(
 ):
     """Get datasets for the current user or all datasets for admin."""
     dataset_service = DatasetService(db)
-    
+
     if has_permission("read_all_datasets")(current_user):
         query = db.query(Dataset).filter(Dataset.is_deleted == False)
     else:
         query = db.query(Dataset).filter(Dataset.owner_id == current_user.id, Dataset.is_deleted == False)
-    
+
     # Apply data retention policy to the query
     query = data_retention_manager.apply_retention_policy("datasets", query)
 
     datasets = query.offset(skip).limit(limit).all()
-    
+
     AuditLogger.log_event(
         db=db,
         user_id=current_user.id,
@@ -219,18 +241,18 @@ async def get_dataset(
     """Get dataset by ID."""
     dataset_service = DatasetService(db)
     dataset = dataset_service.get_dataset_by_id(dataset_id)
-    
+
     if not dataset or dataset.is_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found")
-    
+
     # Check permissions: owner or admin/read_all_datasets
     if not (dataset.owner_id == current_user.id or has_permission("read_all_datasets")(current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    
+
     dataset_response = DatasetResponse.from_orm(dataset)
     # Apply data masking to sensitive fields if any in DatasetResponse
     # For now, assuming no sensitive fields directly in DatasetResponse that need masking
-    
+
     AuditLogger.log_event(
         db=db,
         user_id=current_user.id,
@@ -255,14 +277,14 @@ async def update_dataset(
     """Update dataset information."""
     dataset_service = DatasetService(db)
     dataset = dataset_service.get_dataset_by_id(dataset_id)
-    
+
     if not dataset or dataset.is_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found")
-    
+
     # Check permissions: owner or admin/update_all_datasets
     if not (dataset.owner_id == current_user.id or has_permission("update_all_datasets")(current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    
+
     updated_dataset = dataset_service.update_dataset_record(
         dataset_id,
         name=dataset_update.name,
@@ -271,10 +293,10 @@ async def update_dataset(
         source=dataset_update.source,
         frequency=dataset_update.frequency
     )
-    
+
     if not updated_dataset:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update dataset")
-    
+
     AuditLogger.log_event(
         db=db,
         user_id=current_user.id,
@@ -299,18 +321,18 @@ async def delete_dataset(
     """Soft delete a dataset."""
     dataset_service = DatasetService(db)
     dataset = dataset_service.get_dataset_by_id(dataset_id)
-    
+
     if not dataset or dataset.is_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found")
-    
+
     # Check permissions: owner or admin/delete_all_datasets
     if not (dataset.owner_id == current_user.id or has_permission("delete_all_datasets")(current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    
+
     success = dataset_service.soft_delete_dataset(dataset_id, current_user.id)
     if not success:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete dataset")
-    
+
     # Optionally, delete the physical file if no longer needed and retention policy allows
     if os.path.exists(dataset.file_path):
         try:
@@ -345,23 +367,23 @@ async def get_dataset_statistics(
     """Get statistical information about dataset."""
     dataset_service = DatasetService(db)
     dataset = dataset_service.get_dataset_by_id(dataset_id)
-    
+
     if not dataset or dataset.is_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found")
-    
+
     # Check permissions
     if not (dataset.owner_id == current_user.id or has_permission("read_all_dataset_stats")(current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    
+
     # Load and decrypt data if necessary
     data = dataset_service.load_dataset_data(dataset.file_path, encryption_manager) # Pass encryption_manager
     if data is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load dataset data for statistics")
-    
+
     stats = dataset_service.calculate_dataset_statistics(data)
     if not stats:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to calculate dataset statistics")
-    
+
     AuditLogger.log_event(
         db=db,
         user_id=current_user.id,
@@ -388,22 +410,22 @@ async def preview_dataset(
     """Get a preview of dataset data."""
     dataset_service = DatasetService(db)
     dataset = dataset_service.get_dataset_by_id(dataset_id)
-    
+
     if not dataset or dataset.is_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found")
-    
+
     # Check permissions
     if not (dataset.owner_id == current_user.id or has_permission("read_all_dataset_preview")(current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    
+
     # Load and decrypt data if necessary
     data = dataset_service.load_dataset_data(dataset.file_path, encryption_manager) # Pass encryption_manager
     if data is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load dataset data")
-    
+
     # Return preview, apply data masking if configured
     preview_data = data.head(rows)
-    
+
     # Apply data masking to the preview data
     masked_records = []
     for record in preview_data.to_dict("records"):
@@ -439,19 +461,19 @@ async def download_dataset(
     """Download dataset in specified format."""
     dataset_service = DatasetService(db)
     dataset = dataset_service.get_dataset_by_id(dataset_id)
-    
+
     if not dataset or dataset.is_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found")
-    
+
     # Check permissions
     if not (dataset.owner_id == current_user.id or has_permission("download_all_datasets")(current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    
+
     # Load and decrypt data if necessary
     data = dataset_service.load_dataset_data(dataset.file_path, encryption_manager) # Pass encryption_manager
     if data is None:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load dataset data")
-    
+
     # Create temporary file for download
     with tempfile.NamedTemporaryFile(delete=False, suffix=f".{format}") as tmp_file:
         if format == "csv":
@@ -463,7 +485,7 @@ async def download_dataset(
         elif format == "parquet":
             data.to_parquet(tmp_file.name, index=False)
             media_type = "application/octet-stream"
-        
+
         from fastapi.responses import FileResponse
         AuditLogger.log_event(
             db=db,
@@ -479,6 +501,3 @@ async def download_dataset(
             media_type=media_type,
             filename=f"{dataset.name}.{format}"
         )
-
-
-

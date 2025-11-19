@@ -131,4 +131,3 @@ const LineChart = ({ data, title, height = 300 }) => {
 };
 
 export default LineChart;
-

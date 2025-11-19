@@ -636,9 +636,8 @@ WAF → ALB → Security Groups → EC2 Instances
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2024-06-24  
-**Next Review**: 2024-09-24  
-**Owner**: Infrastructure Team  
+**Document Version**: 1.0
+**Last Updated**: 2024-06-24
+**Next Review**: 2024-09-24
+**Owner**: Infrastructure Team
 **Approved By**: Chief Technology Officer
-

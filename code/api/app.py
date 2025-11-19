@@ -7,31 +7,52 @@ from contextlib import asynccontextmanager
 from typing import Any, Dict
 
 import structlog
-from fastapi import (Depends, FastAPI, HTTPException, Request, Response,
-                     WebSocket, WebSocketDisconnect)
-from fastapi.exception_handlers import (http_exception_handler,
-                                        request_validation_exception_handler)
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from prometheus_client import (CONTENT_TYPE_LATEST, Counter, Histogram,
-                               generate_latest)
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .auth_enhanced import AuditLogger, get_current_user, rate_limit
 from .config import Settings, get_settings  # Import Settings class
-from .database_enhanced import (AuditLog,  # Import new managers and AuditLog
-                                close_redis, get_consent_manager,
-                                get_data_masking_manager,
-                                get_data_retention_manager, get_db,
-                                get_encryption_manager, health_check, init_db)
-from .endpoints import (auth_enhanced, datasets_enhanced, financial,
-                        models_enhanced, monitoring_enhanced,
-                        notifications_enhanced, predictions_enhanced,
-                        users_enhanced, websocket_enhanced)
+from .database_enhanced import AuditLog  # Import new managers and AuditLog
+from .database_enhanced import (
+    close_redis,
+    get_consent_manager,
+    get_data_masking_manager,
+    get_data_retention_manager,
+    get_db,
+    get_encryption_manager,
+    health_check,
+    init_db,
+)
+from .endpoints import (
+    auth_enhanced,
+    datasets_enhanced,
+    financial,
+    models_enhanced,
+    monitoring_enhanced,
+    notifications_enhanced,
+    predictions_enhanced,
+    users_enhanced,
+    websocket_enhanced,
+)
 from .models_enhanced import User
 from .schemas_enhanced import ErrorResponse, HealthCheck, SystemMetricsResponse
 
@@ -78,59 +99,59 @@ WEBSOCKET_CONNECTIONS = Counter(
 
 class MetricsMiddleware(BaseHTTPMiddleware):
     """Middleware for collecting metrics"""
-    
+
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
-        
+
         # Process request
         response = await call_next(request)
-        
+
         # Record metrics
         duration = time.time() - start_time
         endpoint = request.url.path
         method = request.method
         status_code = response.status_code
-        
+
         REQUEST_COUNT.labels(
             method=method,
             endpoint=endpoint,
             status_code=status_code
         ).inc()
-        
+
         REQUEST_DURATION.labels(
             method=method,
             endpoint=endpoint
         ).observe(duration)
-        
+
         # Add response headers
         response.headers["X-Response-Time"] = str(duration)
-        
+
         return response
 
 
 class AuditMiddleware(BaseHTTPMiddleware):
     """Middleware for audit logging"""
-    
+
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
-        
+
         # Generate request ID
         request_id = f"req_{int(time.time() * 1000000)}"
         request.state.request_id = request_id
-        
+
         # Process request
         response = await call_next(request)
-        
+
         # Log audit event for sensitive operations if audit logging is enabled
         if settings.logging.enable_audit_logging and request.method in ["POST", "PUT", "DELETE", "PATCH"]:
             try:
                 # Get user if authenticated
                 user = getattr(request.state, "user", None)
                 user_id = user.id if user else None
-                
+
                 # Get database session
                 db = next(get_db())
-                
+
                 AuditLogger.log_event(
                     db=db,
                     user_id=user_id,
@@ -140,56 +161,56 @@ class AuditMiddleware(BaseHTTPMiddleware):
                     request=request,
                     status_code=response.status_code
                 )
-                
+
             except Exception as e:
                 # Catch specific database or logging errors if possible, but for now, keep it broad
                 # to ensure the main request flow is not interrupted by a logging failure.
                 logger.error("Failed to log audit event", error=str(e))
-        
+
         return response
 
 
 class WebSocketManager:
     """WebSocket connection manager"""
-    
+
     def __init__(self):
         self.active_connections: Dict[str, Dict[str, WebSocket]] = {}
         self.user_connections: Dict[int, list] = {}
-    
+
     async def connect(self, websocket: WebSocket, connection_id: str, user_id: int):
         """Accept a WebSocket connection"""
         await websocket.accept()
-        
+
         if connection_id not in self.active_connections:
             self.active_connections[connection_id] = {}
-        
+
         self.active_connections[connection_id][str(user_id)] = websocket
-        
+
         if user_id not in self.user_connections:
             self.user_connections[user_id] = []
         self.user_connections[user_id].append(connection_id)
-        
+
         WEBSOCKET_CONNECTIONS.labels(endpoint=connection_id).inc()
         logger.info("WebSocket connected", connection_id=connection_id, user_id=user_id)
-    
+
     def disconnect(self, connection_id: str, user_id: int):
         """Remove a WebSocket connection"""
         if connection_id in self.active_connections:
             if str(user_id) in self.active_connections[connection_id]:
                 del self.active_connections[connection_id][str(user_id)]
-                
+
                 if not self.active_connections[connection_id]:
                     del self.active_connections[connection_id]
-        
+
         if user_id in self.user_connections:
             if connection_id in self.user_connections[user_id]:
                 self.user_connections[user_id].remove(connection_id)
-                
+
                 if not self.user_connections[user_id]:
                     del self.user_connections[user_id]
-        
+
         logger.info("WebSocket disconnected", connection_id=connection_id, user_id=user_id)
-    
+
     async def send_personal_message(self, message: str, user_id: int):
         """Send a message to a specific user"""
         if user_id in self.user_connections:
@@ -203,7 +224,7 @@ class WebSocketManager:
                             # Catch specific WebSocket errors if possible
                             logger.error("Failed to send WebSocket message", error=str(e))
                             self.disconnect(connection_id, user_id)
-    
+
     async def broadcast(self, message: str, connection_id: str):
         """Broadcast a message to all connections in a specific endpoint"""
         if connection_id in self.active_connections:
@@ -227,21 +248,21 @@ async def lifespan(app: FastAPI):
     try:
         init_db()
         logger.info("Database initialized successfully")
-        
+
         # Initialize other services
         if settings.celery_broker_url:
             logger.info("Background tasks enabled")
-        
+
         # No specific setting for websockets, it's always enabled if the router is included
         logger.info("Quantis API started successfully")
-        
+
     except Exception as e:
         # Keep broad exception here as it's a critical startup failure
         logger.error("Failed to start Quantis API", error=str(e))
         raise
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down Quantis API...")
     try:
@@ -250,7 +271,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         # Keep broad exception here as it's a critical shutdown failure
         logger.error("Error during shutdown", error=str(e))
-    
+
     logger.info("Quantis API shutdown complete")
 
 
@@ -259,9 +280,9 @@ app = FastAPI(
     title="Quantis API",
     description="""
     ## Quantis Time Series Forecasting Platform API
-    
+
     A comprehensive API for quantitative trading and investment analytics with machine learning models.
-    
+
     ### Features
     - **Authentication**: JWT tokens and API keys
     - **Machine Learning**: Train and deploy ML models
@@ -269,21 +290,21 @@ app = FastAPI(
     - **Real-time Updates**: WebSocket support
     - **Background Tasks**: Asynchronous processing
     - **Monitoring**: Comprehensive metrics and health checks
-    
+
     ### Authentication
-    
+
     The API supports two authentication methods:
     1. **JWT Tokens**: Use the `/auth/login` endpoint to get access tokens
     2. **API Keys**: Include `X-API-Key` header with your API key
-    
+
     ### Rate Limiting
-    
+
     API endpoints are rate limited to ensure fair usage:
     - Default: 100 requests per minute
     - Authenticated users: Higher limits based on subscription
-    
+
     ### WebSocket Endpoints
-    
+
     Real-time updates are available via WebSocket connections:
     - `/ws/notifications`: Real-time notifications
     - `/ws/predictions`: Live prediction updates
@@ -411,18 +432,18 @@ async def websocket_notifications(websocket: WebSocket, user_id: int):
     try:
         # Authenticate user (simplified for WebSocket)
         # In production, you'd validate the user_id and check permissions
-        
+
         await websocket_manager.connect(websocket, "notifications", user_id)
-        
+
         try:
             while True:
                 # Keep connection alive and handle incoming messages
                 data = await websocket.receive_text()
                 message = json.loads(data)
-                
+
                 # Process incoming WebSocket messages (e.g., user actions, acknowledgements)
                 logger.info("Received WebSocket message", user_id=user_id, message=message)
-                
+
                 # Example: Echo message back or trigger some action
                 await websocket.send_text(f"Message received: {message.get('text', 'No text')}")
 

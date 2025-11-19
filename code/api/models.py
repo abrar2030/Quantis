@@ -9,9 +9,23 @@ from enum import Enum as PyEnum
 from typing import Any, Dict, List, Optional
 
 from passlib.context import CryptContext
-from sqlalchemy import (JSON, Boolean, CheckConstraint, Column, DateTime, Enum,
-                        Float, ForeignKey, Index, Integer, String, Table, Text,
-                        UniqueConstraint, event)
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Table,
+    Text,
+    UniqueConstraint,
+    event,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
@@ -130,14 +144,14 @@ class User(Base, AuditMixin, SoftDeleteMixin):
     last_login = Column(DateTime(timezone=True))
     login_attempts = Column(Integer, default=0, nullable=False)
     locked_until = Column(DateTime(timezone=True))
-    
+
     # Profile information
     first_name = Column(String(50))
     last_name = Column(String(50))
     phone_number = Column(String(20))
     timezone = Column(String(50), default="UTC")
     preferences = Column(JSON, default=dict)
-    
+
     # Relationships
     role = relationship("Role", back_populates="users") # Added relationship to Role
     api_keys = relationship("ApiKey", back_populates="user", cascade="all, delete-orphan")
@@ -146,7 +160,7 @@ class User(Base, AuditMixin, SoftDeleteMixin):
     predictions = relationship("Prediction", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     user_sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
-    
+
     # Indexes
     __table_args__ = (
         Index("idx_user_email_active", "email", "is_active"),
@@ -159,18 +173,18 @@ class User(Base, AuditMixin, SoftDeleteMixin):
     @staticmethod
     def hash_password(password: str) -> str:
         return pwd_context.hash(password)
-    
+
     def is_locked(self) -> bool:
         return self.locked_until and self.locked_until > datetime.utcnow()
-    
+
     def lock_account(self, duration_minutes: int = 15):
         self.locked_until = datetime.utcnow() + timedelta(minutes=duration_minutes)
         self.login_attempts = 0
-    
+
     def unlock_account(self):
         self.locked_until = None
         self.login_attempts = 0
-    
+
     @property
     def full_name(self) -> str:
         if self.first_name and self.last_name:
@@ -180,7 +194,7 @@ class User(Base, AuditMixin, SoftDeleteMixin):
 
 class UserSession(Base, AuditMixin):
     __tablename__ = "user_sessions"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     session_token = Column(String(255), unique=True, nullable=False)
@@ -190,10 +204,10 @@ class UserSession(Base, AuditMixin):
     ip_address = Column(String(45)) # Already exists
     user_agent = Column(String(500)) # Already exists
     last_activity = Column(DateTime(timezone=True), server_default=func.now()) # Already exists
-    
+
     # Relationships
     user = relationship("User", back_populates="user_sessions")
-    
+
     def is_expired(self) -> bool:
         return datetime.utcnow() > self.expires_at
 
@@ -224,7 +238,7 @@ class ApiKey(Base, AuditMixin, SoftDeleteMixin):
     @staticmethod
     def hash_key(key: str) -> str:
         return hashlib.sha256(key.encode()).hexdigest()
-    
+
     def is_expired(self) -> bool:
         return self.expires_at and datetime.utcnow() > self.expires_at
 
@@ -244,13 +258,13 @@ class Dataset(Base, AuditMixin, SoftDeleteMixin):
     row_count = Column(Integer)
     status = Column(Enum(DatasetStatus), default=DatasetStatus.UPLOADING, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
-    
+
     # Data quality metrics
     quality_score = Column(Float)
     missing_values_count = Column(Integer)
     duplicate_rows_count = Column(Integer)
     outliers_count = Column(Integer)
-    
+
     # Metadata
     tags = Column(JSON, default=list)
     source = Column(String(100))  # Source of the data
@@ -262,7 +276,7 @@ class Dataset(Base, AuditMixin, SoftDeleteMixin):
     owner = relationship("User", back_populates="datasets")
     models = relationship("Model", back_populates="dataset", cascade="all, delete-orphan")
     data_quality_reports = relationship("DataQualityReport", back_populates="dataset")
-    
+
     # Constraints
     __table_args__ = (
         Index("idx_dataset_owner_status", "owner_id", "status"),
@@ -282,29 +296,29 @@ class Model(Base, AuditMixin, SoftDeleteMixin):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False)
     parent_model_id = Column(Integer, ForeignKey("models.id"), nullable=True)  # For model versioning
-    
+
     # File storage
     file_path = Column(String(500))
     file_size = Column(Integer)
     file_hash = Column(String(64))
-    
+
     # Configuration
     hyperparameters = Column(JSON, default=dict)
     feature_columns = Column(JSON, default=list)
     target_column = Column(String(100))
-    
+
     # Training information
     training_config = Column(JSON, default=dict)
     training_duration_seconds = Column(Integer)
     training_samples = Column(Integer)
     validation_samples = Column(Integer)
     test_samples = Column(Integer)
-    
+
     # Performance metrics
     metrics = Column(JSON, default=dict)
     validation_score = Column(Float)
     test_score = Column(Float)
-    
+
     # Status and deployment
     status = Column(Enum(ModelStatus), default=ModelStatus.CREATED, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
@@ -312,7 +326,7 @@ class Model(Base, AuditMixin, SoftDeleteMixin):
     deployment_url = Column(String(500))
     trained_at = Column(DateTime(timezone=True))
     deployed_at = Column(DateTime(timezone=True))
-    
+
     # Metadata
     tags = Column(JSON, default=list)
     notes = Column(Text)
@@ -323,7 +337,7 @@ class Model(Base, AuditMixin, SoftDeleteMixin):
     predictions = relationship("Prediction", back_populates="model", cascade="all, delete-orphan")
     model_versions = relationship("Model", remote_side=[id])  # Self-referential for versioning
     experiments = relationship("Experiment", back_populates="model")
-    
+
     # Constraints
     __table_args__ = (
         Index("idx_model_owner_status", "owner_id", "status"),
@@ -339,26 +353,26 @@ class Prediction(Base, AuditMixin):
     uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     model_id = Column(Integer, ForeignKey("models.id"), nullable=False)
-    
+
     # Input and output data
     input_data = Column(JSON, nullable=False)
     prediction_result = Column(JSON, nullable=False)
-    
+
     # Prediction metadata
     confidence_score = Column(Float)
     prediction_interval = Column(JSON)  # Upper and lower bounds
     feature_importance = Column(JSON)
-    
+
     # Performance tracking
     execution_time_ms = Column(Integer)
     model_version = Column(String(20))
     api_version = Column(String(20))
-    
+
     # Feedback and validation
     actual_value = Column(Float)  # For backtesting
     feedback_score = Column(Float)  # User feedback
     is_validated = Column(Boolean, default=False)
-    
+
     # Metadata
     tags = Column(JSON, default=list)
     notes = Column(Text)
@@ -366,7 +380,7 @@ class Prediction(Base, AuditMixin):
     # Relationships
     user = relationship("User", back_populates="predictions")
     model = relationship("Model", back_populates="predictions")
-    
+
     # Indexes
     __table_args__ = (
         Index("idx_prediction_user_model", "user_id", "model_id"),
@@ -376,61 +390,61 @@ class Prediction(Base, AuditMixin):
 
 class Experiment(Base, AuditMixin):
     __tablename__ = "experiments"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
     name = Column(String(100), nullable=False)
     description = Column(Text)
     model_id = Column(Integer, ForeignKey("models.id"), nullable=False)
-    
+
     # Experiment configuration
     config = Column(JSON, default=dict)
     parameters = Column(JSON, default=dict)
-    
+
     # Results
     results = Column(JSON, default=dict)
     metrics = Column(JSON, default=dict)
     artifacts = Column(JSON, default=list)  # File paths to artifacts
-    
+
     # Status
     status = Column(String(20), default="created", nullable=False)
     started_at = Column(DateTime(timezone=True))
     completed_at = Column(DateTime(timezone=True))
-    
+
     # Relationships
     model = relationship("Model", back_populates="experiments")
 
 
 class Notification(Base, AuditMixin):
     __tablename__ = "notifications"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    
+
     # Notification content
     title = Column(String(200), nullable=False)
     message = Column(Text, nullable=False)
     notification_type = Column(Enum(NotificationType), nullable=False)
-    
+
     # Status
     is_read = Column(Boolean, default=False, nullable=False)
     is_sent = Column(Boolean, default=False, nullable=False)
     sent_at = Column(DateTime(timezone=True))
     read_at = Column(DateTime(timezone=True))
-    
+
     # Delivery information
     delivery_status = Column(String(50))
     delivery_error = Column(Text)
     retry_count = Column(Integer, default=0, nullable=False)
-    
+
     # Metadata
     priority = Column(String(20), default="normal")  # low, normal, high, urgent
     category = Column(String(50))  # model_training, data_processing, system_alert, etc.
     data = Column(JSON, default=dict)  # Additional notification data
-    
+
     # Relationships
     user = relationship("User", back_populates="notifications")
-    
+
     # Indexes
     __table_args__ = (
         Index("idx_notification_user_read", "user_id", "is_read"),
@@ -440,27 +454,27 @@ class Notification(Base, AuditMixin):
 
 class DataQualityReport(Base, AuditMixin):
     __tablename__ = "data_quality_reports"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False)
-    
+
     # Quality metrics
     completeness_score = Column(Float)  # Percentage of non-null values
     accuracy_score = Column(Float)  # Data accuracy assessment
     consistency_score = Column(Float)  # Data consistency assessment
     validity_score = Column(Float)  # Data validity assessment
     overall_score = Column(Float)  # Overall quality score
-    
+
     # Detailed analysis
     column_analysis = Column(JSON, default=dict)  # Per-column quality metrics
     outliers_analysis = Column(JSON, default=dict)  # Outlier detection results
     duplicates_analysis = Column(JSON, default=dict)  # Duplicate detection results
     missing_values_analysis = Column(JSON, default=dict)  # Missing values analysis
-    
+
     # Recommendations
     recommendations = Column(JSON, default=list)  # Data quality improvement recommendations
     issues_found = Column(JSON, default=list)  # List of issues found
-    
+
     # Relationships
     dataset = relationship("Dataset", back_populates="data_quality_reports")
 
@@ -559,7 +573,7 @@ def receive_before_update(mapper, connection, target):
 class Transaction(Base):
     """Transaction model for financial operations"""
     __tablename__ = "transactions"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     amount = Column(Numeric(precision=15, scale=2), nullable=False)
@@ -570,23 +584,23 @@ class Transaction(Base):
     risk_level = Column(String(20), default="low")
     risk_score = Column(Integer, default=0)
     compliance_flags = Column(JSON)
-    
+
     # Approval fields
     approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime(timezone=True), nullable=True)
     rejected_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     rejected_at = Column(DateTime(timezone=True), nullable=True)
     rejection_reason = Column(Text)
-    
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    
+
     # Relationships
     user = relationship("User", foreign_keys=[user_id], back_populates="transactions")
     approver = relationship("User", foreign_keys=[approved_by])
     rejecter = relationship("User", foreign_keys=[rejected_by])
-    
+
     # Indexes
     __table_args__ = (
         Index('idx_transaction_user_date', 'user_id', 'created_at'),
@@ -598,4 +612,3 @@ class Transaction(Base):
 
 # Add transactions relationship to User model
 User.transactions = relationship("Transaction", foreign_keys="Transaction.user_id", back_populates="user")
-

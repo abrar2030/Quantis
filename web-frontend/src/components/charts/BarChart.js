@@ -107,4 +107,3 @@ const BarChart = ({ data, title, height = 300, dataKey = 'value', nameKey = 'nam
 };
 
 export default BarChart;
-

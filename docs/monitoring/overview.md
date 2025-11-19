@@ -81,23 +81,23 @@ scrape_configs:
     scrape_interval: 5s
     static_configs:
       - targets: ['api:8000']
-    
+
   # Model service metrics
   - job_name: 'model_service'
     scrape_interval: 10s
     static_configs:
       - targets: ['model-service:8001']
-    
+
   # Database metrics
   - job_name: 'database'
     static_configs:
       - targets: ['db-exporter:9187']
-    
+
   # Node metrics (system-level)
   - job_name: 'node'
     static_configs:
       - targets: ['node-exporter:9100']
-    
+
   # Kubernetes metrics (if deployed on Kubernetes)
   - job_name: 'kubernetes'
     kubernetes_sd_configs:
@@ -408,11 +408,11 @@ class ModelMonitor:
         self.models_metadata = {}
         self.reference_data = {}
         self.current_data = {}
-        
+
         # Start Prometheus metrics server
         start_http_server(config.get('metrics_port', 8002))
         logger.info(f"Started metrics server on port {config.get('metrics_port', 8002)}")
-        
+
     def register_model(self, model_id, model_version, metadata=None):
         """Register a model for monitoring."""
         self.models_metadata[model_id] = {
@@ -421,7 +421,7 @@ class ModelMonitor:
             'metadata': metadata or {}
         }
         logger.info(f"Registered model {model_id} version {model_version} for monitoring")
-        
+
     def load_reference_data(self, model_id, data_path):
         """Load reference data for drift detection."""
         try:
@@ -431,89 +431,89 @@ class ModelMonitor:
         except Exception as e:
             logger.error(f"Error loading reference data for model {model_id}: {str(e)}")
             return False
-    
+
     def record_prediction(self, model_id, features, prediction, actual=None, latency=None):
         """Record a single prediction for monitoring."""
         model_version = self.models_metadata.get(model_id, {}).get('version', 'unknown')
-        
+
         # Update prediction counter
         PREDICTION_COUNT.labels(model_id=model_id, model_version=model_version).inc()
-        
+
         # Record prediction latency
         if latency is not None:
             PREDICTION_LATENCY.labels(model_id=model_id, model_version=model_version).observe(latency)
-        
+
         # Store features for drift detection
         if model_id not in self.current_data:
             self.current_data[model_id] = []
-        
+
         self.current_data[model_id].append(features)
-        
+
         # If we have actual values, calculate and record error metrics
         if actual is not None:
             error = abs(prediction - actual)
             percentage_error = abs(error / actual) if actual != 0 else float('inf')
             squared_error = error ** 2
-            
+
             PREDICTION_ERROR.labels(model_id=model_id, model_version=model_version, metric_type='mae').set(error)
             PREDICTION_ERROR.labels(model_id=model_id, model_version=model_version, metric_type='mape').set(percentage_error * 100)
             PREDICTION_ERROR.labels(model_id=model_id, model_version=model_version, metric_type='mse').set(squared_error)
-            
+
             logger.debug(f"Recorded prediction error for model {model_id}: MAE={error}, MAPE={percentage_error*100}%")
-    
+
     def record_batch_metrics(self, model_id, predictions, actuals, features_df):
         """Record metrics for a batch of predictions."""
         model_version = self.models_metadata.get(model_id, {}).get('version', 'unknown')
-        
+
         # Calculate error metrics
         errors = np.abs(np.array(predictions) - np.array(actuals))
         percentage_errors = np.abs(errors / np.array(actuals))
         squared_errors = errors ** 2
-        
+
         mae = np.mean(errors)
         mape = np.mean(percentage_errors) * 100
         rmse = np.sqrt(np.mean(squared_errors))
-        
+
         # Record metrics
         PREDICTION_ERROR.labels(model_id=model_id, model_version=model_version, metric_type='mae').set(mae)
         PREDICTION_ERROR.labels(model_id=model_id, model_version=model_version, metric_type='mape').set(mape)
         PREDICTION_ERROR.labels(model_id=model_id, model_version=model_version, metric_type='rmse').set(rmse)
-        
+
         # Update current data for drift detection
         if model_id not in self.current_data:
             self.current_data[model_id] = []
-        
+
         self.current_data[model_id].extend(features_df.to_dict('records'))
-        
+
         logger.info(f"Recorded batch metrics for model {model_id}: MAE={mae}, MAPE={mape}%, RMSE={rmse}")
-    
+
     def record_feature_importance(self, model_id, feature_importance_dict):
         """Record feature importance scores."""
         model_version = self.models_metadata.get(model_id, {}).get('version', 'unknown')
-        
+
         for feature_name, importance in feature_importance_dict.items():
             FEATURE_IMPORTANCE.labels(
-                model_id=model_id, 
+                model_id=model_id,
                 model_version=model_version,
                 feature_name=feature_name
             ).set(importance)
-        
+
         logger.info(f"Recorded feature importance for model {model_id}")
-    
+
     def detect_drift(self, model_id, method='ks', threshold=0.05):
         """Detect data drift between reference and current data."""
         if model_id not in self.reference_data or model_id not in self.current_data:
             logger.warning(f"Cannot detect drift for model {model_id}: missing reference or current data")
             return False
-        
+
         model_version = self.models_metadata.get(model_id, {}).get('version', 'unknown')
-        
+
         # Convert current data list to DataFrame
         current_df = pd.DataFrame(self.current_data[model_id])
         reference_df = self.reference_data[model_id]
-        
+
         drift_detected = False
-        
+
         # Check each numerical feature for drift
         for feature in reference_df.select_dtypes(include=['number']).columns:
             if feature in current_df.columns:
@@ -526,42 +526,42 @@ class ModelMonitor:
                     # Jensen-Shannon divergence (simplified implementation)
                     from scipy.spatial.distance import jensenshannon
                     from numpy import histogram
-                    
+
                     # Create histograms with same bins
                     min_val = min(reference_df[feature].min(), current_df[feature].min())
                     max_val = max(reference_df[feature].max(), current_df[feature].max())
                     bins = np.linspace(min_val, max_val, 20)
-                    
+
                     ref_hist, _ = histogram(reference_df[feature].dropna(), bins=bins, density=True)
                     cur_hist, _ = histogram(current_df[feature].dropna(), bins=bins, density=True)
-                    
+
                     # Add small epsilon to avoid division by zero
                     ref_hist = ref_hist + 1e-10
                     cur_hist = cur_hist + 1e-10
-                    
+
                     # Normalize
                     ref_hist = ref_hist / ref_hist.sum()
                     cur_hist = cur_hist / cur_hist.sum()
-                    
+
                     drift_score = jensenshannon(ref_hist, cur_hist)
                 else:
                     logger.warning(f"Unknown drift detection method: {method}")
                     continue
-                
+
                 # Record drift score
                 DRIFT_SCORE.labels(
                     model_id=model_id,
                     model_version=model_version,
                     feature_name=feature
                 ).set(drift_score)
-                
+
                 # Check if drift exceeds threshold
                 if drift_score > threshold:
                     drift_detected = True
                     logger.warning(f"Drift detected for model {model_id}, feature {feature}: score={drift_score}")
-        
+
         return drift_detected
-    
+
     def run_monitoring_cycle(self):
         """Run a complete monitoring cycle for all registered models."""
         for model_id in self.models_metadata:
@@ -569,25 +569,25 @@ class ModelMonitor:
                 # Detect drift if we have enough data
                 if model_id in self.current_data and len(self.current_data[model_id]) >= self.config.get('min_samples_for_drift', 100):
                     drift_detected = self.detect_drift(
-                        model_id, 
+                        model_id,
                         method=self.config.get('drift_method', 'ks'),
                         threshold=self.config.get('drift_threshold', 0.05)
                     )
-                    
+
                     if drift_detected and self.config.get('alert_on_drift', True):
                         self._send_alert(
                             model_id=model_id,
                             alert_type='drift',
                             message=f"Data drift detected for model {model_id}"
                         )
-                
+
                 # Check performance if we have a performance endpoint configured
                 if self.config.get('performance_endpoint'):
                     self._fetch_and_record_performance(model_id)
-            
+
             except Exception as e:
                 logger.error(f"Error in monitoring cycle for model {model_id}: {str(e)}")
-    
+
     def _fetch_and_record_performance(self, model_id):
         """Fetch performance metrics from API and record them."""
         try:
@@ -595,10 +595,10 @@ class ModelMonitor:
                 f"{self.config['performance_endpoint']}/models/{model_id}/performance",
                 headers=self.config.get('api_headers', {})
             )
-            
+
             if response.status_code == 200:
                 performance = response.json()
-                
+
                 # Record performance metrics
                 for metric_type, value in performance.get('metrics', {}).items():
                     PREDICTION_ERROR.labels(
@@ -606,18 +606,18 @@ class ModelMonitor:
                         model_version=self.models_metadata[model_id]['version'],
                         metric_type=metric_type
                     ).set(value)
-                
+
                 # Record feature importance if available
                 if 'feature_importance' in performance:
                     self.record_feature_importance(model_id, performance['feature_importance'])
-                
+
                 logger.info(f"Recorded performance metrics for model {model_id}")
             else:
                 logger.warning(f"Failed to fetch performance for model {model_id}: {response.status_code}")
-        
+
         except Exception as e:
             logger.error(f"Error fetching performance for model {model_id}: {str(e)}")
-    
+
     def _send_alert(self, model_id, alert_type, message):
         """Send an alert through configured channels."""
         if 'alert_webhook' in self.config:
@@ -629,19 +629,19 @@ class ModelMonitor:
                     'message': message,
                     'timestamp': datetime.now().isoformat()
                 }
-                
+
                 response = requests.post(
                     self.config['alert_webhook'],
                     json=alert_data,
                     headers=self.config.get('webhook_headers', {})
                 )
-                
+
                 if response.status_code < 200 or response.status_code >= 300:
                     logger.warning(f"Alert webhook returned non-success status: {response.status_code}")
-            
+
             except Exception as e:
                 logger.error(f"Error sending alert to webhook: {str(e)}")
-        
+
         logger.warning(f"ALERT: {message}")
 
 
@@ -657,15 +657,15 @@ if __name__ == "__main__":
         'performance_endpoint': 'http://api:8000/api',
         'monitoring_interval': 300  # seconds
     }
-    
+
     monitor = ModelMonitor(config)
-    
+
     # Register models
     monitor.register_model('tft-sales', '1.0.0', {'description': 'TFT model for sales forecasting'})
-    
+
     # Load reference data
     monitor.load_reference_data('tft-sales', 'data/reference/sales_reference.csv')
-    
+
     # Main monitoring loop
     try:
         while True:

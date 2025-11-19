@@ -81,19 +81,19 @@ async def get_system_health(
         database_status = "healthy"
     except Exception:
         database_status = "unhealthy"
-    
+
     # Get system metrics
     disk_usage = psutil.disk_usage('/')
     memory = psutil.virtual_memory()
     cpu_percent = psutil.cpu_percent(interval=1)
-    
+
     # Determine overall status
     overall_status = "healthy"
     if database_status == "unhealthy" or memory.percent > 90 or disk_usage.percent > 90:
         overall_status = "unhealthy"
     elif memory.percent > 80 or disk_usage.percent > 80 or cpu_percent > 80:
         overall_status = "warning"
-    
+
     return SystemHealth(
         status=overall_status,
         timestamp=datetime.utcnow().isoformat(),
@@ -123,29 +123,29 @@ async def get_system_statistics(
     """Get system usage statistics."""
     # Count totals
     total_users = db.query(models.User).filter(models.User.is_active == True).count()
-    
+
     # Active users (logged in within last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     active_users = db.query(models.User).filter(
         models.User.is_active == True,
         models.User.last_login >= thirty_days_ago
     ).count()
-    
+
     total_datasets = db.query(models.Dataset).filter(Dataset.is_active == True).count()
     total_models = db.query(models.Model).filter(Model.is_active == True).count()
     trained_models = db.query(models.Model).filter(
         Model.is_active == True,
         Model.status == "trained"
     ).count()
-    
+
     total_predictions = db.query(models.Prediction).count()
-    
+
     # Predictions in last 24 hours
     twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
     predictions_last_24h = db.query(models.Prediction).filter(
         Prediction.created_at >= twenty_four_hours_ago
     ).count()
-    
+
     return SystemStats(
         total_users=total_users,
         active_users=active_users,
@@ -170,7 +170,7 @@ async def get_audit_logs(
 ):
     """Get audit logs (admin only)."""
     query = db.query(AuditLog)
-    
+
     # Apply filters
     if action:
         query = query.filter(AuditLog.action == action)
@@ -178,21 +178,21 @@ async def get_audit_logs(
         query = query.filter(AuditLog.resource_type == resource_type)
     if user_id:
         query = query.filter(AuditLog.user_id == user_id)
-    
+
     # Get logs with user information
     logs = query.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit).all()
-    
+
     # Get usernames
     importservices.user_service import UserService
     user_service = UserService(db)
-    
+
     result = []
     for log in logs:
         username = None
         if log.user_id:
             user = user_service.get_user_by_id(log.user_id)
             username = user.username if user else "Unknown"
-        
+
         result.append(AuditLogEntry(
             id=log.id,
             user_id=log.user_id,
@@ -204,7 +204,7 @@ async def get_audit_logs(
             ip_address=log.ip_address,
             created_at=log.created_at.isoformat()
         ))
-    
+
     return result
 
 
@@ -225,10 +225,10 @@ async def create_audit_log(
         resource_id=resource_id,
         details=details
     )
-    
+
     db.add(audit_log)
     db.commit()
-    
+
     return {"message": "Audit log created successfully"}
 
 
@@ -244,17 +244,17 @@ async def get_system_metrics(
 ):
     """Get system metrics."""
     query = db.query(SystemMetrics)
-    
+
     # Filter by time range
     time_threshold = datetime.utcnow() - timedelta(hours=hours)
     query = query.filter(SystemMetrics.created_at >= time_threshold)
-    
+
     # Filter by metric name if provided
     if metric_name:
         query = query.filter(SystemMetrics.metric_name == metric_name)
-    
+
     metrics = query.order_by(SystemMetrics.created_at.desc()).offset(skip).limit(limit).all()
-    
+
     return [
         MetricEntry(
             id=metric.id,
@@ -284,10 +284,10 @@ async def record_metric(
         metric_unit=metric_unit,
         tags=tags
     )
-    
+
     db.add(metric)
     db.commit()
-    
+
     return {"message": "Metric recorded successfully"}
 
 
@@ -300,7 +300,7 @@ async def get_prediction_analytics(
 ):
     """Get prediction analytics over time."""
     time_threshold = datetime.utcnow() - timedelta(days=days)
-    
+
     # Daily prediction counts
     daily_counts = db.query(
         func.date(Prediction.created_at).label('date'),
@@ -310,7 +310,7 @@ async def get_prediction_analytics(
     ).group_by(
         func.date(Prediction.created_at)
     ).all()
-    
+
     # Average confidence by day
     daily_confidence = db.query(
         func.date(Prediction.created_at).label('date'),
@@ -321,7 +321,7 @@ async def get_prediction_analytics(
     ).group_by(
         func.date(Prediction.created_at)
     ).all()
-    
+
     # Average execution time by day
     daily_execution_time = db.query(
         func.date(Prediction.created_at).label('date'),
@@ -332,7 +332,7 @@ async def get_prediction_analytics(
     ).group_by(
         func.date(Prediction.created_at)
     ).all()
-    
+
     return {
         "daily_prediction_counts": [
             {"date": str(row.date), "count": row.count}
@@ -362,7 +362,7 @@ async def get_model_analytics(
     ).filter(
         Model.is_active == True
     ).group_by(Model.model_type).all()
-    
+
     # Model status distribution
     model_status = db.query(
         Model.status,
@@ -370,7 +370,7 @@ async def get_model_analytics(
     ).filter(
         Model.is_active == True
     ).group_by(Model.status).all()
-    
+
     # Most used models (by prediction count)
     popular_models = db.query(
         Model.id,
@@ -385,7 +385,7 @@ async def get_model_analytics(
     ).order_by(
         func.count(Prediction.id).desc()
     ).limit(10).all()
-    
+
     return {
         "model_type_distribution": [
             {"model_type": row.model_type, "count": row.count}
@@ -415,20 +415,19 @@ async def cleanup_system(
 ):
     """Clean up old system data."""
     cutoff_date = datetime.utcnow() - timedelta(days=days_old)
-    
+
     # Clean up old audit logs
     old_audit_logs = db.query(AuditLog).filter(AuditLog.created_at < cutoff_date).count()
     db.query(AuditLog).filter(AuditLog.created_at < cutoff_date).delete()
-    
+
     # Clean up old system metrics
     old_metrics = db.query(SystemMetrics).filter(SystemMetrics.created_at < cutoff_date).count()
     db.query(SystemMetrics).filter(SystemMetrics.created_at < cutoff_date).delete()
-    
+
     db.commit()
-    
+
     return {
         "message": "System cleanup completed",
         "audit_logs_deleted": old_audit_logs,
         "metrics_deleted": old_metrics
     }
-

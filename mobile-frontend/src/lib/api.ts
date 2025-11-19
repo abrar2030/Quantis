@@ -18,13 +18,13 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
     const apiKey = localStorage.getItem('apiKey');
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else if (apiKey) {
       config.headers['X-API-Key'] = apiKey;
     }
-    
+
     return config;
   },
   (error) => {
@@ -55,22 +55,22 @@ export const authAPI = {
     const response = await apiClient.post('/auth/login', credentials);
     return response.data;
   },
-  
+
   register: async (userData: any) => {
     const response = await apiClient.post('/auth/register', userData);
     return response.data;
   },
-  
+
   logout: async () => {
     const response = await apiClient.post('/auth/logout');
     return response.data;
   },
-  
+
   refreshToken: async () => {
     const response = await apiClient.post('/auth/refresh');
     return response.data;
   },
-  
+
   getCurrentUser: async () => {
     const response = await apiClient.get('/auth/me');
     return response.data;
@@ -83,32 +83,32 @@ export const usersAPI = {
     const response = await apiClient.get('/users', { params });
     return response.data;
   },
-  
+
   getUser: async (userId: string) => {
     const response = await apiClient.get(`/users/${userId}`);
     return response.data;
   },
-  
+
   updateUser: async (userId: string, userData: any) => {
     const response = await apiClient.put(`/users/${userId}`, userData);
     return response.data;
   },
-  
+
   deleteUser: async (userId: string) => {
     const response = await apiClient.delete(`/users/${userId}`);
     return response.data;
   },
-  
+
   createApiKey: async (keyData: any) => {
     const response = await apiClient.post('/users/api-keys', keyData);
     return response.data;
   },
-  
+
   getApiKeys: async () => {
     const response = await apiClient.get('/users/api-keys');
     return response.data;
   },
-  
+
   revokeApiKey: async (keyId: string) => {
     const response = await apiClient.delete(`/users/api-keys/${keyId}`);
     return response.data;
@@ -121,12 +121,12 @@ export const datasetsAPI = {
     const response = await apiClient.get('/datasets', { params });
     return response.data;
   },
-  
+
   getDataset: async (datasetId: string) => {
     const response = await apiClient.get(`/datasets/${datasetId}`);
     return response.data;
   },
-  
+
   uploadDataset: async (formData: FormData, onUploadProgress: any) => {
     const response = await apiClient.post('/datasets/upload', formData, {
       headers: {
@@ -136,17 +136,17 @@ export const datasetsAPI = {
     });
     return response.data;
   },
-  
+
   updateDataset: async (datasetId: string, datasetData: any) => {
     const response = await apiClient.put(`/datasets/${datasetId}`, datasetData);
     return response.data;
   },
-  
+
   deleteDataset: async (datasetId: string) => {
     const response = await apiClient.delete(`/datasets/${datasetId}`);
     return response.data;
   },
-  
+
   getDatasetPreview: async (datasetId: string, rows = 10) => {
     const response = await apiClient.get(`/datasets/${datasetId}/preview`, {
       params: { rows },
@@ -161,32 +161,32 @@ export const modelsAPI = {
     const response = await apiClient.get('/models', { params });
     return response.data;
   },
-  
+
   getModel: async (modelId: string) => {
     const response = await apiClient.get(`/models/${modelId}`);
     return response.data;
   },
-  
+
   createModel: async (modelData: any) => {
     const response = await apiClient.post('/models', modelData);
     return response.data;
   },
-  
+
   updateModel: async (modelId: string, modelData: any) => {
     const response = await apiClient.put(`/models/${modelId}`, modelData);
     return response.data;
   },
-  
+
   deleteModel: async (modelId: string) => {
     const response = await apiClient.delete(`/models/${modelId}`);
     return response.data;
   },
-  
+
   trainModel: async (modelId: string) => {
     const response = await apiClient.post(`/models/${modelId}/train`);
     return response.data;
   },
-  
+
   getModelMetrics: async (modelId: string) => {
     const response = await apiClient.get(`/models/${modelId}/metrics`);
     return response.data;
@@ -199,22 +199,22 @@ export const predictionsAPI = {
     const response = await apiClient.get('/predictions', { params });
     return response.data;
   },
-  
+
   getPrediction: async (predictionId: string) => {
     const response = await apiClient.get(`/predictions/${predictionId}`);
     return response.data;
   },
-  
+
   createPrediction: async (predictionData: any) => {
     const response = await apiClient.post('/predictions', predictionData);
     return response.data;
   },
-  
+
   batchPredict: async (batchData: any) => {
     const response = await apiClient.post('/predictions/batch', batchData);
     return response.data;
   },
-  
+
   getPredictionStats: async (params: any = {}) => {
     const response = await apiClient.get('/predictions/stats', { params });
     return response.data;
@@ -227,22 +227,22 @@ export const monitoringAPI = {
     const response = await apiClient.get('/health');
     return response.data;
   },
-  
+
   getMetrics: async () => {
     const response = await apiClient.get('/metrics');
     return response.data;
   },
-  
+
   getSystemMetrics: async () => {
     const response = await apiClient.get('/monitoring/system');
     return response.data;
   },
-  
+
   getDatabaseMetrics: async () => {
     const response = await apiClient.get('/monitoring/database');
     return response.data;
   },
-  
+
   getPerformanceSummary: async (hours = 24) => {
     const response = await apiClient.get('/monitoring/performance', {
       params: { hours },
@@ -257,22 +257,22 @@ export const notificationsAPI = {
     const response = await apiClient.get('/notifications', { params });
     return response.data;
   },
-  
+
   markAsRead: async (notificationId: string) => {
     const response = await apiClient.put(`/notifications/${notificationId}/read`);
     return response.data;
   },
-  
+
   markAllAsRead: async () => {
     const response = await apiClient.put('/notifications/read-all');
     return response.data;
   },
-  
+
   deleteNotification: async (notificationId: string) => {
     const response = await apiClient.delete(`/notifications/${notificationId}`);
     return response.data;
   },
-  
+
   getNotificationStats: async () => {
     const response = await apiClient.get('/notifications/stats');
     return response.data;
@@ -326,4 +326,3 @@ export const isAuthenticated = () => {
 };
 
 export default apiClient;
-

@@ -244,7 +244,7 @@ class FeatureStore:
     def __init__(self, config):
         self.config = config
         self.features = {}
-        
+
     def add_feature(self, feature_name, feature_type, params):
         """Add a feature definition to the store."""
         self.features[feature_name] = {
@@ -252,15 +252,15 @@ class FeatureStore:
             "params": params,
             "created_at": datetime.now().isoformat()
         }
-        
+
     def generate_features(self, df):
         """Generate all registered features for a dataframe."""
         result = df.copy()
-        
+
         for feature_name, feature_config in self.features.items():
             if feature_config["type"] == "lag":
                 result = self._create_lag_feature(
-                    result, 
+                    result,
                     feature_config["params"]["column"],
                     feature_config["params"]["lag_periods"],
                     feature_name
@@ -274,14 +274,14 @@ class FeatureStore:
                     feature_name
                 )
             # Additional feature types...
-            
+
         return result
-    
+
     def _create_lag_feature(self, df, column, lag_periods, feature_name):
         """Create lag features for a column."""
         df[feature_name] = df[column].shift(lag_periods)
         return df
-    
+
     def _create_rolling_feature(self, df, column, window, function, feature_name):
         """Create rolling window features for a column."""
         if function == "mean":
@@ -289,7 +289,7 @@ class FeatureStore:
         elif function == "std":
             df[feature_name] = df[column].rolling(window=window).std()
         # Additional functions...
-        
+
         return df
 ```
 
@@ -353,48 +353,48 @@ class DataProcessor:
     def __init__(self, config):
         self.config = config
         self.feature_store = FeatureStore(config.get("feature_store", {}))
-        
+
     def run_pipeline(self, input_path, output_path):
         """Run the complete data processing pipeline."""
         logger.info(f"Starting data processing pipeline for {input_path}")
-        
+
         # Step 1: Load data
         df = self.load_data(input_path)
         logger.info(f"Loaded data with shape {df.shape}")
-        
+
         # Step 2: Validate data
         validation_result = self.validate_data(df)
         if validation_result["validation_status"] == "ERROR":
             logger.error("Data validation failed")
             return validation_result
-        
+
         # Step 3: Clean data
         df = self.clean_data(df)
         logger.info(f"Data cleaned, new shape {df.shape}")
-        
+
         # Step 4: Generate features
         df = self.generate_features(df)
         logger.info(f"Features generated, final shape {df.shape}")
-        
+
         # Step 5: Transform data
         df = self.transform_data(df)
         logger.info("Data transformation completed")
-        
+
         # Step 6: Save processed data
         self.save_data(df, output_path)
         logger.info(f"Processed data saved to {output_path}")
-        
+
         return {
             "status": "success",
             "rows_processed": len(df),
             "features_created": len(df.columns) - len(self.config["feature_columns"]) - 2,
             "output_path": output_path
         }
-    
+
     def load_data(self, input_path):
         """Load data from the specified source."""
         source_type = self.config["source_type"]
-        
+
         if source_type == "csv":
             return pd.read_csv(input_path, parse_dates=[self.config["timestamp_column"]])
         elif source_type == "excel":
@@ -402,12 +402,12 @@ class DataProcessor:
         elif source_type == "json":
             return pd.read_json(input_path, convert_dates=[self.config["timestamp_column"]])
         # Additional source types...
-    
+
     def validate_data(self, df):
         """Validate the input data."""
         # Implementation of validation logic
         # ...
-        
+
     def clean_data(self, df):
         """Clean the data by handling missing values and outliers."""
         # Handle missing values
@@ -429,7 +429,7 @@ class DataProcessor:
                     df[column] = df[column].fillna(df[column].mode()[0])
                 elif strategy == "zero":
                     df[column] = df[column].fillna(0)
-        
+
         # Handle outliers
         outlier_config = self.config.get("outlier_config", {})
         if outlier_config:
@@ -441,22 +441,22 @@ class DataProcessor:
                         IQR = Q3 - Q1
                         lower_bound = Q1 - outlier_config["threshold"] * IQR
                         upper_bound = Q3 + outlier_config["threshold"] * IQR
-                        
+
                         if outlier_config["handling_strategy"] == "removal":
                             df = df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
                         elif outlier_config["handling_strategy"] == "capping":
                             df[column] = np.where(df[column] < lower_bound, lower_bound, df[column])
                             df[column] = np.where(df[column] > upper_bound, upper_bound, df[column])
                         # Additional handling strategies...
-        
+
         return df
-    
+
     def generate_features(self, df):
         """Generate features for the dataset."""
         # Set timestamp as index if not already
         if not isinstance(df.index, pd.DatetimeIndex):
             df = df.set_index(self.config["timestamp_column"])
-        
+
         # Generate temporal features
         if self.config.get("generate_temporal_features", True):
             df['hour'] = df.index.hour
@@ -466,15 +466,15 @@ class DataProcessor:
             df['quarter'] = df.index.quarter
             df['year'] = df.index.year
             df['is_weekend'] = df['day_of_week'].isin([5, 6]).astype(int)
-        
+
         # Generate features from feature store
         df = self.feature_store.generate_features(df)
-        
+
         # Reset index to get timestamp as column again
         df = df.reset_index()
-        
+
         return df
-    
+
     def transform_data(self, df):
         """Apply transformations to prepare data for modeling."""
         # Scaling numerical features
@@ -490,7 +490,7 @@ class DataProcessor:
                     std = df[column].std()
                     df[column] = (df[column] - mean) / std
                 # Additional scaling methods...
-        
+
         # Encoding categorical features
         encoding_config = self.config.get("encoding", {})
         for column, method in encoding_config.items():
@@ -501,13 +501,13 @@ class DataProcessor:
                 elif method == "label":
                     df[column] = df[column].astype('category').cat.codes
                 # Additional encoding methods...
-        
+
         return df
-    
+
     def save_data(self, df, output_path):
         """Save the processed data to the specified location."""
         output_format = self.config.get("output_format", "csv")
-        
+
         if output_format == "csv":
             df.to_csv(output_path, index=False)
         elif output_format == "parquet":
@@ -552,13 +552,13 @@ if __name__ == "__main__":
             "storage_path": "data/features/store"
         }
     }
-    
+
     processor = DataProcessor(config)
     result = processor.run_pipeline(
         input_path="data/raw/sales_data.csv",
         output_path="data/processed/sales_data_processed.csv"
     )
-    
+
     print(result)
 ```
 

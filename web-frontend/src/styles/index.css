@@ -64,7 +64,7 @@ code {
   .mobile-only {
     display: block;
   }
-  
+
   .desktop-only {
     display: none;
   }

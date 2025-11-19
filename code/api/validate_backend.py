@@ -37,8 +37,7 @@ def test_imports():
         logger.info("✓ Enhanced database models imported successfully")
 
         # Test schemas
-        from schemas_enhanced import (DatasetCreate, Token, UserCreate,
-                                      UserResponse)
+        from schemas_enhanced import DatasetCreate, Token, UserCreate, UserResponse
 
         logger.info("✓ Enhanced Pydantic schemas imported successfully")
 
@@ -157,8 +156,14 @@ def test_data_models():
 
     try:
         from database_enhanced import SessionLocal
-        from models_enhanced import (Dataset, Model, ModelStatus, ModelType,
-                                     User, UserRole)
+        from models_enhanced import (
+            Dataset,
+            Model,
+            ModelStatus,
+            ModelType,
+            User,
+            UserRole,
+        )
 
         db = SessionLocal()
         try:
@@ -248,8 +253,12 @@ def test_pydantic_schemas():
     logger.info("Testing Pydantic schemas...")
 
     try:
-        from schemas_enhanced import (DatasetCreate, ModelCreate, UserCreate,
-                                      UserResponse)
+        from schemas_enhanced import (
+            DatasetCreate,
+            ModelCreate,
+            UserCreate,
+            UserResponse,
+        )
 
         # Test user creation schema
         user_data = {

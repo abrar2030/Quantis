@@ -18,7 +18,7 @@ The TFT architecture consists of several key components:
 
 1. **Variable Selection Networks**: Identify relevant input features at each time step
 2. **Gated Residual Networks (GRNs)**: Enable efficient information flow with skip connections
-3. **Temporal Processing Layers**: 
+3. **Temporal Processing Layers**:
    - LSTM layers for local processing
    - Self-attention layers for long-range dependencies
 4. **Multi-head Attention Mechanism**: Captures different temporal patterns simultaneously
@@ -215,18 +215,18 @@ class CustomForecaster(BaseModel):
         super().__init__()
         self.params = params
         # Initialize model components
-        
+
     def fit(self, training_data, validation_data=None):
         # Implement training logic
         return self
-        
+
     def predict(self, data, prediction_length):
         # Implement prediction logic
         return forecasts
-        
+
     def save(self, path):
         # Save model artifacts
-        
+
     @classmethod
     def load(cls, path):
         # Load model from artifacts
@@ -239,7 +239,7 @@ class CustomForecaster(BaseModel):
 
 Guidelines for selecting the appropriate model:
 
-1. **Data Volume**: 
+1. **Data Volume**:
    - Small datasets: Statistical models (ARIMA, ETS)
    - Large datasets: Deep learning models (TFT, DeepAR)
 

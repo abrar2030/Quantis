@@ -203,7 +203,7 @@ resource "aws_route_table_association" "database" {
 resource "aws_vpc_endpoint" "s3" {
   vpc_id       = aws_vpc.main.id
   service_name = "com.amazonaws.${data.aws_region.current.name}.s3"
-  
+
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-s3-endpoint"
     Environment = var.environment
@@ -215,7 +215,7 @@ resource "aws_vpc_endpoint" "s3" {
 resource "aws_vpc_endpoint" "dynamodb" {
   vpc_id       = aws_vpc.main.id
   service_name = "com.amazonaws.${data.aws_region.current.name}.dynamodb"
-  
+
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-dynamodb-endpoint"
     Environment = var.environment
@@ -231,7 +231,7 @@ resource "aws_vpc_endpoint" "ec2" {
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -262,7 +262,7 @@ resource "aws_vpc_endpoint" "ssm" {
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  
+
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-ssm-endpoint"
     Environment = var.environment
@@ -277,7 +277,7 @@ resource "aws_vpc_endpoint" "ssm_messages" {
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  
+
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-ssm-messages-endpoint"
     Environment = var.environment
@@ -292,7 +292,7 @@ resource "aws_vpc_endpoint" "ec2_messages" {
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  
+
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-ec2-messages-endpoint"
     Environment = var.environment
@@ -307,7 +307,7 @@ resource "aws_vpc_endpoint" "logs" {
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  
+
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-logs-endpoint"
     Environment = var.environment
@@ -322,7 +322,7 @@ resource "aws_vpc_endpoint" "monitoring" {
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
-  
+
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-monitoring-endpoint"
     Environment = var.environment
@@ -725,4 +725,3 @@ resource "aws_dx_gateway" "main" {
     Compliance  = "financial-grade"
   })
 }
-

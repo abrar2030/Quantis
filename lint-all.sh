@@ -282,11 +282,11 @@ if [ "$YAMLLINT_AVAILABLE" = true ]; then
   echo "yamllint completed."
 else
   echo "Skipping yamllint (not installed)."
-  
+
   # 3.2 Basic YAML validation using Python
   echo "Performing basic YAML validation using Python..."
   pip3 install --upgrade pyyaml
-  
+
   YAML_FILES_TO_VALIDATE=()
   for dir in "${YAML_DIRECTORIES[@]}"; do
     if [ -d "$dir" ]; then

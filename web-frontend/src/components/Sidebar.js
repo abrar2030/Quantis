@@ -210,9 +210,9 @@ const Sidebar = ({ open, onClose }) => {
           menuItems.filter(item => item.section === 'main'),
           null
         )}
-        
+
         <Divider sx={{ my: 1, mx: 2 }} />
-        
+
         {renderMenuSection(
           menuItems.filter(item => item.section === 'management'),
           'Management'
@@ -272,4 +272,3 @@ const Sidebar = ({ open, onClose }) => {
 };
 
 export default Sidebar;
-

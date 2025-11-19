@@ -1,5 +1,6 @@
 import pytest
 from api.app import app
+
 # import torch # F401: Unused import
 from fastapi.testclient import TestClient
 from models.train_model import TemporalFusionTransformer
