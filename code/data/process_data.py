@@ -1,7 +1,8 @@
 import dask.dataframe as dd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
+from sklearn.preprocessing import (OneHotEncoder, PolynomialFeatures,
+                                   StandardScaler)
 
 # Define default features if not provided
 numeric_features = ["feature1", "feature2", "feature3"]

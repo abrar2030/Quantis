@@ -7,43 +7,21 @@ import tempfile
 from typing import List, Optional
 
 import pandas as pd
-from fastapi import (
-    APIRouter,
-    Depends,
-    File,
-    HTTPException,
-    Query,
-    Request,
-    UploadFile,
-    status,
-)
+from fastapi import (APIRouter, Depends, File, HTTPException, Query, Request,
+                     UploadFile, status)
 from sqlalchemy.orm import Session
 
-from ..auth_enhanced import (
-    AuditLogger,
-    get_current_active_user,
-    get_current_user,
-    has_permission,
-)
+from ..auth_enhanced import (AuditLogger, get_current_active_user,
+                             get_current_user, has_permission)
 from ..config import Settings, get_settings
-from ..database_enhanced import (
-    AuditLog,
-    DataMaskingManager,
-    DataRetentionManager,
-    EncryptionManager,
-    get_data_masking_manager,
-    get_data_retention_manager,
-    get_db,
-    get_encryption_manager,
-)
+from ..database_enhanced import (AuditLog, DataMaskingManager,
+                                 DataRetentionManager, EncryptionManager,
+                                 get_data_masking_manager,
+                                 get_data_retention_manager, get_db,
+                                 get_encryption_manager)
 from ..models_enhanced import Dataset, DatasetStatus, User
-from ..schemas_enhanced import (
-    DatasetCreate,
-    DatasetResponse,
-    DatasetStats,
-    DatasetUpdate,
-    DatasetUpload,
-)
+from ..schemas_enhanced import (DatasetCreate, DatasetResponse, DatasetStats,
+                                DatasetUpdate, DatasetUpload)
 from ..services.dataset_service import DatasetService
 
 logger = logging.getLogger(__name__)

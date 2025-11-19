@@ -23,13 +23,8 @@ from sqlalchemy.orm import Session
 from .config import get_settings
 from .database_enhanced import get_db, get_redis
 from .models_enhanced import AuditLog  # Added RolePermission
-from .models_enhanced import (
-    ApiKey,
-    RolePermission,
-    User,
-    UserSession,
-)
-from .schemas_enhanced import Token, UserResponse
+from .models_enhanced import ApiKey, User, UserSession
+from .schemas_enhanced import Token
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

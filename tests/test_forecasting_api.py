@@ -1,10 +1,7 @@
-import json
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 from api.app import app
-from api.endpoints.prediction import get_model
 from api.middleware.auth import validate_api_key
 from fastapi import HTTPException
 from fastapi.testclient import TestClient

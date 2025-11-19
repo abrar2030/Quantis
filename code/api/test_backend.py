@@ -2,7 +2,6 @@
 Test script for Quantis API
 """
 
-import asyncio
 import os
 import sys
 
@@ -10,9 +9,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import database
-
 # Fix relative imports
-import models
 import numpy as np
 import pandas as pd
 from services.dataset_service import DatasetService

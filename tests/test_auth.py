@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 import pytest
 from api.app import app
 from api.middleware.auth import ApiKeyManager, RateLimiter, Roles

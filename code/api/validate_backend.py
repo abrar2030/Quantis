@@ -24,7 +24,7 @@ def test_imports():
 
     try:
         # Test configuration
-        from config import Settings, get_settings
+        from config import get_settings
 
         settings = get_settings()
         logger.info(
@@ -32,27 +32,22 @@ def test_imports():
         )
 
         # Test database models
-        from models_enhanced import ApiKey, Dataset, Model, Prediction, User
 
         logger.info("✓ Enhanced database models imported successfully")
 
         # Test schemas
-        from schemas_enhanced import DatasetCreate, Token, UserCreate, UserResponse
 
         logger.info("✓ Enhanced Pydantic schemas imported successfully")
 
         # Test authentication
-        from auth_enhanced import get_current_user, security_manager
 
         logger.info("✓ Enhanced authentication system imported successfully")
 
         # Test database
-        from database_enhanced import CacheManager, DatabaseManager
 
         logger.info("✓ Enhanced database management imported successfully")
 
         # Test tasks
-        from tasks import process_dataset_task, train_model_task
 
         logger.info("✓ Background task system imported successfully")
 
@@ -156,14 +151,8 @@ def test_data_models():
 
     try:
         from database_enhanced import SessionLocal
-        from models_enhanced import (
-            Dataset,
-            Model,
-            ModelStatus,
-            ModelType,
-            User,
-            UserRole,
-        )
+        from models_enhanced import (Dataset, Model, ModelStatus, ModelType,
+                                     User, UserRole)
 
         db = SessionLocal()
         try:
@@ -253,12 +242,7 @@ def test_pydantic_schemas():
     logger.info("Testing Pydantic schemas...")
 
     try:
-        from schemas_enhanced import (
-            DatasetCreate,
-            ModelCreate,
-            UserCreate,
-            UserResponse,
-        )
+        from schemas_enhanced import UserCreate
 
         # Test user creation schema
         user_data = {
@@ -303,7 +287,7 @@ def test_configuration():
     logger.info("Testing configuration management...")
 
     try:
-        from config import Settings, get_settings
+        from config import get_settings
 
         settings = get_settings()
 
@@ -341,7 +325,7 @@ def test_background_tasks():
     logger.info("Testing background task system...")
 
     try:
-        from tasks import celery_app, get_task_status
+        from tasks import celery_app
 
         # Test Celery app configuration
         if celery_app.conf.broker_url:

@@ -11,7 +11,6 @@ from email.mime.multipart import MimeMultipart
 from email.mime.text import MimeText
 from typing import Any, Dict, List, Optional
 
-from jinja2 import Template
 from sqlalchemy.orm import Session
 
 from .. import models

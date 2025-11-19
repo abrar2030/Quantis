@@ -7,52 +7,31 @@ from contextlib import asynccontextmanager
 from typing import Any, Dict
 
 import structlog
-from fastapi import (
-    Depends,
-    FastAPI,
-    HTTPException,
-    Request,
-    Response,
-    WebSocket,
-    WebSocketDisconnect,
-)
-from fastapi.exception_handlers import (
-    http_exception_handler,
-    request_validation_exception_handler,
-)
+from fastapi import (Depends, FastAPI, HTTPException, Request, Response,
+                     WebSocket, WebSocketDisconnect)
+from fastapi.exception_handlers import (http_exception_handler,
+                                        request_validation_exception_handler)
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from prometheus_client import (CONTENT_TYPE_LATEST, Counter, Histogram,
+                               generate_latest)
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .auth_enhanced import AuditLogger, get_current_user, rate_limit
 from .config import Settings, get_settings  # Import Settings class
 from .database_enhanced import AuditLog  # Import new managers and AuditLog
-from .database_enhanced import (
-    close_redis,
-    get_consent_manager,
-    get_data_masking_manager,
-    get_data_retention_manager,
-    get_db,
-    get_encryption_manager,
-    health_check,
-    init_db,
-)
-from .endpoints import (
-    auth_enhanced,
-    datasets_enhanced,
-    financial,
-    models_enhanced,
-    monitoring_enhanced,
-    notifications_enhanced,
-    predictions_enhanced,
-    users_enhanced,
-    websocket_enhanced,
-)
+from .database_enhanced import (close_redis, get_consent_manager,
+                                get_data_masking_manager,
+                                get_data_retention_manager, get_db,
+                                get_encryption_manager, health_check, init_db)
+from .endpoints import (auth_enhanced, datasets_enhanced, financial,
+                        models_enhanced, monitoring_enhanced,
+                        notifications_enhanced, predictions_enhanced,
+                        users_enhanced, websocket_enhanced)
 from .models_enhanced import User
 from .schemas_enhanced import ErrorResponse, HealthCheck, SystemMetricsResponse
 

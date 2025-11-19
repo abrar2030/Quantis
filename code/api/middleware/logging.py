@@ -2,7 +2,6 @@
 Logging middleware for request/response tracking and monitoring
 """
 
-import json
 import logging
 import time
 from datetime import datetime

@@ -9,13 +9,8 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import UUID4, BaseModel, EmailStr, Field, validator
 from pydantic.types import confloat, conint, constr
 
-from .models_enhanced import (
-    DatasetStatus,
-    ModelStatus,
-    ModelType,
-    NotificationType,
-    UserRole,
-)
+from .models_enhanced import (DatasetStatus, ModelStatus, ModelType,
+                              NotificationType, UserRole)
 
 
 # Base schemas

@@ -2,11 +2,10 @@
 Enhanced background task processing system using Celery
 """
 
-import json
 import logging
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import joblib
@@ -18,16 +17,8 @@ from sqlalchemy.orm import Session
 
 from .config import get_settings
 from .database_enhanced import SessionLocal
-from .models_enhanced import (
-    DataQualityReport,
-    Dataset,
-    Model,
-    ModelStatus,
-    Notification,
-    NotificationType,
-    Prediction,
-    User,
-)
+from .models_enhanced import (DataQualityReport, Dataset, Model, ModelStatus,
+                              Notification, NotificationType, Prediction, User)
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

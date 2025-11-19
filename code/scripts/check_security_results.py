@@ -8,7 +8,6 @@ import json
 import os
 import sys
 from datetime import datetime
-from typing import Any, Dict, List
 
 
 def check_security_results():

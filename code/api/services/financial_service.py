@@ -4,20 +4,16 @@ Implements financial industry-specific functionality and compliance features
 """
 
 import decimal
-import hashlib
-import hmac
 import logging
 from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
-from ..config import settings
-from ..database import get_db
-from ..models import AuditLog, Transaction, User
+from ..models import Transaction
 
 logger = logging.getLogger(__name__)
 

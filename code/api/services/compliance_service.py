@@ -5,19 +5,15 @@ Handles data masking, tokenization, retention policies, and consent management
 
 import base64
 import hashlib
-import json
 import logging
-import secrets
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from cryptography.fernet import Fernet
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
-from ..config import settings
-from ..database import get_db
-from ..models import AuditLog, Dataset, Model, User
+from ..models import AuditLog, User
 
 logger = logging.getLogger(__name__)
 

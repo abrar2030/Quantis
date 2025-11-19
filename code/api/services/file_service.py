@@ -4,11 +4,9 @@ File handling service for dataset uploads and model storage
 
 import hashlib
 import mimetypes
-import os
-import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, List, Optional
+from typing import Any, Dict
 
 import pandas as pd
 from fastapi import HTTPException, UploadFile

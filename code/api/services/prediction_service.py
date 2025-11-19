@@ -3,11 +3,10 @@ Prediction service for handling model predictions
 """
 
 import time
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from sqlalchemy import and_, desc
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from .. import models

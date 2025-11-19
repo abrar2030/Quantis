@@ -9,23 +9,9 @@ from enum import Enum as PyEnum
 from typing import Any, Dict, List, Optional
 
 from passlib.context import CryptContext
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    CheckConstraint,
-    Column,
-    DateTime,
-    Enum,
-    Float,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-    Table,
-    Text,
-    UniqueConstraint,
-    event,
-)
+from sqlalchemy import (JSON, Boolean, CheckConstraint, Column, DateTime, Enum,
+                        Float, ForeignKey, Index, Integer, String, Table, Text,
+                        UniqueConstraint, event)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates

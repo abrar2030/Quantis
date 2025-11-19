@@ -103,34 +103,22 @@ def create_success_response(
 class ValidationError(Exception):
     """Custom validation error"""
 
-    pass
-
 
 class AuthenticationError(Exception):
     """Custom authentication error"""
-
-    pass
 
 
 class AuthorizationError(Exception):
     """Custom authorization error"""
 
-    pass
-
 
 class ResourceNotFoundError(Exception):
     """Custom resource not found error"""
-
-    pass
 
 
 class BusinessLogicError(Exception):
     """Custom business logic error"""
 
-    pass
-
 
 class ExternalServiceError(Exception):
     """Custom external service error"""
-
-    pass

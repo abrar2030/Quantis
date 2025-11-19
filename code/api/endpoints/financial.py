@@ -6,7 +6,7 @@ Provides financial transaction and compliance endpoints
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -15,14 +15,11 @@ from ..auth import get_current_user, require_role
 from ..database import get_db
 from ..middleware.logging import AuditLogger
 from ..models import Transaction, User
-from ..schemas import FinancialSummaryResponse, TransactionCreate, TransactionResponse
+from ..schemas import (FinancialSummaryResponse, TransactionCreate,
+                       TransactionResponse)
 from ..services.compliance_service import get_compliance_services
-from ..services.financial_service import (
-    RiskLevel,
-    TransactionStatus,
-    TransactionType,
-    get_financial_services,
-)
+from ..services.financial_service import (TransactionStatus, TransactionType,
+                                          get_financial_services)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -38,7 +35,7 @@ async def create_transaction(
     """Create a new financial transaction with risk assessment and compliance checks"""
     try:
         financial_services = get_financial_services(db)
-        compliance_services = get_compliance_services(db)
+        get_compliance_services(db)
 
         # Risk assessment
         risk_assessment = financial_services["risk_assessment"].assess_transaction_risk(

@@ -2,8 +2,6 @@
 Dataset service for data management operations
 """
 
-import hashlib
-import json
 import os
 from typing import Any, Dict, List, Optional
 
@@ -13,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from .. import models_enhanced as models
 from ..config import get_settings
-from ..database_enhanced import DataRetentionManager, EncryptionManager
+from ..database_enhanced import EncryptionManager
 
 settings = get_settings()
 
