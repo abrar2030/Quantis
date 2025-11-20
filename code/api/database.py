@@ -16,8 +16,7 @@ from sqlalchemy.pool import QueuePool
 
 from .config import get_settings
 from .models_enhanced import ConsentRecord  # Import new models
-from .models_enhanced import (Base, DataMaskingConfig, DataRetentionPolicy,
-                              EncryptionKey)
+from .models_enhanced import Base, DataMaskingConfig, DataRetentionPolicy, EncryptionKey
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

@@ -151,8 +151,14 @@ def test_data_models():
 
     try:
         from database_enhanced import SessionLocal
-        from models_enhanced import (Dataset, Model, ModelStatus, ModelType,
-                                     User, UserRole)
+        from models_enhanced import (
+            Dataset,
+            Model,
+            ModelStatus,
+            ModelType,
+            User,
+            UserRole,
+        )
 
         db = SessionLocal()
         try:
