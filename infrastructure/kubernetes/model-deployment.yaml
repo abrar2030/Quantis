@@ -13,13 +13,13 @@ spec:
         app: model-serving
     spec:
       containers:
-      - name: model
-        image: deepinsight-model:2.4.0
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            nvidia.com/gpu: 1
+        - name: model
+          image: deepinsight-model:2.4.0
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              nvidia.com/gpu: 1
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -33,9 +33,9 @@ spec:
   minReplicas: 3
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80

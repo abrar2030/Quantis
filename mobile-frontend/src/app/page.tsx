@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -57,7 +56,8 @@ export default function Home() {
   const router = useRouter();
   const { user, logout, isLoading: authLoading } = useAuth();
   const [featureInput, setFeatureInput] = useState<string>('');
-  const [predictionResult, setPredictionResult] = useState<PredictionResponse | null>(null);
+  const [predictionResult, setPredictionResult] =
+    useState<PredictionResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [predictionHistory, setPredictionHistory] = useState<HistoryEntry[]>(

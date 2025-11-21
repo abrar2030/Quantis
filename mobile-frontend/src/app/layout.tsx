@@ -30,7 +30,11 @@ export default function RootLayout({
   useEffect(() => {
     // Redirect to login if not authenticated on initial load
     // This is a basic check, AuthProvider will handle full authentication logic
-    if (typeof window !== 'undefined' && !localStorage.getItem('authToken') && !localStorage.getItem('apiKey')) {
+    if (
+      typeof window !== 'undefined' &&
+      !localStorage.getItem('authToken') &&
+      !localStorage.getItem('apiKey')
+    ) {
       router.push('/login');
     }
   }, [router]);

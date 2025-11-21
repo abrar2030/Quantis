@@ -222,7 +222,9 @@ const Dashboard = () => {
           {dashboardData.recentActivity.map((activity, index) => (
             <li key={index} className={styles.activityItem}>
               <span className={styles.activityTime}>{activity.time}</span>
-              <span className={styles.activityDescription}>{activity.description}</span>
+              <span className={styles.activityDescription}>
+                {activity.description}
+              </span>
             </li>
           ))}
         </ul>
@@ -251,7 +253,7 @@ const Predictions = () => {
   const [formData, setFormData] = useState({
     datasetId: '',
     forecastHorizon: 7,
-    modelId: 'default'
+    modelId: 'default',
   });
 
   useEffect(() => {
@@ -273,7 +275,7 @@ const Predictions = () => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -365,12 +367,8 @@ const Predictions = () => {
                     <p>Accuracy: {prediction.accuracy}%</p>
                   </div>
                   <div className={styles.predictionActions}>
-                    <button className={styles.viewButton}>
-                      View Details
-                    </button>
-                    <button className={styles.exportButton}>
-                      Export
-                    </button>
+                    <button className={styles.viewButton}>View Details</button>
+                    <button className={styles.exportButton}>Export</button>
                   </div>
                 </li>
               ))}
@@ -416,11 +414,12 @@ const LineChart = ({ data, options = {} }) => {
         type: 'line',
         data: {
           labels: data.labels,
-          datasets: data.datasets.map(dataset => ({
+          datasets: data.datasets.map((dataset) => ({
             label: dataset.label,
             data: dataset.data,
             borderColor: dataset.color || '#4285F4',
-            backgroundColor: dataset.backgroundColor || 'rgba(66, 133, 244, 0.1)',
+            backgroundColor:
+              dataset.backgroundColor || 'rgba(66, 133, 244, 0.1)',
             borderWidth: 2,
             tension: 0.4,
             pointRadius: 3,
@@ -509,7 +508,7 @@ export const ThemeProvider = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
   return (
@@ -530,7 +529,8 @@ The API service handles communication with the backend:
 // api.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
 // Create axios instance
 const apiClient = axios.create({
@@ -607,15 +607,15 @@ The frontend uses CSS Modules for component-scoped styling:
 /* index.css - Global styles */
 :root {
   /* Color variables */
-  --primary-color: #4285F4;
-  --secondary-color: #34A853;
-  --accent-color: #FBBC05;
-  --error-color: #EA4335;
+  --primary-color: #4285f4;
+  --secondary-color: #34a853;
+  --accent-color: #fbbc05;
+  --error-color: #ea4335;
   --text-primary: #202124;
-  --text-secondary: #5F6368;
-  --background-light: #FFFFFF;
+  --text-secondary: #5f6368;
+  --background-light: #ffffff;
   --background-dark: #202124;
-  --border-color: #DADCE0;
+  --border-color: #dadce0;
 
   /* Spacing variables */
   --spacing-xs: 4px;
@@ -656,15 +656,20 @@ body {
 
 /* Theme classes */
 body.theme-dark {
-  --text-primary: #E8EAED;
-  --text-secondary: #9AA0A6;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
   --background-light: #202124;
   --background-dark: #303134;
-  --border-color: #5F6368;
+  --border-color: #5f6368;
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin-top: 0;
   font-weight: 500;
 }
@@ -716,7 +721,9 @@ button:focus {
 }
 
 /* Form elements */
-input, select, textarea {
+input,
+select,
+textarea {
   font-family: var(--font-family);
   font-size: var(--font-size-md);
   padding: var(--spacing-sm) var(--spacing-md);
@@ -728,7 +735,9 @@ input, select, textarea {
   box-sizing: border-box;
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
@@ -769,12 +778,24 @@ input:focus, select:focus, textarea:focus {
   text-align: center;
 }
 
-.mt-sm { margin-top: var(--spacing-sm); }
-.mt-md { margin-top: var(--spacing-md); }
-.mt-lg { margin-top: var(--spacing-lg); }
-.mb-sm { margin-bottom: var(--spacing-sm); }
-.mb-md { margin-bottom: var(--spacing-md); }
-.mb-lg { margin-bottom: var(--spacing-lg); }
+.mt-sm {
+  margin-top: var(--spacing-sm);
+}
+.mt-md {
+  margin-top: var(--spacing-md);
+}
+.mt-lg {
+  margin-top: var(--spacing-lg);
+}
+.mb-sm {
+  margin-bottom: var(--spacing-sm);
+}
+.mb-md {
+  margin-bottom: var(--spacing-md);
+}
+.mb-lg {
+  margin-bottom: var(--spacing-lg);
+}
 ```
 
 ## Responsive Design
@@ -1039,12 +1060,13 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
 import Header from './Header';
 
-const renderWithContext = (ui, { theme = 'light', toggleTheme = jest.fn() } = {}) => {
+const renderWithContext = (
+  ui,
+  { theme = 'light', toggleTheme = jest.fn() } = {}
+) => {
   return render(
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <BrowserRouter>
-        {ui}
-      </BrowserRouter>
+      <BrowserRouter>{ui}</BrowserRouter>
     </ThemeContext.Provider>
   );
 };
@@ -1142,9 +1164,7 @@ const mockDashboardData = {
 const renderWithProviders = (ui) => {
   return render(
     <ThemeContext.Provider value={{ theme: 'light', toggleTheme: jest.fn() }}>
-      <BrowserRouter>
-        {ui}
-      </BrowserRouter>
+      <BrowserRouter>{ui}</BrowserRouter>
     </ThemeContext.Provider>
   );
 };
@@ -1183,7 +1203,9 @@ describe('Dashboard Page', () => {
     expect(screen.getByText('Model Accuracy Comparison')).toBeInTheDocument();
 
     expect(screen.getByText('Recent Activity')).toBeInTheDocument();
-    expect(screen.getByText('New prediction created for Sales Data')).toBeInTheDocument();
+    expect(
+      screen.getByText('New prediction created for Sales Data')
+    ).toBeInTheDocument();
   });
 
   test('displays error message when API call fails', async () => {
@@ -1195,7 +1217,9 @@ describe('Dashboard Page', () => {
       expect(fetchDashboardData).toHaveBeenCalledTimes(1);
     });
 
-    expect(screen.getByText('Error loading dashboard: Failed to fetch data')).toBeInTheDocument();
+    expect(
+      screen.getByText('Error loading dashboard: Failed to fetch data')
+    ).toBeInTheDocument();
   });
 });
 ```
@@ -1205,7 +1229,7 @@ describe('Dashboard Page', () => {
 The frontend follows accessibility best practices:
 
 1. **Semantic HTML**: Using appropriate HTML elements
-2. **ARIA Attributes**: Adding aria-* attributes where needed
+2. **ARIA Attributes**: Adding aria-\* attributes where needed
 3. **Keyboard Navigation**: Ensuring all interactive elements are keyboard accessible
 4. **Focus Management**: Proper focus handling for modals and dynamic content
 5. **Color Contrast**: Meeting WCAG AA standards for text contrast
@@ -1234,7 +1258,9 @@ const AccessibleButton = ({
     styles[size],
     fullWidth ? styles.fullWidth : '',
     className,
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <button

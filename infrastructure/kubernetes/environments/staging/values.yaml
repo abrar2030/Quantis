@@ -88,7 +88,7 @@ redis:
 ingress:
   host: staging.quantis.example.com
   class: nginx
-  sslRedirect: "true"
+  sslRedirect: 'true'
   certManager:
     issuer: letsencrypt-staging
 

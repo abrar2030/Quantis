@@ -65,14 +65,14 @@ global:
 # Alerting configuration
 alerting:
   alertmanagers:
-  - static_configs:
-    - targets:
-      - alertmanager:9093
+    - static_configs:
+        - targets:
+            - alertmanager:9093
 
 # Rule files
 rule_files:
-  - "rules/system_alerts.yml"
-  - "rules/model_alerts.yml"
+  - 'rules/system_alerts.yml'
+  - 'rules/model_alerts.yml'
 
 # Scrape configurations
 scrape_configs:
@@ -1350,37 +1350,37 @@ route:
   repeat_interval: 4h
   receiver: 'team-email'
   routes:
-  - match:
-      severity: critical
-    receiver: 'pager'
-    continue: true
-  - match:
-      category: model
-    receiver: 'data-science-team'
+    - match:
+        severity: critical
+      receiver: 'pager'
+      continue: true
+    - match:
+        category: model
+      receiver: 'data-science-team'
 
 receivers:
-- name: 'team-email'
-  email_configs:
-  - to: 'team@quantis.example.com'
-    send_resolved: true
+  - name: 'team-email'
+    email_configs:
+      - to: 'team@quantis.example.com'
+        send_resolved: true
 
-- name: 'pager'
-  pagerduty_configs:
-  - service_key: '<pagerduty-service-key>'
-    send_resolved: true
+  - name: 'pager'
+    pagerduty_configs:
+      - service_key: '<pagerduty-service-key>'
+        send_resolved: true
 
-- name: 'data-science-team'
-  slack_configs:
-  - api_url: '<slack-webhook-url>'
-    channel: '#data-science-alerts'
-    send_resolved: true
+  - name: 'data-science-team'
+    slack_configs:
+      - api_url: '<slack-webhook-url>'
+        channel: '#data-science-alerts'
+        send_resolved: true
 
 inhibit_rules:
-- source_match:
-    severity: 'critical'
-  target_match:
-    severity: 'warning'
-  equal: ['alertname', 'service']
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service']
 ```
 
 ### Alert Rules

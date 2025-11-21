@@ -1,5 +1,17 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authAPI, setAuthToken, setApiKey, clearAuth, isAuthenticated } from '../lib/api';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
+import {
+  authAPI,
+  setAuthToken,
+  setApiKey,
+  clearAuth,
+  isAuthenticated,
+} from '../lib/api';
 
 interface User {
   id: string;
@@ -12,8 +24,12 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: any) => Promise<{ success: boolean; error?: string; data?: any }>;
-  register: (userData: any) => Promise<{ success: boolean; error?: string; data?: any }>;
+  login: (
+    credentials: any
+  ) => Promise<{ success: boolean; error?: string; data?: any }>;
+  register: (
+    userData: any
+  ) => Promise<{ success: boolean; error?: string; data?: any }>;
   logout: () => Promise<void>;
 }
 
@@ -70,7 +86,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Login failed:', error);
       return {
         success: false,
-        error: error.response?.data?.message || 'Login failed'
+        error: error.response?.data?.message || 'Login failed',
       };
     }
   };
@@ -93,7 +109,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Registration failed:', error);
       return {
         success: false,
-        error: error.response?.data?.message || 'Registration failed'
+        error: error.response?.data?.message || 'Registration failed',
       };
     }
   };
@@ -118,9 +134,5 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     register,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

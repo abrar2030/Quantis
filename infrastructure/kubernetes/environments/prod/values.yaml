@@ -88,7 +88,7 @@ redis:
 ingress:
   host: quantis.example.com
   class: nginx
-  sslRedirect: "true"
+  sslRedirect: 'true'
   certManager:
     issuer: letsencrypt-prod
 

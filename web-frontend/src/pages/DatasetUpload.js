@@ -39,7 +39,7 @@ const DatasetUpload = () => {
 
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
     if (rejectedFiles.length > 0) {
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         error: 'Invalid file type. Please upload CSV, JSON, or Excel files.',
       }));
@@ -48,7 +48,7 @@ const DatasetUpload = () => {
 
     const file = acceptedFiles[0];
     if (file) {
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         file,
         name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
@@ -64,7 +64,9 @@ const DatasetUpload = () => {
       'text/csv': ['.csv'],
       'application/json': ['.json'],
       'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [
+        '.xlsx',
+      ],
     },
     multiple: false,
     maxSize: 10 * 1024 * 1024, // 10MB
@@ -72,14 +74,14 @@ const DatasetUpload = () => {
 
   const handleUpload = async () => {
     if (!uploadState.file || !uploadState.name.trim()) {
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         error: 'Please select a file and provide a name.',
       }));
       return;
     }
 
-    setUploadState(prev => ({
+    setUploadState((prev) => ({
       ...prev,
       isUploading: true,
       uploadProgress: 0,
@@ -98,7 +100,7 @@ const DatasetUpload = () => {
           const progress = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
           );
-          setUploadState(prev => ({
+          setUploadState((prev) => ({
             ...prev,
             uploadProgress: progress,
           }));
@@ -108,7 +110,7 @@ const DatasetUpload = () => {
       // Get preview of uploaded dataset
       const preview = await datasetsAPI.getDatasetPreview(response.data.id, 5);
 
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         isUploading: false,
         success: true,
@@ -117,7 +119,7 @@ const DatasetUpload = () => {
       }));
     } catch (error) {
       const apiError = handleApiError(error);
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         isUploading: false,
         error: apiError.message,
@@ -160,7 +162,8 @@ const DatasetUpload = () => {
                 Dataset Uploaded Successfully!
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Your dataset "{uploadState.uploadedDataset.name}" has been processed and is ready to use.
+                Your dataset "{uploadState.uploadedDataset.name}" has been
+                processed and is ready to use.
               </Typography>
             </Box>
 
@@ -211,24 +214,28 @@ const DatasetUpload = () => {
                     Column Types
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {uploadState.uploadedDataset.metadata?.numeric_columns?.map((col) => (
-                      <Chip
-                        key={col}
-                        label={col}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                      />
-                    ))}
-                    {uploadState.uploadedDataset.metadata?.categorical_columns?.map((col) => (
-                      <Chip
-                        key={col}
-                        label={col}
-                        size="small"
-                        color="secondary"
-                        variant="outlined"
-                      />
-                    ))}
+                    {uploadState.uploadedDataset.metadata?.numeric_columns?.map(
+                      (col) => (
+                        <Chip
+                          key={col}
+                          label={col}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                        />
+                      )
+                    )}
+                    {uploadState.uploadedDataset.metadata?.categorical_columns?.map(
+                      (col) => (
+                        <Chip
+                          key={col}
+                          label={col}
+                          size="small"
+                          color="secondary"
+                          variant="outlined"
+                        />
+                      )
+                    )}
                   </Box>
                 </Paper>
               </Grid>
@@ -267,17 +274,10 @@ const DatasetUpload = () => {
             </Grid>
 
             <Box sx={{ mt: 3, textAlign: 'center' }}>
-              <Button
-                variant="contained"
-                onClick={handleReset}
-                sx={{ mr: 2 }}
-              >
+              <Button variant="contained" onClick={handleReset} sx={{ mr: 2 }}>
                 Upload Another Dataset
               </Button>
-              <Button
-                variant="outlined"
-                href="/datasets"
-              >
+              <Button variant="outlined" href="/datasets">
                 View All Datasets
               </Button>
             </Box>
@@ -293,8 +293,8 @@ const DatasetUpload = () => {
         Upload Dataset
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Upload your dataset to start building machine learning models.
-        Supported formats: CSV, JSON, Excel (.xlsx, .xls)
+        Upload your dataset to start building machine learning models. Supported
+        formats: CSV, JSON, Excel (.xlsx, .xls)
       </Typography>
 
       <Card>
@@ -309,7 +309,9 @@ const DatasetUpload = () => {
             {...getRootProps()}
             sx={{
               border: `2px dashed ${
-                isDragActive ? theme.palette.primary.main : theme.palette.divider
+                isDragActive
+                  ? theme.palette.primary.main
+                  : theme.palette.divider
               }`,
               borderRadius: 2,
               p: 4,
@@ -341,12 +343,18 @@ const DatasetUpload = () => {
           </Box>
 
           {uploadState.file && (
-            <Paper sx={{ p: 2, mb: 3, backgroundColor: theme.palette.background.default }}>
+            <Paper
+              sx={{
+                p: 2,
+                mb: 3,
+                backgroundColor: theme.palette.background.default,
+              }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Description sx={{ mr: 1, color: theme.palette.text.secondary }} />
-                <Typography variant="body1">
-                  {uploadState.file.name}
-                </Typography>
+                <Description
+                  sx={{ mr: 1, color: theme.palette.text.secondary }}
+                />
+                <Typography variant="body1">{uploadState.file.name}</Typography>
                 <Chip
                   label={formatFileSize(uploadState.file.size)}
                   size="small"
@@ -363,7 +371,7 @@ const DatasetUpload = () => {
                 label="Dataset Name"
                 value={uploadState.name}
                 onChange={(e) =>
-                  setUploadState(prev => ({ ...prev, name: e.target.value }))
+                  setUploadState((prev) => ({ ...prev, name: e.target.value }))
                 }
                 required
                 disabled={uploadState.isUploading}
@@ -375,7 +383,10 @@ const DatasetUpload = () => {
                 label="Description (Optional)"
                 value={uploadState.description}
                 onChange={(e) =>
-                  setUploadState(prev => ({ ...prev, description: e.target.value }))
+                  setUploadState((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
                 }
                 disabled={uploadState.isUploading}
               />
@@ -398,7 +409,11 @@ const DatasetUpload = () => {
             <Button
               variant="contained"
               onClick={handleUpload}
-              disabled={!uploadState.file || !uploadState.name.trim() || uploadState.isUploading}
+              disabled={
+                !uploadState.file ||
+                !uploadState.name.trim() ||
+                uploadState.isUploading
+              }
               size="large"
             >
               {uploadState.isUploading ? 'Uploading...' : 'Upload Dataset'}

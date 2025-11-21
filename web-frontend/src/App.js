@@ -1,5 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -69,7 +74,10 @@ function AppContent() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/predictions" element={<Predictions />} />
                   <Route path="/models" element={<Models />} />
-                  <Route path="/model-management" element={<ModelManagement />} />
+                  <Route
+                    path="/model-management"
+                    element={<ModelManagement />}
+                  />
                   <Route path="/datasets" element={<Datasets />} />
                   <Route path="/dataset-upload" element={<DatasetUpload />} />
                   {/* Redirect any unknown routes to dashboard */}

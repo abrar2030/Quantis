@@ -9,6 +9,7 @@ The Quantis API is built using FastAPI, a modern, high-performance web framework
 ## Base URL
 
 When running locally, the API is available at:
+
 ```
 http://localhost:8000
 ```
@@ -28,6 +29,7 @@ POST /users/token
 ```
 
 Request body:
+
 ```json
 {
   "username": "your_username",
@@ -36,6 +38,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -62,6 +65,7 @@ POST /users/
 ```
 
 Request body:
+
 ```json
 {
   "username": "new_user",
@@ -72,6 +76,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "username": "new_user",
@@ -88,6 +93,7 @@ GET /users/me
 ```
 
 Response:
+
 ```json
 {
   "username": "current_user",
@@ -106,12 +112,13 @@ POST /predictions/
 ```
 
 Request body:
+
 ```json
 {
   "time_series_data": [
-    {"timestamp": "2023-01-01T00:00:00Z", "value": 10.5},
-    {"timestamp": "2023-01-02T00:00:00Z", "value": 11.2},
-    {"timestamp": "2023-01-03T00:00:00Z", "value": 10.8}
+    { "timestamp": "2023-01-01T00:00:00Z", "value": 10.5 },
+    { "timestamp": "2023-01-02T00:00:00Z", "value": 11.2 },
+    { "timestamp": "2023-01-03T00:00:00Z", "value": 10.8 }
   ],
   "forecast_horizon": 7,
   "model_id": "default"
@@ -119,17 +126,53 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "prediction_id": "pred_uuid",
   "forecast": [
-    {"timestamp": "2023-01-04T00:00:00Z", "value": 11.1, "lower_bound": 10.5, "upper_bound": 11.7},
-    {"timestamp": "2023-01-05T00:00:00Z", "value": 11.3, "lower_bound": 10.6, "upper_bound": 12.0},
-    {"timestamp": "2023-01-06T00:00:00Z", "value": 11.5, "lower_bound": 10.7, "upper_bound": 12.3},
-    {"timestamp": "2023-01-07T00:00:00Z", "value": 11.7, "lower_bound": 10.8, "upper_bound": 12.6},
-    {"timestamp": "2023-01-08T00:00:00Z", "value": 11.9, "lower_bound": 10.9, "upper_bound": 12.9},
-    {"timestamp": "2023-01-09T00:00:00Z", "value": 12.1, "lower_bound": 11.0, "upper_bound": 13.2},
-    {"timestamp": "2023-01-10T00:00:00Z", "value": 12.3, "lower_bound": 11.1, "upper_bound": 13.5}
+    {
+      "timestamp": "2023-01-04T00:00:00Z",
+      "value": 11.1,
+      "lower_bound": 10.5,
+      "upper_bound": 11.7
+    },
+    {
+      "timestamp": "2023-01-05T00:00:00Z",
+      "value": 11.3,
+      "lower_bound": 10.6,
+      "upper_bound": 12.0
+    },
+    {
+      "timestamp": "2023-01-06T00:00:00Z",
+      "value": 11.5,
+      "lower_bound": 10.7,
+      "upper_bound": 12.3
+    },
+    {
+      "timestamp": "2023-01-07T00:00:00Z",
+      "value": 11.7,
+      "lower_bound": 10.8,
+      "upper_bound": 12.6
+    },
+    {
+      "timestamp": "2023-01-08T00:00:00Z",
+      "value": 11.9,
+      "lower_bound": 10.9,
+      "upper_bound": 12.9
+    },
+    {
+      "timestamp": "2023-01-09T00:00:00Z",
+      "value": 12.1,
+      "lower_bound": 11.0,
+      "upper_bound": 13.2
+    },
+    {
+      "timestamp": "2023-01-10T00:00:00Z",
+      "value": 12.3,
+      "lower_bound": 11.1,
+      "upper_bound": 13.5
+    }
   ],
   "model_version": "1.0.0",
   "created_at": "2023-01-03T12:34:56Z"
@@ -143,17 +186,53 @@ GET /predictions/{prediction_id}
 ```
 
 Response:
+
 ```json
 {
   "prediction_id": "pred_uuid",
   "forecast": [
-    {"timestamp": "2023-01-04T00:00:00Z", "value": 11.1, "lower_bound": 10.5, "upper_bound": 11.7},
-    {"timestamp": "2023-01-05T00:00:00Z", "value": 11.3, "lower_bound": 10.6, "upper_bound": 12.0},
-    {"timestamp": "2023-01-06T00:00:00Z", "value": 11.5, "lower_bound": 10.7, "upper_bound": 12.3},
-    {"timestamp": "2023-01-07T00:00:00Z", "value": 11.7, "lower_bound": 10.8, "upper_bound": 12.6},
-    {"timestamp": "2023-01-08T00:00:00Z", "value": 11.9, "lower_bound": 10.9, "upper_bound": 12.9},
-    {"timestamp": "2023-01-09T00:00:00Z", "value": 12.1, "lower_bound": 11.0, "upper_bound": 13.2},
-    {"timestamp": "2023-01-10T00:00:00Z", "value": 12.3, "lower_bound": 11.1, "upper_bound": 13.5}
+    {
+      "timestamp": "2023-01-04T00:00:00Z",
+      "value": 11.1,
+      "lower_bound": 10.5,
+      "upper_bound": 11.7
+    },
+    {
+      "timestamp": "2023-01-05T00:00:00Z",
+      "value": 11.3,
+      "lower_bound": 10.6,
+      "upper_bound": 12.0
+    },
+    {
+      "timestamp": "2023-01-06T00:00:00Z",
+      "value": 11.5,
+      "lower_bound": 10.7,
+      "upper_bound": 12.3
+    },
+    {
+      "timestamp": "2023-01-07T00:00:00Z",
+      "value": 11.7,
+      "lower_bound": 10.8,
+      "upper_bound": 12.6
+    },
+    {
+      "timestamp": "2023-01-08T00:00:00Z",
+      "value": 11.9,
+      "lower_bound": 10.9,
+      "upper_bound": 12.9
+    },
+    {
+      "timestamp": "2023-01-09T00:00:00Z",
+      "value": 12.1,
+      "lower_bound": 11.0,
+      "upper_bound": 13.2
+    },
+    {
+      "timestamp": "2023-01-10T00:00:00Z",
+      "value": 12.3,
+      "lower_bound": 11.1,
+      "upper_bound": 13.5
+    }
   ],
   "model_version": "1.0.0",
   "created_at": "2023-01-03T12:34:56Z"
@@ -167,6 +246,7 @@ GET /predictions/
 ```
 
 Response:
+
 ```json
 {
   "predictions": [
@@ -310,6 +390,7 @@ POST /webhooks/
 ```
 
 Request body:
+
 ```json
 {
   "url": "https://your-server.com/webhook",

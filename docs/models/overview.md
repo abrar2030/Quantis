@@ -27,6 +27,7 @@ The TFT architecture consists of several key components:
 #### Input Types
 
 TFT handles three types of variables:
+
 - **Static Covariates**: Features that remain constant for a time series (e.g., location, product category)
 - **Known Future Inputs**: Variables known in advance for the forecast horizon (e.g., holidays, planned events)
 - **Observed Inputs**: Historical values only available up to the forecast point (e.g., past values, weather)
@@ -34,6 +35,7 @@ TFT handles three types of variables:
 #### Interpretability Features
 
 TFT provides several interpretability mechanisms:
+
 - **Variable Importance**: Identifies which features are most influential
 - **Temporal Attention**: Shows which historical time points influence each forecast point
 - **Persistent vs. Temporal Effects**: Distinguishes between long-term and short-term influences
@@ -99,6 +101,7 @@ Quantis uses a systematic approach to hyperparameter tuning:
 4. **Cross-Validation**: Time series cross-validation with expanding windows
 
 Key hyperparameters for TFT include:
+
 - Hidden layer sizes
 - Number of attention heads
 - Dropout rates
@@ -304,12 +307,12 @@ Models are serialized and stored using:
 Typical resource requirements for different models:
 
 | Model Type | Training Memory | Training Time | Inference Memory | Inference Time |
-|------------|----------------|---------------|------------------|----------------|
-| ARIMA      | Low            | Fast          | Very Low         | Very Fast      |
-| Prophet    | Medium         | Medium        | Low              | Fast           |
-| XGBoost    | Medium         | Medium        | Low              | Very Fast      |
-| TFT        | High           | Slow          | Medium           | Medium         |
-| DeepAR     | High           | Slow          | Medium           | Medium         |
+| ---------- | --------------- | ------------- | ---------------- | -------------- |
+| ARIMA      | Low             | Fast          | Very Low         | Very Fast      |
+| Prophet    | Medium          | Medium        | Low              | Fast           |
+| XGBoost    | Medium          | Medium        | Low              | Very Fast      |
+| TFT        | High            | Slow          | Medium           | Medium         |
+| DeepAR     | High            | Slow          | Medium           | Medium         |
 
 ### Distributed Training
 

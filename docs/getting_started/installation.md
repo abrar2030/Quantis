@@ -153,6 +153,7 @@ docker-compose logs -f
 ```
 
 This will start the following services:
+
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000
 - Database
@@ -203,6 +204,7 @@ To provision cloud infrastructure using Terraform:
 ### 1. Configure Terraform Variables
 
 Edit the `terraform.tfvars` file in the appropriate environment directory:
+
 - `infrastructure/terraform/environments/dev/terraform.tfvars`
 - `infrastructure/terraform/environments/staging/terraform.tfvars`
 - `infrastructure/terraform/environments/prod/terraform.tfvars`

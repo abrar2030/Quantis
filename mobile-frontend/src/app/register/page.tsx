@@ -1,5 +1,12 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
@@ -49,7 +56,9 @@ export default function Register() {
         <CardHeader className="text-center p-6 bg-gray-800/50 border-b border-gray-700">
           <div className="flex justify-center items-center mb-3">
             <UserPlus className="h-7 w-7 text-purple-400 mr-2" />
-            <CardTitle className="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">Quantis Register</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
+              Quantis Register
+            </CardTitle>
           </div>
           <CardDescription className="text-gray-400">
             Create your new account.
@@ -58,7 +67,12 @@ export default function Register() {
         <form onSubmit={handleRegister}>
           <CardContent className="p-6 space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-300">Email Address</Label>
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-300"
+              >
+                Email Address
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -70,7 +84,12 @@ export default function Register() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-300">Password</Label>
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-300"
+              >
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -82,7 +101,12 @@ export default function Register() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-300">Confirm Password</Label>
+              <Label
+                htmlFor="confirm-password"
+                className="text-sm font-medium text-gray-300"
+              >
+                Confirm Password
+              </Label>
               <Input
                 id="confirm-password"
                 type="password"
@@ -94,7 +118,10 @@ export default function Register() {
               />
             </div>
             {error && (
-              <Alert variant="destructive" className="w-full bg-red-900/30 border-red-700 text-red-300 rounded-lg p-3">
+              <Alert
+                variant="destructive"
+                className="w-full bg-red-900/30 border-red-700 text-red-300 rounded-lg p-3"
+              >
                 <AlertDescription className="text-sm">{error}</AlertDescription>
               </Alert>
             )}
@@ -106,14 +133,22 @@ export default function Register() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Registering...</>
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />{' '}
+                  Registering...
+                </>
               ) : (
-                <><UserPlus className="mr-2 h-5 w-5" /> Register</>
+                <>
+                  <UserPlus className="mr-2 h-5 w-5" /> Register
+                </>
               )}
             </Button>
             <p className="text-sm text-center text-gray-400 pt-2">
               Already have an account?{' '}
-              <Link href="/login" className="font-medium text-blue-400 hover:text-blue-300 hover:underline flex items-center justify-center mt-1">
+              <Link
+                href="/login"
+                className="font-medium text-blue-400 hover:text-blue-300 hover:underline flex items-center justify-center mt-1"
+              >
                 <LogIn className="mr-1 h-4 w-4" /> Login
               </Link>
             </p>

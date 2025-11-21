@@ -23,11 +23,11 @@ const LineChart = ({ data, title, height = 300 }) => {
     // Check if data is in the old format (array of objects with id and data)
     if (data[0] && data[0].data && Array.isArray(data[0].data)) {
       // Transform old format to new format
-      const xValues = data[0].data.map(point => point.x);
-      return xValues.map(x => {
+      const xValues = data[0].data.map((point) => point.x);
+      return xValues.map((x) => {
         const point = { x };
-        data.forEach(series => {
-          const dataPoint = series.data.find(p => p.x === x);
+        data.forEach((series) => {
+          const dataPoint = series.data.find((p) => p.x === x);
           if (dataPoint) {
             point[series.id] = dataPoint.y;
           }
@@ -45,7 +45,7 @@ const LineChart = ({ data, title, height = 300 }) => {
     if (!transformedData || transformedData.length === 0) {
       return [];
     }
-    return Object.keys(transformedData[0]).filter(key => key !== 'x');
+    return Object.keys(transformedData[0]).filter((key) => key !== 'x');
   }, [transformedData]);
 
   // Color palette
@@ -100,10 +100,7 @@ const LineChart = ({ data, title, height = 300 }) => {
             stroke={theme.palette.text.secondary}
             fontSize={12}
           />
-          <YAxis
-            stroke={theme.palette.text.secondary}
-            fontSize={12}
-          />
+          <YAxis stroke={theme.palette.text.secondary} fontSize={12} />
           <Tooltip
             contentStyle={{
               backgroundColor: theme.palette.background.paper,
@@ -120,8 +117,16 @@ const LineChart = ({ data, title, height = 300 }) => {
               dataKey={seriesName}
               stroke={colors[index % colors.length]}
               strokeWidth={2}
-              dot={{ fill: colors[index % colors.length], strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, stroke: colors[index % colors.length], strokeWidth: 2 }}
+              dot={{
+                fill: colors[index % colors.length],
+                strokeWidth: 2,
+                r: 4,
+              }}
+              activeDot={{
+                r: 6,
+                stroke: colors[index % colors.length],
+                strokeWidth: 2,
+              }}
             />
           ))}
         </RechartsLineChart>

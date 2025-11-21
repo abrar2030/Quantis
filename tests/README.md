@@ -42,6 +42,7 @@ def sample_model():
 ```
 
 These fixtures provide:
+
 - A consistent test client for API testing
 - Sample model instances for model testing
 - Mock data for consistent test inputs
@@ -55,6 +56,7 @@ These fixtures provide:
 Tests in `test_api.py` and `test_forecasting_api.py` verify that API endpoints function correctly, handle various input scenarios, and return appropriate responses. These tests ensure the API contract is maintained and that all endpoints behave as expected.
 
 Key aspects tested include:
+
 - Endpoint availability and response codes
 - Request validation and error handling
 - Response format and content validation
@@ -62,6 +64,7 @@ Key aspects tested include:
 - Performance under various loads
 
 Example API test:
+
 ```python
 def test_predict_endpoint_success(test_client, sample_data):
     response = test_client.post("/predict", json=sample_data)
@@ -80,6 +83,7 @@ def test_predict_endpoint_invalid_data(test_client):
 Tests in `test_auth.py` verify user authentication, authorization, token handling, and security mechanisms to ensure proper access control throughout the platform.
 
 These tests cover:
+
 - User authentication flows
 - Token generation and validation
 - Permission checking and role-based access
@@ -87,6 +91,7 @@ These tests cover:
 - Rate limiting and throttling
 
 Example authentication test:
+
 ```python
 @pytest.fixture
 def mock_env_api_key(monkeypatch):
@@ -107,6 +112,7 @@ def test_validate_api_key_failure(mock_env_api_key):
 Tests in `test_model.py` and `test_forecasting_model.py` validate machine learning model behavior, including training, inference, and performance metrics. These tests ensure models meet accuracy and reliability requirements.
 
 These tests cover:
+
 - Model initialization with different parameters
 - Forward and backward passes
 - Training procedures
@@ -115,6 +121,7 @@ These tests cover:
 - Performance metrics calculation
 
 Example model test:
+
 ```python
 def test_model_with_different_input_sizes():
     # Test with minimum input size
@@ -135,6 +142,7 @@ def test_model_with_different_input_sizes():
 Tests in `test_infrastructure.py` verify that infrastructure components are correctly configured and functioning as expected, ensuring reliable deployment and operation.
 
 These tests cover:
+
 - Deployment procedures
 - Configuration validation
 - Resource provisioning
@@ -142,6 +150,7 @@ These tests cover:
 - Monitoring integration
 
 Example infrastructure test:
+
 ```python
 @pytest.fixture
 def mock_s3():
@@ -185,6 +194,7 @@ pip install -r requirements-test.txt
 ```
 
 The requirements file includes:
+
 - pytest and pytest plugins
 - Testing utilities like mock
 - Coverage reporting tools
@@ -248,6 +258,7 @@ The test suite is integrated into the CI/CD pipeline defined in the `.github` di
 - Release preparation
 
 The CI pipeline performs the following steps:
+
 1. Set up the test environment
 2. Install dependencies
 3. Run the test suite
@@ -268,6 +279,7 @@ When adding new features or fixing bugs, follow these guidelines for test develo
 3. **Assert**: Verify the results match expectations
 
 Example:
+
 ```python
 def test_feature_calculation():
     # Arrange
@@ -283,6 +295,7 @@ def test_feature_calculation():
 ### Test Isolation
 
 Ensure tests are isolated and do not depend on:
+
 - External services (use mocks instead)
 - Other test results
 - Specific environment configurations
@@ -367,6 +380,7 @@ def create_test_user(username="testuser", is_admin=False):
 ### Test Databases
 
 For database-dependent tests, the suite uses:
+
 - In-memory SQLite databases for unit tests
 - Test-specific PostgreSQL databases for integration tests
 - Database fixtures with predefined test data
@@ -435,11 +449,13 @@ Common issues and solutions when working with the test suite:
 ### Debugging Techniques
 
 1. **Verbose Output**:
+
    ```bash
    pytest -v
    ```
 
 2. **Print Debugging**:
+
    ```python
    def test_complex_function():
        result = complex_function()
@@ -448,6 +464,7 @@ Common issues and solutions when working with the test suite:
    ```
 
 3. **Interactive Debugging**:
+
    ```bash
    pytest --pdb
    ```
@@ -474,6 +491,7 @@ pytest test_api.py test_auth.py
 ### Code Review Requirements
 
 Pull requests must include:
+
 - Tests for new functionality
 - Tests for fixed bugs
 - Passing CI build with tests
@@ -481,6 +499,7 @@ Pull requests must include:
 ### Test-Driven Development
 
 The development process encourages TDD:
+
 1. Write failing tests for new functionality
 2. Implement the functionality
 3. Verify tests pass

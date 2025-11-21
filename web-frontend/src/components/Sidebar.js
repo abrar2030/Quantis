@@ -185,18 +185,10 @@ const Sidebar = ({ open, onClose }) => {
               {user.username?.charAt(0).toUpperCase() || 'U'}
             </Avatar>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 600 }}
-                noWrap
-              >
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }} noWrap>
                 {user.username || 'User'}
               </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                noWrap
-              >
+              <Typography variant="caption" color="text.secondary" noWrap>
                 {user.email || ''}
               </Typography>
             </Box>
@@ -207,14 +199,14 @@ const Sidebar = ({ open, onClose }) => {
       {/* Navigation */}
       <Box sx={{ flex: 1, overflow: 'auto', py: 1 }}>
         {renderMenuSection(
-          menuItems.filter(item => item.section === 'main'),
+          menuItems.filter((item) => item.section === 'main'),
           null
         )}
 
         <Divider sx={{ my: 1, mx: 2 }} />
 
         {renderMenuSection(
-          menuItems.filter(item => item.section === 'management'),
+          menuItems.filter((item) => item.section === 'management'),
           'Management'
         )}
       </Box>

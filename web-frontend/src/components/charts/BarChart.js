@@ -11,7 +11,13 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const BarChart = ({ data, title, height = 300, dataKey = 'value', nameKey = 'name' }) => {
+const BarChart = ({
+  data,
+  title,
+  height = 300,
+  dataKey = 'value',
+  nameKey = 'name',
+}) => {
   const theme = useTheme();
 
   // Transform data if needed
@@ -23,7 +29,7 @@ const BarChart = ({ data, title, height = 300, dataKey = 'value', nameKey = 'nam
     // Check if data needs transformation
     if (data[0] && data[0].feature && data[0].value !== undefined) {
       // Transform feature importance data
-      return data.map(item => ({
+      return data.map((item) => ({
         name: item.feature,
         value: item.value,
       }));
@@ -78,10 +84,7 @@ const BarChart = ({ data, title, height = 300, dataKey = 'value', nameKey = 'nam
             textAnchor="end"
             height={60}
           />
-          <YAxis
-            stroke={theme.palette.text.secondary}
-            fontSize={12}
-          />
+          <YAxis stroke={theme.palette.text.secondary} fontSize={12} />
           <Tooltip
             contentStyle={{
               backgroundColor: theme.palette.background.paper,
@@ -91,7 +94,7 @@ const BarChart = ({ data, title, height = 300, dataKey = 'value', nameKey = 'nam
             }}
             formatter={(value, name) => [
               typeof value === 'number' ? value.toFixed(3) : value,
-              name
+              name,
             ]}
           />
           <Legend />

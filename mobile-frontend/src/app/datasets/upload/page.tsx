@@ -55,7 +55,7 @@ export default function DatasetUpload() {
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
     if (rejectedFiles.length > 0) {
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         error: 'Invalid file type. Please upload CSV, JSON, or Excel files.',
       }));
@@ -64,7 +64,7 @@ export default function DatasetUpload() {
 
     const file = acceptedFiles[0];
     if (file) {
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         file,
         name: file.name.replace(/\.[^/.]+$/, ''), // Remove extension
@@ -80,7 +80,9 @@ export default function DatasetUpload() {
       'text/csv': ['.csv'],
       'application/json': ['.json'],
       'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [
+        '.xlsx',
+      ],
     },
     multiple: false,
     maxSize: 10 * 1024 * 1024, // 10MB
@@ -88,14 +90,14 @@ export default function DatasetUpload() {
 
   const handleUpload = async () => {
     if (!uploadState.file || !uploadState.name.trim()) {
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         error: 'Please select a file and provide a name.',
       }));
       return;
     }
 
-    setUploadState(prev => ({
+    setUploadState((prev) => ({
       ...prev,
       isUploading: true,
       uploadProgress: 0,
@@ -114,16 +116,19 @@ export default function DatasetUpload() {
           const progress = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
           );
-          setUploadState(prev => ({
+          setUploadState((prev) => ({
             ...prev,
             uploadProgress: progress,
           }));
         }
       );
 
-      const previewResponse = await datasetsAPI.getDatasetPreview(response.id, 5);
+      const previewResponse = await datasetsAPI.getDatasetPreview(
+        response.id,
+        5
+      );
 
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         isUploading: false,
         success: true,
@@ -132,7 +137,7 @@ export default function DatasetUpload() {
       }));
     } catch (error: any) {
       const apiError = handleApiError(error);
-      setUploadState(prev => ({
+      setUploadState((prev) => ({
         ...prev,
         isUploading: false,
         error: apiError.message,
@@ -181,55 +186,98 @@ export default function DatasetUpload() {
               Dataset Uploaded Successfully!
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Your dataset "{uploadState.uploadedDataset.name}" has been processed and is ready to use.
+              Your dataset "{uploadState.uploadedDataset.name}" has been
+              processed and is ready to use.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="text-xl font-semibold text-gray-300 mb-2">Dataset Information</h3>
-                <p className="text-gray-400"><strong>Name:</strong> {uploadState.uploadedDataset.name}</p>
-                <p className="text-gray-400"><strong>Rows:</strong> {uploadState.uploadedDataset.row_count?.toLocaleString()}</p>
-                <p className="text-gray-400"><strong>Columns:</strong> {uploadState.uploadedDataset.columns?.length}</p>
-                <p className="text-gray-400"><strong>File Size:</strong> {formatFileSize(uploadState.uploadedDataset.file_size)}</p>
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                  Dataset Information
+                </h3>
+                <p className="text-gray-400">
+                  <strong>Name:</strong> {uploadState.uploadedDataset.name}
+                </p>
+                <p className="text-gray-400">
+                  <strong>Rows:</strong>{' '}
+                  {uploadState.uploadedDataset.row_count?.toLocaleString()}
+                </p>
+                <p className="text-gray-400">
+                  <strong>Columns:</strong>{' '}
+                  {uploadState.uploadedDataset.columns?.length}
+                </p>
+                <p className="text-gray-400">
+                  <strong>File Size:</strong>{' '}
+                  {formatFileSize(uploadState.uploadedDataset.file_size)}
+                </p>
               </div>
               {uploadState.uploadedDataset.metadata && (
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-300 mb-2">Column Types</h3>
-                  {uploadState.uploadedDataset.metadata.numeric_columns && uploadState.uploadedDataset.metadata.numeric_columns.length > 0 && (
-                    <p className="text-gray-400"><strong>Numeric:</strong> {uploadState.uploadedDataset.metadata.numeric_columns.join(', ')}</p>
-                  )}
-                  {uploadState.uploadedDataset.metadata.categorical_columns && uploadState.uploadedDataset.metadata.categorical_columns.length > 0 && (
-                    <p className="text-gray-400"><strong>Categorical:</strong> {uploadState.uploadedDataset.metadata.categorical_columns.join(', ')}</p>
-                  )}
+                  <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                    Column Types
+                  </h3>
+                  {uploadState.uploadedDataset.metadata.numeric_columns &&
+                    uploadState.uploadedDataset.metadata.numeric_columns
+                      .length > 0 && (
+                      <p className="text-gray-400">
+                        <strong>Numeric:</strong>{' '}
+                        {uploadState.uploadedDataset.metadata.numeric_columns.join(
+                          ', '
+                        )}
+                      </p>
+                    )}
+                  {uploadState.uploadedDataset.metadata.categorical_columns &&
+                    uploadState.uploadedDataset.metadata.categorical_columns
+                      .length > 0 && (
+                      <p className="text-gray-400">
+                        <strong>Categorical:</strong>{' '}
+                        {uploadState.uploadedDataset.metadata.categorical_columns.join(
+                          ', '
+                        )}
+                      </p>
+                    )}
                 </div>
               )}
             </div>
 
             {uploadState.preview && (
               <div className="mt-6">
-                <h3 className="text-xl font-semibold text-gray-300 mb-2">Data Preview</h3>
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                  Data Preview
+                </h3>
                 <div className="overflow-x-auto rounded-md border border-gray-700 bg-gray-900/50">
                   <table className="min-w-full divide-y divide-gray-700">
                     <thead className="bg-gray-800">
                       <tr>
                         {uploadState.preview.columns.map((column: string) => (
-                          <th key={column} scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                          <th
+                            key={column}
+                            scope="col"
+                            className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider"
+                          >
                             {column}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700">
-                      {uploadState.preview.data.map((row: any, index: number) => (
-                        <tr key={index}>
-                          {uploadState.preview.columns.map((column: string) => (
-                            <td key={column} className="px-4 py-2 whitespace-nowrap text-sm text-gray-400">
-                              {row[column]?.toString() || ''}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
+                      {uploadState.preview.data.map(
+                        (row: any, index: number) => (
+                          <tr key={index}>
+                            {uploadState.preview.columns.map(
+                              (column: string) => (
+                                <td
+                                  key={column}
+                                  className="px-4 py-2 whitespace-nowrap text-sm text-gray-400"
+                                >
+                                  {row[column]?.toString() || ''}
+                                </td>
+                              )
+                            )}
+                          </tr>
+                        )
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -282,16 +330,19 @@ export default function DatasetUpload() {
           <div
             {...getRootProps()}
             className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg text-center transition-colors duration-200
-              ${isDragActive
-                ? 'border-blue-500 bg-gray-700/30'
-                : 'border-gray-600 bg-gray-800/50 hover:border-blue-500'}
+              ${
+                isDragActive
+                  ? 'border-blue-500 bg-gray-700/30'
+                  : 'border-gray-600 bg-gray-800/50 hover:border-blue-500'
+              }
             `}
           >
             <input {...getInputProps()} />
             <UploadCloud className="h-16 w-16 text-gray-400 mb-4" />
             <p className="text-lg font-semibold text-gray-300">
               {isDragActive
-                ? 'Drop the file here...' : 'Drag & drop a file here, or click to select'}
+                ? 'Drop the file here...'
+                : 'Drag & drop a file here, or click to select'}
             </p>
             <p className="text-sm text-gray-500">Maximum file size: 10MB</p>
           </div>
@@ -300,31 +351,52 @@ export default function DatasetUpload() {
             <div className="flex items-center space-x-3 p-3 rounded-md bg-gray-700/50 border border-gray-600">
               <FileText className="h-6 w-6 text-blue-400" />
               <div className="flex-grow">
-                <p className="text-gray-300 font-medium">{uploadState.file.name}</p>
-                <p className="text-xs text-gray-500">{formatFileSize(uploadState.file.size)}</p>
+                <p className="text-gray-300 font-medium">
+                  {uploadState.file.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formatFileSize(uploadState.file.size)}
+                </p>
               </div>
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="dataset-name" className="text-sm font-medium text-gray-300">Dataset Name</Label>
+              <Label
+                htmlFor="dataset-name"
+                className="text-sm font-medium text-gray-300"
+              >
+                Dataset Name
+              </Label>
               <Input
                 id="dataset-name"
                 placeholder="My New Dataset"
                 value={uploadState.name}
-                onChange={(e) => setUploadState(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setUploadState((prev) => ({ ...prev, name: e.target.value }))
+                }
                 className="bg-gray-700 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-lg p-3"
                 disabled={uploadState.isUploading}
               />
             </div>
             <div>
-              <Label htmlFor="description" className="text-sm font-medium text-gray-300">Description (Optional)</Label>
+              <Label
+                htmlFor="description"
+                className="text-sm font-medium text-gray-300"
+              >
+                Description (Optional)
+              </Label>
               <Input
                 id="description"
                 placeholder="A brief description of my dataset"
                 value={uploadState.description}
-                onChange={(e) => setUploadState(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setUploadState((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 className="bg-gray-700 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-lg p-3"
                 disabled={uploadState.isUploading}
               />
@@ -333,7 +405,9 @@ export default function DatasetUpload() {
 
           {uploadState.isUploading && (
             <div className="space-y-2">
-              <p className="text-gray-300">Uploading... {uploadState.uploadProgress}%</p>
+              <p className="text-gray-300">
+                Uploading... {uploadState.uploadProgress}%
+              </p>
               <Progress value={uploadState.uploadProgress} className="w-full" />
             </div>
           )}
@@ -341,13 +415,21 @@ export default function DatasetUpload() {
         <CardFooter className="flex justify-center p-6 bg-gray-800/50 border-t border-gray-700">
           <Button
             onClick={handleUpload}
-            disabled={!uploadState.file || !uploadState.name.trim() || uploadState.isUploading}
+            disabled={
+              !uploadState.file ||
+              !uploadState.name.trim() ||
+              uploadState.isUploading
+            }
             className="w-full sm:w-auto text-lg font-semibold py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {uploadState.isUploading ? (
-              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Uploading...</>
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Uploading...
+              </>
             ) : (
-              <><UploadCloud className="mr-2 h-5 w-5" /> Upload Dataset</>
+              <>
+                <UploadCloud className="mr-2 h-5 w-5" /> Upload Dataset
+              </>
             )}
           </Button>
         </CardFooter>

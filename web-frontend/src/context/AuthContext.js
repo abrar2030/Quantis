@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI, setAuthToken, setApiKey, clearAuth, isAuthenticated } from '../services/api';
+import {
+  authAPI,
+  setAuthToken,
+  setApiKey,
+  clearAuth,
+  isAuthenticated,
+} from '../services/api';
 
 const AuthContext = createContext({
   user: null,
@@ -58,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Login failed:', error);
       return {
         success: false,
-        error: error.response?.data?.message || 'Login failed'
+        error: error.response?.data?.message || 'Login failed',
       };
     }
   };
@@ -81,7 +87,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Registration failed:', error);
       return {
         success: false,
-        error: error.response?.data?.message || 'Registration failed'
+        error: error.response?.data?.message || 'Registration failed',
       };
     }
   };
@@ -106,9 +112,5 @@ export const AuthProvider = ({ children }) => {
     register,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

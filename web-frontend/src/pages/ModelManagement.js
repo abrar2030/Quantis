@@ -89,7 +89,7 @@ const ModelManagement = () => {
   const handleCreateModel = async () => {
     try {
       const response = await modelsAPI.createModel(newModel);
-      setModels(prev => [...prev, response.data]);
+      setModels((prev) => [...prev, response.data]);
       setCreateDialogOpen(false);
       setNewModel({
         name: '',
@@ -108,7 +108,7 @@ const ModelManagement = () => {
 
   const handleTrainModel = async (modelId) => {
     try {
-      setTrainingModels(prev => new Set([...prev, modelId]));
+      setTrainingModels((prev) => new Set([...prev, modelId]));
       await modelsAPI.trainModel(modelId);
       // Refresh models to get updated status
       await loadData();
@@ -116,7 +116,7 @@ const ModelManagement = () => {
       const apiError = handleApiError(error);
       setError(apiError.message);
     } finally {
-      setTrainingModels(prev => {
+      setTrainingModels((prev) => {
         const newSet = new Set(prev);
         newSet.delete(modelId);
         return newSet;
@@ -128,7 +128,7 @@ const ModelManagement = () => {
     if (window.confirm('Are you sure you want to delete this model?')) {
       try {
         await modelsAPI.deleteModel(modelId);
-        setModels(prev => prev.filter(model => model.id !== modelId));
+        setModels((prev) => prev.filter((model) => model.id !== modelId));
       } catch (error) {
         const apiError = handleApiError(error);
         setError(apiError.message);
@@ -184,7 +184,14 @@ const ModelManagement = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
         <Typography variant="h4">Model Management</Typography>
         <Button
           variant="contained"
@@ -206,7 +213,14 @@ const ModelManagement = () => {
           <Grid item xs={12} md={6} lg={4} key={model.id}>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    mb: 2,
+                  }}
+                >
                   <Typography variant="h6" noWrap>
                     {model.name}
                   </Typography>
@@ -217,7 +231,11 @@ const ModelManagement = () => {
                   />
                 </Box>
 
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
                   {model.description || 'No description'}
                 </Typography>
 
@@ -287,7 +305,13 @@ const ModelManagement = () => {
         {models.length === 0 && (
           <Grid item xs={12}>
             <Paper sx={{ p: 4, textAlign: 'center' }}>
-              <DataUsage sx={{ fontSize: 64, color: theme.palette.text.secondary, mb: 2 }} />
+              <DataUsage
+                sx={{
+                  fontSize: 64,
+                  color: theme.palette.text.secondary,
+                  mb: 2,
+                }}
+              />
               <Typography variant="h6" gutterBottom>
                 No Models Yet
               </Typography>
@@ -321,7 +345,9 @@ const ModelManagement = () => {
                 fullWidth
                 label="Model Name"
                 value={newModel.name}
-                onChange={(e) => setNewModel(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setNewModel((prev) => ({ ...prev, name: e.target.value }))
+                }
                 required
               />
             </Grid>
@@ -331,7 +357,12 @@ const ModelManagement = () => {
                 <Select
                   value={newModel.model_type}
                   label="Model Type"
-                  onChange={(e) => setNewModel(prev => ({ ...prev, model_type: e.target.value }))}
+                  onChange={(e) =>
+                    setNewModel((prev) => ({
+                      ...prev,
+                      model_type: e.target.value,
+                    }))
+                  }
                 >
                   {modelTypes.map((type) => (
                     <MenuItem key={type.value} value={type.value}>
@@ -348,7 +379,12 @@ const ModelManagement = () => {
                 multiline
                 rows={3}
                 value={newModel.description}
-                onChange={(e) => setNewModel(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setNewModel((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
               />
             </Grid>
             <Grid item xs={12}>
@@ -357,7 +393,12 @@ const ModelManagement = () => {
                 <Select
                   value={newModel.dataset_id}
                   label="Dataset"
-                  onChange={(e) => setNewModel(prev => ({ ...prev, dataset_id: e.target.value }))}
+                  onChange={(e) =>
+                    setNewModel((prev) => ({
+                      ...prev,
+                      dataset_id: e.target.value,
+                    }))
+                  }
                   required
                 >
                   {datasets.map((dataset) => (
@@ -389,9 +430,7 @@ const ModelManagement = () => {
         maxWidth="lg"
         fullWidth
       >
-        <DialogTitle>
-          Model Details: {selectedModel?.name}
-        </DialogTitle>
+        <DialogTitle>Model Details: {selectedModel?.name}</DialogTitle>
         <DialogContent>
           {selectedModel && (
             <Grid container spacing={3}>
@@ -445,16 +484,20 @@ const ModelManagement = () => {
                     <Typography variant="h6" gutterBottom>
                       Performance Metrics
                     </Typography>
-                    {Object.entries(selectedModel.metrics).map(([key, value]) => (
-                      <Box key={key} sx={{ mb: 1 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          {key.replace(/_/g, ' ').toUpperCase()}
-                        </Typography>
-                        <Typography variant="body1">
-                          {typeof value === 'number' ? value.toFixed(4) : value}
-                        </Typography>
-                      </Box>
-                    ))}
+                    {Object.entries(selectedModel.metrics).map(
+                      ([key, value]) => (
+                        <Box key={key} sx={{ mb: 1 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {key.replace(/_/g, ' ').toUpperCase()}
+                          </Typography>
+                          <Typography variant="body1">
+                            {typeof value === 'number'
+                              ? value.toFixed(4)
+                              : value}
+                          </Typography>
+                        </Box>
+                      )
+                    )}
                   </Paper>
                 </Grid>
               )}

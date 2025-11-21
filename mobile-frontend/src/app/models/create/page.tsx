@@ -14,7 +14,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, PlusCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Dataset {
   id: string;
@@ -135,31 +141,55 @@ export default function ModelCreate() {
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="model-name" className="text-sm font-medium text-gray-300">Model Name</Label>
+              <Label
+                htmlFor="model-name"
+                className="text-sm font-medium text-gray-300"
+              >
+                Model Name
+              </Label>
               <Input
                 id="model-name"
                 placeholder="My Predictive Model"
                 value={newModel.name}
-                onChange={(e) => setNewModel(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setNewModel((prev) => ({ ...prev, name: e.target.value }))
+                }
                 className="bg-gray-700 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-lg p-3"
                 required
               />
             </div>
             <div>
-              <Label htmlFor="description" className="text-sm font-medium text-gray-300">Description (Optional)</Label>
+              <Label
+                htmlFor="description"
+                className="text-sm font-medium text-gray-300"
+              >
+                Description (Optional)
+              </Label>
               <Input
                 id="description"
                 placeholder="A brief description of my model"
                 value={newModel.description}
-                onChange={(e) => setNewModel(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setNewModel((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 className="bg-gray-700 border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-lg p-3"
               />
             </div>
             <div>
-              <Label htmlFor="model-type" className="text-sm font-medium text-gray-300">Model Type</Label>
+              <Label
+                htmlFor="model-type"
+                className="text-sm font-medium text-gray-300"
+              >
+                Model Type
+              </Label>
               <Select
                 value={newModel.model_type}
-                onValueChange={(value) => setNewModel(prev => ({ ...prev, model_type: value }))}
+                onValueChange={(value) =>
+                  setNewModel((prev) => ({ ...prev, model_type: value }))
+                }
               >
                 <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500 rounded-lg text-lg p-3">
                   <SelectValue placeholder="Select a model type" />
@@ -174,10 +204,17 @@ export default function ModelCreate() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="dataset" className="text-sm font-medium text-gray-300">Dataset</Label>
+              <Label
+                htmlFor="dataset"
+                className="text-sm font-medium text-gray-300"
+              >
+                Dataset
+              </Label>
               <Select
                 value={newModel.dataset_id}
-                onValueChange={(value) => setNewModel(prev => ({ ...prev, dataset_id: value }))}
+                onValueChange={(value) =>
+                  setNewModel((prev) => ({ ...prev, dataset_id: value }))
+                }
               >
                 <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500 rounded-lg text-lg p-3">
                   <SelectValue placeholder="Select a dataset" />
@@ -201,9 +238,13 @@ export default function ModelCreate() {
             className="w-full sm:w-auto text-lg font-semibold py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isLoading ? (
-              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Creating...</>
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Creating...
+              </>
             ) : (
-              <><PlusCircle className="mr-2 h-5 w-5" /> Create Model</>
+              <>
+                <PlusCircle className="mr-2 h-5 w-5" /> Create Model
+              </>
             )}
           </Button>
         </CardFooter>

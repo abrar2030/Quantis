@@ -10,7 +10,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, PlusCircle, BrainCircuit, Trash2, Eye, Play } from 'lucide-react';
+import {
+  Loader2,
+  PlusCircle,
+  BrainCircuit,
+  Trash2,
+  Eye,
+  Play,
+} from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -77,7 +84,11 @@ export default function Models() {
   };
 
   const handleTrainModel = async (modelId: string) => {
-    if (window.confirm('Are you sure you want to train this model? This may take some time.')) {
+    if (
+      window.confirm(
+        'Are you sure you want to train this model? This may take some time.'
+      )
+    ) {
       try {
         await modelsAPI.trainModel(modelId);
         fetchModels(); // Refresh the list to show updated status
@@ -145,18 +156,27 @@ export default function Models() {
             <div className="text-center py-8">
               <BrainCircuit className="mx-auto h-16 w-16 text-gray-500 mb-4" />
               <p className="text-gray-400 text-lg">No models created yet.</p>
-              <p className="text-gray-500">Start by creating your first model!</p>
+              <p className="text-gray-500">
+                Start by creating your first model!
+              </p>
             </div>
           ) : (
             <ScrollArea className="h-[400px] w-full rounded-md border border-gray-700 bg-gray-900/50 p-3">
               <div className="space-y-4">
                 {models.map((model) => (
-                  <Card key={model.id} className="bg-gray-700/50 border-gray-600">
+                  <Card
+                    key={model.id}
+                    className="bg-gray-700/50 border-gray-600"
+                  >
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h3 className="text-xl font-semibold text-blue-300">{model.name}</h3>
-                          <p className="text-sm text-gray-400">{model.description || 'No description provided.'}</p>
+                          <h3 className="text-xl font-semibold text-blue-300">
+                            {model.name}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            {model.description || 'No description provided.'}
+                          </p>
                         </div>
                         <div className="flex space-x-2">
                           {model.status === 'created' && (
@@ -188,14 +208,32 @@ export default function Models() {
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm text-gray-400">
-                        <p><strong>Type:</strong> {model.model_type}</p>
-                        <p><strong>Status:</strong> <span className={getStatusColor(model.status)}>{model.status}</span></p>
-                        <p><strong>Created:</strong> {new Date(model.created_at).toLocaleDateString()}</p>
-                        {model.trained_at && <p><strong>Trained:</strong> {new Date(model.trained_at).toLocaleDateString()}</p>}
+                        <p>
+                          <strong>Type:</strong> {model.model_type}
+                        </p>
+                        <p>
+                          <strong>Status:</strong>{' '}
+                          <span className={getStatusColor(model.status)}>
+                            {model.status}
+                          </span>
+                        </p>
+                        <p>
+                          <strong>Created:</strong>{' '}
+                          {new Date(model.created_at).toLocaleDateString()}
+                        </p>
+                        {model.trained_at && (
+                          <p>
+                            <strong>Trained:</strong>{' '}
+                            {new Date(model.trained_at).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
                       {model.metrics && (
                         <div className="mt-2">
-                          <p className="text-xs text-gray-500">Accuracy: {(model.metrics.accuracy * 100).toFixed(2)}%</p>
+                          <p className="text-xs text-gray-500">
+                            Accuracy:{' '}
+                            {(model.metrics.accuracy * 100).toFixed(2)}%
+                          </p>
                         </div>
                       )}
                     </CardContent>

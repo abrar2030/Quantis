@@ -19,6 +19,7 @@ The CI/CD pipeline performs the following operations:
 ## Usage
 
 These workflows are automatically triggered when:
+
 - Code is pushed to main, master, or develop branches
 - Pull requests are created against main, master, or develop branches
 
@@ -35,6 +36,7 @@ To modify the CI/CD pipeline:
 ## Dependencies
 
 The workflows depend on:
+
 - GitHub Actions runners
 - Python 3.10
 - Node.js 18

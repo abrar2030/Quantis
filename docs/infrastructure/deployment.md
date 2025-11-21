@@ -173,7 +173,7 @@ services:
       context: ./api
       dockerfile: ../infrastructure/Dockerfile.api
     ports:
-      - "8000:8000"
+      - '8000:8000'
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/quantis
       - DEBUG=true
@@ -187,7 +187,7 @@ services:
       context: ./frontend
       dockerfile: ../infrastructure/Dockerfile.frontend
     ports:
-      - "3000:80"
+      - '3000:80'
     volumes:
       - ./frontend:/app
     depends_on:
@@ -227,35 +227,35 @@ spec:
         app: backend
     spec:
       containers:
-      - name: api
-        image: quantis/api:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: database-url
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: api
+          image: quantis/api:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: database-url
+          resources:
+            requests:
+              memory: '512Mi'
+              cpu: '250m'
+            limits:
+              memory: '1Gi'
+              cpu: '500m'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
 ```
 
 #### Terraform Configuration
@@ -306,6 +306,7 @@ Quantis uses a CI/CD pipeline for automated testing and deployment:
 The deployment process follows these steps:
 
 1. **Infrastructure Provisioning**:
+
    ```bash
    cd infrastructure/terraform/environments/dev
    terraform init
@@ -313,6 +314,7 @@ The deployment process follows these steps:
    ```
 
 2. **Kubernetes Deployment**:
+
    ```bash
    kubectl apply -k infrastructure/kubernetes/environments/dev
    ```
@@ -328,6 +330,7 @@ The deployment process follows these steps:
 In case of deployment issues:
 
 1. **Kubernetes Rollback**:
+
    ```bash
    kubectl rollout undo deployment/backend-deployment -n quantis
    ```
@@ -460,11 +463,13 @@ Support for various compliance requirements:
 #### Pod Startup Failures
 
 Check for:
+
 - Resource constraints
 - Image pull errors
 - Configuration issues
 
 Resolution:
+
 ```bash
 kubectl describe pod <pod-name> -n quantis
 kubectl logs <pod-name> -n quantis
@@ -473,11 +478,13 @@ kubectl logs <pod-name> -n quantis
 #### Database Connection Issues
 
 Check for:
+
 - Network connectivity
 - Credential issues
 - Connection pool exhaustion
 
 Resolution:
+
 ```bash
 kubectl exec -it <api-pod> -n quantis -- curl -v <db-service>:5432
 kubectl get secret app-secrets -n quantis -o yaml
@@ -486,11 +493,13 @@ kubectl get secret app-secrets -n quantis -o yaml
 #### Performance Degradation
 
 Check for:
+
 - Resource utilization
 - Slow database queries
 - External service dependencies
 
 Resolution:
+
 ```bash
 kubectl top pods -n quantis
 kubectl exec -it <db-pod> -n quantis -- psql -U postgres -c "SELECT * FROM pg_stat_activity"

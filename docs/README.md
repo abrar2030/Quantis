@@ -36,11 +36,13 @@ The `api/reference.md` file provides detailed documentation for the Quantis API,
 - Webhook configuration and usage
 
 Example API authentication flow:
+
 ```
 POST /users/token
 ```
 
 Request body:
+
 ```json
 {
   "username": "your_username",
@@ -49,6 +51,7 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -68,6 +71,7 @@ The `architecture/overview.md` file details the system architecture, including:
 - Future architectural enhancements
 
 The Quantis platform follows a microservices architecture with these major components:
+
 1. Frontend Application (React-based)
 2. Backend API (FastAPI-based)
 3. ML Models (Time series forecasting)
@@ -80,6 +84,7 @@ The Quantis platform follows a microservices architecture with these major compo
 ### For Developers
 
 Developers should refer to these documents during:
+
 - Initial onboarding to understand the system architecture
 - Development of new features to ensure consistency with existing patterns
 - Troubleshooting issues to understand component interactions
@@ -89,6 +94,7 @@ Developers should refer to these documents during:
 ### For End Users
 
 End users should refer to the user guides for:
+
 - Getting started with the platform
 - Understanding available features and capabilities
 - Learning best practices for time series forecasting
@@ -120,6 +126,7 @@ When contributing to the documentation:
 ### Documentation Review Process
 
 All documentation changes undergo the following review process:
+
 1. Technical accuracy review by subject matter experts
 2. Readability review for clarity and comprehension
 3. Structural review for consistency with existing documentation

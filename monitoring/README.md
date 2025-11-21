@@ -106,7 +106,7 @@ alerting:
         - targets: ['localhost:9093']
 
 rule_files:
-  - "alert_rules.yml"
+  - 'alert_rules.yml'
 ```
 
 ## Monitoring Architecture
@@ -140,6 +140,7 @@ The monitoring system follows a multi-layered approach:
 The monitoring system collects a wide range of metrics:
 
 ### System Metrics
+
 - CPU usage (user, system, iowait, idle)
 - Memory usage (used, free, cached, buffered)
 - Disk I/O (reads, writes, latency)
@@ -147,6 +148,7 @@ The monitoring system collects a wide range of metrics:
 - Process counts and states
 
 ### Application Metrics
+
 - Request rates and latencies
 - Error rates and types
 - Queue lengths and processing times
@@ -154,6 +156,7 @@ The monitoring system collects a wide range of metrics:
 - Database query performance
 
 ### Model Metrics
+
 - Prediction latency
 - Prediction accuracy
 - Data drift indicators
@@ -161,6 +164,7 @@ The monitoring system collects a wide range of metrics:
 - Model confidence scores
 
 ### Business Metrics
+
 - User engagement metrics
 - Conversion rates
 - Feature usage patterns
@@ -172,11 +176,13 @@ The monitoring system collects a wide range of metrics:
 The monitoring system includes a sophisticated alerting framework:
 
 ### Alert Severity Levels
+
 1. **Critical**: Immediate action required, service impact
 2. **Warning**: Potential issues requiring attention
 3. **Info**: Informational alerts for awareness
 
 ### Alert Categories
+
 1. **Availability Alerts**: Service or component unavailability
 2. **Performance Alerts**: Degraded performance or latency
 3. **Capacity Alerts**: Resource utilization thresholds
@@ -184,7 +190,9 @@ The monitoring system includes a sophisticated alerting framework:
 5. **Model Alerts**: ML model performance issues
 
 ### Alert Routing
+
 Alerts are routed based on:
+
 - Severity level
 - Component affected
 - Time of day
@@ -206,6 +214,7 @@ The monitoring system integrates with:
 ### Setting Up Monitoring
 
 1. **Install Required Components**:
+
    ```bash
    # Install Prometheus
    wget https://github.com/prometheus/prometheus/releases/download/v2.37.0/prometheus-2.37.0.linux-amd64.tar.gz
@@ -362,6 +371,7 @@ The monitoring system is designed for minimal performance impact:
 ### Adding New Metrics
 
 1. **Instrument Application Code**:
+
    ```python
    from prometheus_client import Counter, Gauge, Histogram
 

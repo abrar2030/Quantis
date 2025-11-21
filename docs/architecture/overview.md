@@ -44,32 +44,38 @@ The components interact in the following manner:
 Quantis leverages a modern technology stack:
 
 ### Frontend
+
 - React.js for UI components and state management
 - Context API for state management
 - Modern CSS for styling
 - Chart.js for data visualization
 
 ### Backend
+
 - FastAPI for high-performance API development
 - Pydantic for data validation
 - JWT for authentication
 
 ### Machine Learning
+
 - PyTorch and TensorFlow for model development
 - MLflow for experiment tracking
 - Temporal Fusion Transformer (TFT) for time series forecasting
 
 ### Data Processing
+
 - Pandas and NumPy for data manipulation
 - Feature store for feature management
 
 ### Infrastructure
+
 - Docker for containerization
 - Kubernetes for orchestration
 - Terraform for infrastructure as code
 - Ansible for configuration management
 
 ### Monitoring
+
 - Prometheus for metrics collection
 - Grafana for visualization
 - Custom model monitoring for ML-specific metrics

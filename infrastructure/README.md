@@ -18,6 +18,7 @@ The enhanced infrastructure implements a multi-tier, highly available architectu
 ## 🔒 Security Features
 
 ### Enhanced Security Controls
+
 - **Web Application Firewall (WAF)**: Protection against OWASP Top 10 and custom attack patterns
 - **Network Security**: Multi-layer network controls with NACLs and Security Groups
 - **Encryption**: End-to-end encryption with customer-managed KMS keys
@@ -27,6 +28,7 @@ The enhanced infrastructure implements a multi-tier, highly available architectu
 - **Audit Logging**: Comprehensive audit trails with CloudTrail and VPC Flow Logs
 
 ### Compliance Features
+
 - **PCI DSS**: Payment card industry data security standards
 - **SOX**: Sarbanes-Oxley Act compliance controls
 - **GDPR**: General Data Protection Regulation compliance
@@ -78,6 +80,7 @@ infrastructure/
 ### Environment Setup
 
 1. **Configure AWS Credentials**
+
    ```bash
    aws configure
    # or use environment variables
@@ -87,12 +90,14 @@ infrastructure/
    ```
 
 2. **Initialize Terraform**
+
    ```bash
    cd terraform/environments/dev
    terraform init
    ```
 
 3. **Plan Deployment**
+
    ```bash
    terraform plan -var-file="terraform.tfvars"
    ```
@@ -124,6 +129,7 @@ docker-compose down
 Key configuration variables for each environment:
 
 #### Development Environment
+
 ```hcl
 app_name = "quantis"
 environment = "dev"
@@ -136,6 +142,7 @@ enable_deletion_protection = false
 ```
 
 #### Production Environment
+
 ```hcl
 app_name = "quantis"
 environment = "prod"
@@ -152,6 +159,7 @@ backup_retention_period = 35
 ### Security Configuration
 
 #### KMS Key Management
+
 ```hcl
 kms_deletion_window = 30
 multi_region_key = true
@@ -159,6 +167,7 @@ enable_key_rotation = true
 ```
 
 #### WAF Configuration
+
 ```hcl
 rate_limit_per_5min = 2000
 blocked_countries = ["CN", "RU", "KP", "IR"]
@@ -167,6 +176,7 @@ enable_xss_protection = true
 ```
 
 #### Database Security
+
 ```hcl
 enable_encryption_at_rest = true
 enable_encryption_in_transit = true
@@ -178,18 +188,21 @@ enable_point_in_time_recovery = true
 ## 📊 Monitoring & Observability
 
 ### CloudWatch Integration
+
 - **Custom Metrics**: Application-specific performance metrics
 - **Log Aggregation**: Centralized log collection and analysis
 - **Alerting**: Multi-threshold alerting with escalation procedures
 - **Dashboards**: Real-time operational visibility
 
 ### Security Monitoring
+
 - **GuardDuty**: Machine learning-based threat detection
 - **Security Hub**: Centralized security findings management
 - **Config**: Configuration compliance monitoring
 - **Inspector**: Vulnerability assessment and management
 
 ### Performance Monitoring
+
 - **Application Performance**: Response time and throughput monitoring
 - **Infrastructure Performance**: CPU, memory, and storage utilization
 - **Database Performance**: Query performance and connection monitoring
@@ -198,6 +211,7 @@ enable_point_in_time_recovery = true
 ## 🔄 CI/CD Integration
 
 ### Terraform Automation
+
 ```yaml
 # Example GitHub Actions workflow
 name: Infrastructure Deployment
@@ -218,6 +232,7 @@ jobs:
 ```
 
 ### Security Scanning
+
 ```yaml
 # Security scanning integration
 - name: Security Scan
@@ -230,18 +245,21 @@ jobs:
 ## 🛡️ Security Best Practices
 
 ### Network Security
+
 - **Zero Trust Architecture**: Never trust, always verify
 - **Network Segmentation**: Isolated subnets with controlled access
 - **Encryption in Transit**: TLS 1.2+ for all communications
 - **VPC Endpoints**: Secure access to AWS services
 
 ### Access Control
+
 - **Least Privilege**: Minimal required permissions
 - **Multi-Factor Authentication**: Required for administrative access
 - **Role-Based Access**: Service-specific IAM roles
 - **Regular Access Reviews**: Quarterly access audits
 
 ### Data Protection
+
 - **Encryption at Rest**: Customer-managed KMS keys
 - **Data Classification**: Automated data discovery and classification
 - **Backup Encryption**: Encrypted backups with retention policies
@@ -250,6 +268,7 @@ jobs:
 ## 📈 Scaling & Performance
 
 ### Auto Scaling Configuration
+
 ```hcl
 # CPU-based scaling
 target_cpu_utilization = 70
@@ -262,6 +281,7 @@ custom_metric_threshold = 1000
 ```
 
 ### Database Scaling
+
 ```hcl
 # Read replica configuration
 create_read_replica = true
@@ -274,6 +294,7 @@ storage_type = "gp3"
 ```
 
 ### Caching Strategy
+
 - **Application Caching**: Redis for session and application data
 - **Database Caching**: RDS Proxy for connection pooling
 - **CDN Integration**: CloudFront for static content delivery
@@ -281,12 +302,14 @@ storage_type = "gp3"
 ## 💰 Cost Optimization
 
 ### Resource Optimization
+
 - **Right-Sizing**: Regular instance size optimization
 - **Reserved Instances**: Long-term capacity reservations
 - **Spot Instances**: Cost-effective compute for non-critical workloads
 - **Storage Optimization**: Lifecycle policies and storage class optimization
 
 ### Cost Monitoring
+
 ```hcl
 # Budget configuration
 monthly_budget_limit = 5000
@@ -295,6 +318,7 @@ cost_anomaly_detection = true
 ```
 
 ### Automated Cost Controls
+
 - **Scheduled Scaling**: Non-production environment shutdown
 - **Lifecycle Management**: Automated resource cleanup
 - **Usage Monitoring**: Resource utilization tracking
@@ -304,6 +328,7 @@ cost_anomaly_detection = true
 ### Common Issues
 
 #### Terraform State Issues
+
 ```bash
 # Refresh state
 terraform refresh
@@ -316,6 +341,7 @@ terraform force-unlock LOCK_ID
 ```
 
 #### Application Deployment Issues
+
 ```bash
 # Check instance health
 aws ec2 describe-instance-status --instance-ids i-1234567890abcdef0
@@ -328,6 +354,7 @@ aws autoscaling describe-scaling-activities --auto-scaling-group-name quantis-de
 ```
 
 #### Database Connection Issues
+
 ```bash
 # Check RDS status
 aws rds describe-db-instances --db-instance-identifier quantis-dev-primary
@@ -342,6 +369,7 @@ aws ec2 describe-security-groups --group-ids sg-1234567890abcdef0
 ### Diagnostic Commands
 
 #### Infrastructure Health Check
+
 ```bash
 # Check all resources
 terraform show
@@ -354,6 +382,7 @@ terraform plan -detailed-exitcode
 ```
 
 #### Security Validation
+
 ```bash
 # Check security groups
 aws ec2 describe-security-groups --query 'SecurityGroups[?GroupName==`quantis-dev-app-sg`]'
@@ -368,6 +397,7 @@ aws cloudtrail get-trail-status --name quantis-dev-cloudtrail
 ## 📚 Documentation
 
 ### Comprehensive Documentation
+
 - **[Infrastructure Documentation](INFRASTRUCTURE_DOCUMENTATION.md)**: Complete technical documentation
 - **Architecture Diagrams**: Visual representation of the infrastructure
 - **Security Controls Matrix**: Detailed security control mapping
@@ -375,6 +405,7 @@ aws cloudtrail get-trail-status --name quantis-dev-cloudtrail
 - **Runbooks**: Operational procedures and troubleshooting guides
 
 ### API Documentation
+
 - **Terraform Modules**: Module documentation with examples
 - **Ansible Playbooks**: Configuration management documentation
 - **Kubernetes Manifests**: Container orchestration documentation
@@ -382,6 +413,7 @@ aws cloudtrail get-trail-status --name quantis-dev-cloudtrail
 ## 🤝 Contributing
 
 ### Development Workflow
+
 1. **Fork Repository**: Create a fork of the repository
 2. **Create Branch**: Create a feature branch for changes
 3. **Make Changes**: Implement infrastructure improvements
@@ -389,12 +421,14 @@ aws cloudtrail get-trail-status --name quantis-dev-cloudtrail
 5. **Submit PR**: Create pull request with detailed description
 
 ### Code Standards
+
 - **Terraform**: Follow HashiCorp configuration language best practices
 - **Security**: Implement security-first design principles
 - **Documentation**: Maintain comprehensive documentation
 - **Testing**: Include validation and testing procedures
 
 ### Review Process
+
 - **Security Review**: All changes reviewed for security implications
 - **Compliance Review**: Ensure changes maintain compliance requirements
 - **Performance Review**: Validate performance impact of changes
@@ -403,11 +437,13 @@ aws cloudtrail get-trail-status --name quantis-dev-cloudtrail
 ## 📞 Support
 
 ### Internal Support
+
 - **Operations Team**: ops@quantis.com
 - **Security Team**: security@quantis.com
 - **Engineering Team**: engineering@quantis.com
 
 ### External Support
+
 - **AWS Support**: Enterprise support for AWS-related issues
 - **Security Consulting**: External security expertise
 - **Compliance Auditing**: Third-party compliance validation

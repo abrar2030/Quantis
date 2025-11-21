@@ -437,6 +437,7 @@ A: Yes, models like Temporal Fusion Transformer and Prophet can automatically de
 **Q: How often should I retrain my models?**
 
 A: It depends on how quickly your data patterns change. As a best practice, consider retraining:
+
 - When new significant data becomes available
 - When forecast accuracy starts to decline
 - On a regular schedule (monthly or quarterly)
@@ -445,6 +446,7 @@ A: It depends on how quickly your data patterns change. As a best practice, cons
 **Q: Can I export forecasts to other systems?**
 
 A: Yes, forecasts can be exported in several formats:
+
 - CSV or Excel for spreadsheet applications
 - JSON for programmatic use
 - Direct API integration with other systems
@@ -453,6 +455,7 @@ A: Yes, forecasts can be exported in several formats:
 **Q: How does Quantis handle confidential data?**
 
 A: Quantis implements several security measures:
+
 - Data encryption in transit and at rest
 - Role-based access control
 - Audit logging of all actions
@@ -463,6 +466,7 @@ A: Quantis implements several security measures:
 **Q: What browsers are supported?**
 
 A: Quantis supports:
+
 - Chrome (latest 2 versions)
 - Firefox (latest 2 versions)
 - Safari (latest 2 versions)
@@ -471,6 +475,7 @@ A: Quantis supports:
 **Q: Can I use Quantis offline?**
 
 A: The web interface requires an internet connection, but you can:
+
 - Export forecasts for offline use
 - Use the Python client library in offline environments
 - Set up a local deployment for internal networks
@@ -482,6 +487,7 @@ A: Yes, API rate limits depend on your subscription level. Check the API documen
 **Q: Can I integrate custom Python code?**
 
 A: Yes, Quantis supports custom Python code in several areas:
+
 - Custom feature engineering
 - Custom models
 - Custom preprocessing steps

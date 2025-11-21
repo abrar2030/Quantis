@@ -1,5 +1,12 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
@@ -27,7 +34,9 @@ export default function Login() {
       if (result.success) {
         router.push('/');
       } else {
-        setError(result.error || 'Login failed. Please check your credentials.');
+        setError(
+          result.error || 'Login failed. Please check your credentials.'
+        );
       }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
@@ -42,7 +51,9 @@ export default function Login() {
         <CardHeader className="text-center p-6 bg-gray-800/50 border-b border-gray-700">
           <div className="flex justify-center items-center mb-3">
             <LogIn className="h-7 w-7 text-blue-400 mr-2" />
-            <CardTitle className="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Quantis Login</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              Quantis Login
+            </CardTitle>
           </div>
           <CardDescription className="text-gray-400">
             Access your prediction dashboard.
@@ -51,7 +62,12 @@ export default function Login() {
         <form onSubmit={handleLogin}>
           <CardContent className="p-6 space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-300">Email Address</Label>
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-300"
+              >
+                Email Address
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -63,7 +79,12 @@ export default function Login() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-300">Password</Label>
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-300"
+              >
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -75,7 +96,10 @@ export default function Login() {
               />
             </div>
             {error && (
-              <Alert variant="destructive" className="w-full bg-red-900/30 border-red-700 text-red-300 rounded-lg p-3">
+              <Alert
+                variant="destructive"
+                className="w-full bg-red-900/30 border-red-700 text-red-300 rounded-lg p-3"
+              >
                 <AlertDescription className="text-sm">{error}</AlertDescription>
               </Alert>
             )}
@@ -87,15 +111,23 @@ export default function Login() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Logging In...</>
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Logging
+                  In...
+                </>
               ) : (
-                <><LogIn className="mr-2 h-5 w-5" /> Login</>
+                <>
+                  <LogIn className="mr-2 h-5 w-5" /> Login
+                </>
               )}
             </Button>
             <p className="text-sm text-center text-gray-400 pt-2">
               Don't have an account?{' '}
-              <Link href="/register" className="font-medium text-blue-400 hover:text-blue-300 hover:underline flex items-center justify-center mt-1">
-                 <UserPlus className="mr-1 h-4 w-4" /> Create Account
+              <Link
+                href="/register"
+                className="font-medium text-blue-400 hover:text-blue-300 hover:underline flex items-center justify-center mt-1"
+              >
+                <UserPlus className="mr-1 h-4 w-4" /> Create Account
               </Link>
             </p>
           </CardFooter>

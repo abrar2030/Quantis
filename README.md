@@ -22,16 +22,16 @@ Quantis is a comprehensive quantitative trading and investment analytics platfor
 
 ## Table of Contents
 
-*   [Overview](#overview)
-*   [Key Features](#key-features)
-*   [Architecture](#architecture)
-*   [Technology Stack](#technology-stack)
-*   [Getting Started](#getting-started)
-*   [API Documentation](#api-documentation)
-*   [Testing](#testing)
-*   [CI/CD Pipeline](#cicd-pipeline)
-*   [Contributing](#contributing)
-*   [License](#license)
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Technology Stack](#technology-stack)
+- [Getting Started](#getting-started)
+- [API Documentation](#api-documentation)
+- [Testing](#testing)
+- [CI/CD Pipeline](#cicd-pipeline)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -69,12 +69,12 @@ Quantis follows a microservices architecture, logically grouped into three main 
 
 ### Architectural Components
 
-| Layer | Key Services | Description |
-| :--- | :--- | :--- |
-| **Data Services** | Market Data, Alternative Data, Historical Data, Data Quality | Responsible for all data ingestion, storage, cleaning, and retrieval. |
-| **Analytical Services** | Statistical Analysis, Machine Learning, Risk Analysis, Portfolio Optimization | Contains the core quantitative intelligence, running models and generating insights. |
-| **Trading Services** | Strategy, Signal Generation, Backtesting, Execution | Manages the full lifecycle of trading strategies, from development to live execution. |
-| **Infrastructure** | API Gateway, Authentication Service, Monitoring Stack, Data Storage | Provides common technical capabilities and ensures system stability and security. |
+| Layer                   | Key Services                                                                  | Description                                                                           |
+| :---------------------- | :---------------------------------------------------------------------------- | :------------------------------------------------------------------------------------ |
+| **Data Services**       | Market Data, Alternative Data, Historical Data, Data Quality                  | Responsible for all data ingestion, storage, cleaning, and retrieval.                 |
+| **Analytical Services** | Statistical Analysis, Machine Learning, Risk Analysis, Portfolio Optimization | Contains the core quantitative intelligence, running models and generating insights.  |
+| **Trading Services**    | Strategy, Signal Generation, Backtesting, Execution                           | Manages the full lifecycle of trading strategies, from development to live execution. |
+| **Infrastructure**      | API Gateway, Authentication Service, Monitoring Stack, Data Storage           | Provides common technical capabilities and ensures system stability and security.     |
 
 ---
 
@@ -82,14 +82,14 @@ Quantis follows a microservices architecture, logically grouped into three main 
 
 The platform is built using a modern, performant, and well-supported technology stack.
 
-| Category | Key Technologies | Description |
-| :--- | :--- | :--- |
-| **Backend** | Python, Rust, FastAPI, Flask | Python for data science and rapid development; Rust for performance-critical components. FastAPI/Flask for robust API development. |
-| **Databases** | PostgreSQL, InfluxDB | PostgreSQL for relational data and core system state; InfluxDB for high-volume time series data storage. |
-| **Task Queue** | Celery, Redis | Celery for asynchronous task processing; Redis for task queuing and caching. |
-| **ML/Quant Libraries** | scikit-learn, PyTorch, pandas-ta, pyfolio, zipline | Specialized libraries for machine learning, technical analysis, performance reporting, and event-driven backtesting. |
-| **Frontend** | React, TypeScript, Redux Toolkit, D3.js, Plotly, TradingView | Modern stack for a responsive, data-rich web dashboard with advanced visualization capabilities. |
-| **DevOps** | Docker, Kubernetes, GitHub Actions, Prometheus, Grafana, ELK Stack | Full-stack CI/CD, container orchestration, and observability tools for production readiness. |
+| Category               | Key Technologies                                                   | Description                                                                                                                        |
+| :--------------------- | :----------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+| **Backend**            | Python, Rust, FastAPI, Flask                                       | Python for data science and rapid development; Rust for performance-critical components. FastAPI/Flask for robust API development. |
+| **Databases**          | PostgreSQL, InfluxDB                                               | PostgreSQL for relational data and core system state; InfluxDB for high-volume time series data storage.                           |
+| **Task Queue**         | Celery, Redis                                                      | Celery for asynchronous task processing; Redis for task queuing and caching.                                                       |
+| **ML/Quant Libraries** | scikit-learn, PyTorch, pandas-ta, pyfolio, zipline                 | Specialized libraries for machine learning, technical analysis, performance reporting, and event-driven backtesting.               |
+| **Frontend**           | React, TypeScript, Redux Toolkit, D3.js, Plotly, TradingView       | Modern stack for a responsive, data-rich web dashboard with advanced visualization capabilities.                                   |
+| **DevOps**             | Docker, Kubernetes, GitHub Actions, Prometheus, Grafana, ELK Stack | Full-stack CI/CD, container orchestration, and observability tools for production readiness.                                       |
 
 ---
 
@@ -98,34 +98,36 @@ The platform is built using a modern, performant, and well-supported technology 
 ### Prerequisites
 
 To set up the platform, ensure you have the following installed:
-*   **Python** (v3.9+)
-*   **Node.js** (v16+)
-*   **Docker** and Docker Compose
-*   **Kubernetes** (for production deployment)
+
+- **Python** (v3.9+)
+- **Node.js** (v16+)
+- **Docker** and Docker Compose
+- **Kubernetes** (for production deployment)
 
 ### Local Development Setup
 
 The recommended way to set up the development environment is using the provided scripts:
 
-| Step | Command | Description |
-| :--- | :--- | :--- |
+| Step                    | Command                                                            | Description                                                     |
+| :---------------------- | :----------------------------------------------------------------- | :-------------------------------------------------------------- |
 | **1. Clone Repository** | `git clone https://github.com/abrar2030/Quantis.git && cd Quantis` | Download the source code and navigate to the project directory. |
-| **2. Run Setup Script** | `./setup_quantis_env.sh` | Installs dependencies and configures the local environment. |
-| **3. Start Services** | `./run_quantis.sh dev` | Starts all core services for development. |
+| **2. Run Setup Script** | `./setup_quantis_env.sh`                                           | Installs dependencies and configures the local environment.     |
+| **3. Start Services**   | `./run_quantis.sh dev`                                             | Starts all core services for development.                       |
 
 **Access Points:**
-*   **Web Dashboard**: `http://localhost:3000`
-*   **API Documentation**: `http://localhost:8000/docs`
-*   **Monitoring Dashboard**: `http://localhost:9090`
+
+- **Web Dashboard**: `http://localhost:3000`
+- **API Documentation**: `http://localhost:8000/docs`
+- **Monitoring Dashboard**: `http://localhost:9090`
 
 ### Deployment
 
 Quantis supports both Docker Compose for local environments and Kubernetes for production deployment.
 
-| Deployment Target | Command Example |
-| :--- | :--- |
-| **Docker Compose** | `docker-compose up -d` |
-| **Kubernetes** | `kubectl apply -f infrastructure/k8s/` |
+| Deployment Target  | Command Example                        |
+| :----------------- | :------------------------------------- |
+| **Docker Compose** | `docker-compose up -d`                 |
+| **Kubernetes**     | `kubectl apply -f infrastructure/k8s/` |
 
 ---
 
@@ -135,13 +137,13 @@ Quantis exposes a comprehensive, versioned API for all platform interactions, ac
 
 ### Key API Endpoints
 
-| Service | Endpoint | Method | Description |
-| :--- | :--- | :--- | :--- |
-| **Market Data** | `/api/v1/market/prices` | `GET` | Get real-time market prices. |
-| **Strategy** | `/api/v1/strategies` | `POST` | Create a new trading strategy. |
-| **Strategy** | `/api/v1/strategies/{id}/backtest` | `POST` | Run a strategy backtest and return results. |
-| **Portfolio** | `/api/v1/portfolios/{id}/performance` | `GET` | Get detailed portfolio performance metrics. |
-| **Portfolio** | `/api/v1/portfolios/{id}/rebalance` | `POST` | Trigger an automated portfolio rebalancing. |
+| Service         | Endpoint                              | Method | Description                                 |
+| :-------------- | :------------------------------------ | :----- | :------------------------------------------ |
+| **Market Data** | `/api/v1/market/prices`               | `GET`  | Get real-time market prices.                |
+| **Strategy**    | `/api/v1/strategies`                  | `POST` | Create a new trading strategy.              |
+| **Strategy**    | `/api/v1/strategies/{id}/backtest`    | `POST` | Run a strategy backtest and return results. |
+| **Portfolio**   | `/api/v1/portfolios/{id}/performance` | `GET`  | Get detailed portfolio performance metrics. |
+| **Portfolio**   | `/api/v1/portfolios/{id}/rebalance`   | `POST` | Trigger an automated portfolio rebalancing. |
 
 Full API documentation, including request/response schemas, is available at `http://localhost:8000/docs`.
 
@@ -153,18 +155,19 @@ The project maintains an overall test coverage of **82%** across all components,
 
 ### Test Coverage Summary
 
-| Component | Coverage | Status |
-| :--- | :--- | :--- |
-| **Trading Services** | 87% | ✅ |
-| **Data Services** | 85% | ✅ |
-| **Analytical Services** | 83% | ✅ |
-| **Portfolio Management** | 80% | ✅ |
-| **API Layer** | 90% | ✅ |
-| **Frontend Components** | 75% | ✅ |
+| Component                | Coverage | Status |
+| :----------------------- | :------- | :----- |
+| **Trading Services**     | 87%      | ✅     |
+| **Data Services**        | 85%      | ✅     |
+| **Analytical Services**  | 83%      | ✅     |
+| **Portfolio Management** | 80%      | ✅     |
+| **API Layer**            | 90%      | ✅     |
+| **Frontend Components**  | 75%      | ✅     |
 
 ### Testing Types
 
 Testing is categorized into four main types:
+
 1.  **Unit Tests**: Focused on individual functions, statistical models, and core trading logic.
 2.  **Integration Tests**: Validating end-to-end trading workflows, API endpoints, and database interactions.
 3.  **Performance Tests**: Measuring data processing throughput, backtesting speed, and API response times under load.
@@ -177,14 +180,16 @@ Testing is categorized into four main types:
 ## CI/CD Pipeline
 
 Quantis uses **GitHub Actions** for continuous integration and deployment, automating the development workflow:
-*   **Continuous Integration**: Automated testing, code quality checks (pylint, flake8, ESLint), and security scanning on every pull request.
-*   **Continuous Deployment**: Automated Docker image building/publishing and deployment to staging and production environments (managed via Kubernetes).
+
+- **Continuous Integration**: Automated testing, code quality checks (pylint, flake8, ESLint), and security scanning on every pull request.
+- **Continuous Deployment**: Automated Docker image building/publishing and deployment to staging and production environments (managed via Kubernetes).
 
 ---
 
 ## Contributing
 
 We welcome contributions to Quantis! To get involved:
+
 1.  Fork the repository.
 2.  Create your feature branch (`git checkout -b feature/your-feature-name`).
 3.  Commit your changes and push to the branch.

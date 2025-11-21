@@ -23,25 +23,25 @@
 - name: Set root password
   mysql_user:
     name: root
-    password: "{{ db_root_password }}"
+    password: '{{ db_root_password }}'
     host_all: yes
     state: present
   no_log: true
 
 - name: Create application database
   mysql_db:
-    name: "{{ db_name }}"
+    name: '{{ db_name }}'
     state: present
     login_user: root
-    login_password: "{{ db_root_password }}"
+    login_password: '{{ db_root_password }}'
 
 - name: Create application database user
   mysql_user:
-    name: "{{ db_user }}"
-    password: "{{ db_password }}"
-    priv: "{{ db_name }}.*:ALL"
+    name: '{{ db_user }}'
+    password: '{{ db_password }}'
+    priv: '{{ db_name }}.*:ALL'
     host: '%'
     state: present
     login_user: root
-    login_password: "{{ db_root_password }}"
+    login_password: '{{ db_root_password }}'
   no_log: true
