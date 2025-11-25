@@ -1,23 +1,37 @@
 """
 Enhanced prediction endpoints with database integration
 """
+
 import time
 from typing import List, Optional
 
-import database
-import get_db
-import import
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-importmiddleware.auth import (
-    prediction_rate_limit, readonly_or_above, user_or_admin_required,
-    validate_api_key, admin_required
+import database
+from get_db import get_db
+
+# ✅ FIXED — remove "import" keyword issue
+# (You had: `import import`)
+# Removing because it is invalid and unused.
+
+
+# ✅ FIXED — correct imports for middleware functions
+from middleware.auth import (
+    prediction_rate_limit,
+    readonly_or_above,
+    user_or_admin_required,
+    validate_api_key,
+    admin_required,
 )
-importschemas import PredictionRequest, PredictionResponse, ModelHealthResponse
-importservices.prediction_service import PredictionService
-importservices.model_service import ModelService
+
+# ✅ FIXED — correct imports for schemas
+from schemas import PredictionRequest, PredictionResponse, ModelHealthResponse
+
+# ✅ FIXED — correct imports for services
+from services.prediction_service import PredictionService
+from services.model_service import ModelService
 
 router = APIRouter()
 
@@ -60,28 +74,24 @@ async def predict(
     request: PredictionRequest,
     current_user: dict = Depends(user_or_admin_required),
     _: dict = Depends(prediction_rate_limit),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Generate predictions using a trained model.
-
-    Requires user or admin role and is rate limited.
-    """
+    """Generate predictions using a trained model."""
     try:
         prediction_service = PredictionService(db)
 
-        # Extract model_id from request if provided, otherwise use default
-        model_id = getattr(request, 'model_id', 1)  # Default to model 1
+        # Extract model_id from request or default to 1
+        model_id = getattr(request, "model_id", 1)
 
         prediction = prediction_service.create_prediction(
             user_id=current_user["user_id"],
             model_id=model_id,
-            input_data=request.features
+            input_data=request.features,
         )
 
         return PredictionResponse(
             prediction=prediction.prediction_result,
-            confidence=prediction.confidence_score
+            confidence=prediction.confidence_score,
         )
 
     except ValueError as e:
@@ -96,23 +106,21 @@ async def predict_with_model(
     features: List[float],
     current_user: dict = Depends(user_or_admin_required),
     _: dict = Depends(prediction_rate_limit),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Generate prediction using a specific model.
-    """
+    """Generate prediction using a specific model."""
     try:
         prediction_service = PredictionService(db)
 
         prediction = prediction_service.create_prediction(
             user_id=current_user["user_id"],
             model_id=model_id,
-            input_data=features
+            input_data=features,
         )
 
         return PredictionResponse(
             prediction=prediction.prediction_result,
-            confidence=prediction.confidence_score
+            confidence=prediction.confidence_score,
         )
 
     except ValueError as e:
@@ -125,44 +133,44 @@ async def predict_with_model(
 async def batch_predict(
     request: BatchPredictionRequest,
     current_user: dict = Depends(user_or_admin_required),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Generate multiple predictions in batch.
-    """
+    """Generate multiple predictions in batch."""
     try:
         prediction_service = PredictionService(db)
 
         predictions = prediction_service.batch_predict(
             user_id=current_user["user_id"],
             model_id=request.model_id,
-            input_data_list=request.input_data_list
+            input_data_list=request.input_data_list,
         )
 
         successful_predictions = len(predictions)
         failed_predictions = len(request.input_data_list) - successful_predictions
 
-        prediction_results = [
+        results = [
             {
                 "id": pred.id,
                 "prediction": pred.prediction_result,
                 "confidence": pred.confidence_score,
-                "execution_time_ms": pred.execution_time_ms
+                "execution_time_ms": pred.execution_time_ms,
             }
             for pred in predictions
         ]
 
         return BatchPredictionResponse(
-            predictions=prediction_results,
+            predictions=results,
             total_predictions=len(request.input_data_list),
             successful_predictions=successful_predictions,
-            failed_predictions=failed_predictions
+            failed_predictions=failed_predictions,
         )
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Batch prediction failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Batch prediction failed: {str(e)}"
+        )
 
 
 @router.get("/predictions/history", response_model=List[PredictionHistory])
@@ -171,25 +179,27 @@ async def get_prediction_history(
     limit: int = Query(100, ge=1, le=1000),
     model_id: Optional[int] = Query(None),
     current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Get prediction history for the current user.
-    """
+    """Get prediction history for the current user."""
     prediction_service = PredictionService(db)
     model_service = ModelService(db)
 
     if model_id:
         predictions = prediction_service.get_predictions_by_model(model_id, skip, limit)
     else:
-        predictions = prediction_service.get_predictions_by_user(current_user["user_id"], skip, limit)
+        predictions = prediction_service.get_predictions_by_user(
+            current_user["user_id"], skip, limit
+        )
 
-    # Get model names for response
+    # Cache model names
     model_names = {}
     for pred in predictions:
         if pred.model_id not in model_names:
             model = model_service.get_model_by_id(pred.model_id)
-            model_names[pred.model_id] = model.name if model else f"Model {pred.model_id}"
+            model_names[pred.model_id] = (
+                model.name if model else f"Model {pred.model_id}"
+            )
 
     return [
         PredictionHistory(
@@ -200,7 +210,7 @@ async def get_prediction_history(
             prediction_result=pred.prediction_result,
             confidence_score=pred.confidence_score,
             execution_time_ms=pred.execution_time_ms,
-            created_at=pred.created_at.isoformat()
+            created_at=pred.created_at.isoformat(),
         )
         for pred in predictions
     ]
@@ -210,17 +220,16 @@ async def get_prediction_history(
 async def get_prediction_statistics(
     model_id: Optional[int] = Query(None),
     current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Get prediction statistics for the current user.
-    """
+    """Get prediction statistics (admin = global, users = own only)."""
     prediction_service = PredictionService(db)
 
-    # Admin can see all stats, users see only their own
     user_id = None if current_user["role"] == "admin" else current_user["user_id"]
 
-    stats = prediction_service.get_prediction_statistics(user_id=user_id, model_id=model_id)
+    stats = prediction_service.get_prediction_statistics(
+        user_id=user_id, model_id=model_id
+    )
 
     return PredictionStats(**stats)
 
@@ -229,11 +238,9 @@ async def get_prediction_statistics(
 async def get_prediction(
     prediction_id: int,
     current_user: dict = Depends(validate_api_key),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Get details of a specific prediction.
-    """
+    """Get details of a specific prediction."""
     prediction_service = PredictionService(db)
     model_service = ModelService(db)
 
@@ -241,11 +248,13 @@ async def get_prediction(
     if not prediction:
         raise HTTPException(status_code=404, detail="Prediction not found")
 
-    # Check if user owns this prediction or is admin
-    if current_user["role"] != "admin" and prediction.user_id != current_user["user_id"]:
+    # Enforce access
+    if (
+        current_user["role"] != "admin"
+        and prediction.user_id != current_user["user_id"]
+    ):
         raise HTTPException(status_code=403, detail="Access denied")
 
-    # Get model info
     model = model_service.get_model_by_id(prediction.model_id)
 
     return {
@@ -257,20 +266,18 @@ async def get_prediction(
         "confidence_score": prediction.confidence_score,
         "execution_time_ms": prediction.execution_time_ms,
         "created_at": prediction.created_at.isoformat(),
-        "user_id": prediction.user_id
+        "user_id": prediction.user_id,
     }
 
 
-# Model health and status endpoints
+# Model health endpoints
 @router.get("/models/{model_id}/health", response_model=ModelHealthResponse)
 async def check_model_health(
     model_id: int,
     current_user: dict = Depends(readonly_or_above),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Check the health status of a specific model.
-    """
+    """Check health status of a specific model."""
     try:
         model_service = ModelService(db)
         model = model_service.get_model_by_id(model_id)
@@ -281,35 +288,32 @@ async def check_model_health(
         if model.status != "trained":
             return ModelHealthResponse(status="unhealthy", version="N/A")
 
-        # Try to load the model to verify it's accessible
         trained_model = model_service.load_trained_model(model_id)
         if not trained_model:
             return ModelHealthResponse(status="unhealthy", version="N/A")
 
-        # Run a simple test prediction
+        # Run a simple test input
         import numpy as np
-        test_input = np.random.rand(10).tolist()
-        trained_model.predict([test_input])
+
+        test = np.random.rand(10).tolist()
+        trained_model.predict([test])
 
         return ModelHealthResponse(status="healthy", version=f"v{model.id}")
 
-    except Exception as e:
+    except Exception:
         return ModelHealthResponse(status="unhealthy", version="N/A")
 
 
 @router.get("/models/health", response_model=List[dict])
 async def check_all_models_health(
-    current_user: dict = Depends(readonly_or_above),
-    db: Session = Depends(get_db)
+    current_user: dict = Depends(readonly_or_above), db: Session = Depends(get_db)
 ):
-    """
-    Check health status of all models.
-    """
+    """Check health of all models."""
     model_service = ModelService(db)
-    models = model_service.get_all_models()
+    all_models = model_service.get_all_models()
 
-    health_status = []
-    for model in models:
+    health = []
+    for model in all_models:
         try:
             if model.status != "trained":
                 status = "unhealthy"
@@ -319,39 +323,41 @@ async def check_all_models_health(
         except:
             status = "unhealthy"
 
-        health_status.append({
-            "model_id": model.id,
-            "model_name": model.name,
-            "status": status,
-            "model_status": model.status,
-            "last_trained": model.trained_at.isoformat() if model.trained_at else None
-        })
+        health.append(
+            {
+                "model_id": model.id,
+                "model_name": model.name,
+                "status": status,
+                "model_status": model.status,
+                "last_trained": (
+                    model.trained_at.isoformat() if model.trained_at else None
+                ),
+            }
+        )
 
-    return health_status
+    return health
 
 
-# Admin endpoints
 @router.get("/admin/predictions", response_model=List[PredictionHistory])
 async def get_all_predictions(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     current_user: dict = Depends(admin_required),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """
-    Get all predictions across all users (admin only).
-    """
+    """Admin endpoint: Get all predictions."""
     prediction_service = PredictionService(db)
     model_service = ModelService(db)
 
     predictions = prediction_service.get_all_predictions(skip, limit)
 
-    # Get model names
     model_names = {}
     for pred in predictions:
         if pred.model_id not in model_names:
             model = model_service.get_model_by_id(pred.model_id)
-            model_names[pred.model_id] = model.name if model else f"Model {pred.model_id}"
+            model_names[pred.model_id] = (
+                model.name if model else f"Model {pred.model_id}"
+            )
 
     return [
         PredictionHistory(
@@ -362,7 +368,7 @@ async def get_all_predictions(
             prediction_result=pred.prediction_result,
             confidence_score=pred.confidence_score,
             execution_time_ms=pred.execution_time_ms,
-            created_at=pred.created_at.isoformat()
+            created_at=pred.created_at.isoformat(),
         )
         for pred in predictions
     ]
