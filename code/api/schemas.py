@@ -2,9 +2,8 @@
 Enhanced Pydantic schemas for Quantis API with comprehensive validation
 """
 
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from pydantic import UUID4, BaseModel, EmailStr, Field, validator
 from pydantic.types import confloat, conint, constr
@@ -14,7 +13,6 @@ from .models_enhanced import (
     ModelStatus,
     ModelType,
     NotificationType,
-    UserRole,
 )
 
 
@@ -233,7 +231,6 @@ class ApiKeyBase(BaseSchema):
 class ApiKeyCreate(ApiKeyBase):
     """Schema for creating an API key"""
 
-    pass
 
 
 class ApiKeyResponse(ApiKeyBase, TimestampMixin):
@@ -266,7 +263,6 @@ class DatasetBase(BaseSchema):
 class DatasetCreate(DatasetBase):
     """Schema for creating a dataset"""
 
-    pass
 
 
 class DatasetUpdate(BaseSchema):
@@ -517,7 +513,6 @@ class MarketDataBase(BaseSchema):
 class MarketDataCreate(MarketDataBase):
     """Schema for creating market data"""
 
-    pass
 
 
 class MarketDataResponse(MarketDataBase, TimestampMixin):
@@ -541,7 +536,6 @@ class PermissionBase(BaseSchema):
 class PermissionCreate(PermissionBase):
     """Schema for creating a permission"""
 
-    pass
 
 
 class PermissionResponse(PermissionBase, TimestampMixin):
@@ -565,7 +559,6 @@ class RoleBase(BaseSchema):
 class RoleCreate(RoleBase):
     """Schema for creating a role"""
 
-    pass
 
 
 class RoleResponse(RoleBase, TimestampMixin):
@@ -594,7 +587,6 @@ class DataRetentionPolicyBase(BaseSchema):
 class DataRetentionPolicyCreate(DataRetentionPolicyBase):
     """Schema for creating a data retention policy"""
 
-    pass
 
 
 class DataRetentionPolicyResponse(DataRetentionPolicyBase, TimestampMixin):
@@ -620,7 +612,6 @@ class ConsentRecordBase(BaseSchema):
 class ConsentRecordCreate(ConsentRecordBase):
     """Schema for creating a consent record"""
 
-    pass
 
 
 class ConsentRecordResponse(ConsentRecordBase, TimestampMixin):
@@ -651,7 +642,6 @@ class DataMaskingConfigBase(BaseSchema):
 class DataMaskingConfigCreate(DataMaskingConfigBase):
     """Schema for creating a data masking configuration"""
 
-    pass
 
 
 class DataMaskingConfigResponse(DataMaskingConfigBase, TimestampMixin):
@@ -688,7 +678,6 @@ class EncryptionKeyBase(BaseSchema):
 class EncryptionKeyCreate(EncryptionKeyBase):
     """Schema for creating an encryption key"""
 
-    pass
 
 
 class EncryptionKeyResponse(EncryptionKeyBase, TimestampMixin):
@@ -718,7 +707,6 @@ class TransactionBase(BaseSchema):
 class TransactionCreate(TransactionBase):
     """Schema for creating a transaction"""
 
-    pass
 
 
 class TransactionResponse(TransactionBase, TimestampMixin):

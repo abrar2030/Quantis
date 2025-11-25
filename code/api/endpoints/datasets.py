@@ -7,7 +7,7 @@ import logging
 import os
 import tempfile
 from fastapi import Request
-from typing import List, Optional
+from typing import List
 
 import pandas as pd
 from fastapi import (
@@ -217,7 +217,7 @@ async def get_datasets(
     data_retention_manager: DataRetentionManager = Depends(get_data_retention_manager),
 ):
     """Get datasets for the current user or all datasets for admin."""
-    dataset_service = DatasetService(db)
+    DatasetService(db)
 
     if has_permission("read_all_datasets")(current_user):
         query = db.query(Dataset).filter(Dataset.is_deleted == False)

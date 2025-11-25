@@ -2,14 +2,12 @@
 Enhanced prediction endpoints with database integration
 """
 
-import time
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-import database
 from get_db import get_db
 
 # ✅ FIXED — remove "import" keyword issue

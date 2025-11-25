@@ -2,7 +2,6 @@
 Enhanced model service for machine learning model management
 """
 
-import json
 import logging
 import os
 import time
@@ -17,7 +16,6 @@ from sqlalchemy.orm import Session
 
 from .. import models_enhanced as models
 from ..config import get_settings
-from ..database_enhanced import DataRetentionManager, EncryptionManager
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO)

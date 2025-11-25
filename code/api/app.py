@@ -5,7 +5,7 @@ Enhanced FastAPI application with comprehensive backend features
 import json
 import time
 from contextlib import asynccontextmanager
-from typing import Any, Dict
+from typing import Dict
 
 import structlog
 from fastapi import (
@@ -26,16 +26,11 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from .auth_enhanced import AuditLogger, get_current_user, rate_limit
+from .auth_enhanced import AuditLogger, rate_limit
 from .config import Settings, get_settings
 from .database_enhanced import (
-    AuditLog,
     close_redis,
-    get_consent_manager,
-    get_data_masking_manager,
-    get_data_retention_manager,
     get_db,
-    get_encryption_manager,
     health_check,
     init_db,
 )
@@ -51,7 +46,7 @@ from .endpoints import (
     websocket_enhanced,
 )
 from .models_enhanced import User
-from .schemas_enhanced import ErrorResponse, HealthCheck, SystemMetricsResponse
+from .schemas_enhanced import HealthCheck
 
 # ---------------------------
 # Structured Logging
