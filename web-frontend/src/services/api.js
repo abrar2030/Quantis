@@ -1,6 +1,3 @@
-"""
-API service for handling all backend communication
-"""
 import axios from 'axios';
 
 // API configuration
@@ -262,7 +259,9 @@ export const notificationsAPI = {
   },
 
   markAsRead: async (notificationId) => {
-    const response = await apiClient.put(`/notifications/${notificationId}/read`);
+    const response = await apiClient.put(
+      `/notifications/${notificationId}/read`
+    );
     return response.data;
   },
 
@@ -325,7 +324,9 @@ export const clearAuth = () => {
 };
 
 export const isAuthenticated = () => {
-  return !!(localStorage.getItem('authToken') || localStorage.getItem('apiKey'));
+  return !!(
+    localStorage.getItem('authToken') || localStorage.getItem('apiKey')
+  );
 };
 
 export default apiClient;
