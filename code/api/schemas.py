@@ -232,7 +232,6 @@ class ApiKeyCreate(ApiKeyBase):
     """Schema for creating an API key"""
 
 
-
 class ApiKeyResponse(ApiKeyBase, TimestampMixin):
     """Schema for API key response"""
 
@@ -262,7 +261,6 @@ class DatasetBase(BaseSchema):
 
 class DatasetCreate(DatasetBase):
     """Schema for creating a dataset"""
-
 
 
 class DatasetUpdate(BaseSchema):
@@ -514,7 +512,6 @@ class MarketDataCreate(MarketDataBase):
     """Schema for creating market data"""
 
 
-
 class MarketDataResponse(MarketDataBase, TimestampMixin):
     """Schema for market data response"""
 
@@ -537,7 +534,6 @@ class PermissionCreate(PermissionBase):
     """Schema for creating a permission"""
 
 
-
 class PermissionResponse(PermissionBase, TimestampMixin):
     """Schema for permission response"""
 
@@ -558,7 +554,6 @@ class RoleBase(BaseSchema):
 
 class RoleCreate(RoleBase):
     """Schema for creating a role"""
-
 
 
 class RoleResponse(RoleBase, TimestampMixin):
@@ -588,7 +583,6 @@ class DataRetentionPolicyCreate(DataRetentionPolicyBase):
     """Schema for creating a data retention policy"""
 
 
-
 class DataRetentionPolicyResponse(DataRetentionPolicyBase, TimestampMixin):
     """Schema for data retention policy response"""
 
@@ -611,7 +605,6 @@ class ConsentRecordBase(BaseSchema):
 
 class ConsentRecordCreate(ConsentRecordBase):
     """Schema for creating a consent record"""
-
 
 
 class ConsentRecordResponse(ConsentRecordBase, TimestampMixin):
@@ -641,7 +634,6 @@ class DataMaskingConfigBase(BaseSchema):
 
 class DataMaskingConfigCreate(DataMaskingConfigBase):
     """Schema for creating a data masking configuration"""
-
 
 
 class DataMaskingConfigResponse(DataMaskingConfigBase, TimestampMixin):
@@ -679,7 +671,6 @@ class EncryptionKeyCreate(EncryptionKeyBase):
     """Schema for creating an encryption key"""
 
 
-
 class EncryptionKeyResponse(EncryptionKeyBase, TimestampMixin):
     """Schema for encryption key response"""
 
@@ -706,7 +697,6 @@ class TransactionBase(BaseSchema):
 
 class TransactionCreate(TransactionBase):
     """Schema for creating a transaction"""
-
 
 
 class TransactionResponse(TransactionBase, TimestampMixin):
