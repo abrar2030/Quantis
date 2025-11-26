@@ -1,5 +1,5 @@
 """
-Enhanced Pydantic schemas for Quantis API with comprehensive validation
+Pydantic schemas for Quantis API with comprehensive validation
 """
 
 from datetime import datetime

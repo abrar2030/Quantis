@@ -1,5 +1,5 @@
 """
-Enhanced FastAPI application with comprehensive backend features
+FastAPI application with comprehensive backend features
 """
 
 import json

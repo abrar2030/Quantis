@@ -1,5 +1,5 @@
 """
-Enhanced background task processing system using Celery
+Background task processing system using Celery
 """
 
 import logging

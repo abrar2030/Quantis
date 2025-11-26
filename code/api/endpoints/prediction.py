@@ -1,5 +1,5 @@
 """
-Enhanced prediction endpoints with database integration
+Prediction endpoints with database integration
 """
 
 from typing import List, Optional

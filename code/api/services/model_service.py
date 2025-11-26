@@ -1,5 +1,5 @@
 """
-Enhanced model service for machine learning model management
+Model service for machine learning model management
 """
 
 import logging

@@ -1,5 +1,5 @@
 """
-Enhanced authentication and security system for Quantis API
+Authentication and security system for Quantis API
 """
 
 import hashlib

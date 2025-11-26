@@ -1,5 +1,5 @@
 """
-Enhanced database configuration and management for Quantis API
+Database configuration and management for Quantis API
 """
 
 import logging

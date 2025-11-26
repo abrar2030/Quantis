@@ -1,5 +1,5 @@
 """
-Enhanced dataset management endpoints for Quantis API
+Dataset management endpoints for Quantis API
 """
 
 import hashlib

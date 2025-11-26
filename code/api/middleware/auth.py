@@ -1,5 +1,5 @@
 """
-Enhanced authentication middleware with database integration
+Authentication middleware with database integration
 """
 
 import os

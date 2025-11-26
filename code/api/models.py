@@ -1,5 +1,5 @@
 """
-Enhanced database models for Quantis API with comprehensive features
+Database models for Quantis API with comprehensive features
 """
 
 import hashlib

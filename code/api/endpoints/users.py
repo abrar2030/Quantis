@@ -1,5 +1,5 @@
 """
-Enhanced user management endpoints for Quantis API
+User management endpoints for Quantis API
 """
 
 import logging
