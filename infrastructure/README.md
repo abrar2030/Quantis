@@ -434,34 +434,6 @@ aws cloudtrail get-trail-status --name quantis-dev-cloudtrail
 - **Performance Review**: Validate performance impact of changes
 - **Cost Review**: Assess cost implications of infrastructure changes
 
-## 📞 Support
-
-### Internal Support
-
-- **Operations Team**: ops@quantis.com
-- **Security Team**: security@quantis.com
-- **Engineering Team**: engineering@quantis.com
-
-### External Support
-
-- **AWS Support**: Enterprise support for AWS-related issues
-- **Security Consulting**: External security expertise
-- **Compliance Auditing**: Third-party compliance validation
-
 ## 📄 License
 
 This infrastructure code is proprietary and confidential. Unauthorized use, distribution, or modification is strictly prohibited.
-
-## 🔖 Version Information
-
-- **Version**: 2.0.0
-- **Last Updated**: 2024-06-24
-- **Terraform Version**: >= 1.0
-- **AWS Provider Version**: >= 4.0
-- **Kubernetes Version**: >= 1.24
-
----
-
-**⚠️ Important Security Notice**: This infrastructure contains financial-grade security controls. Any modifications should be reviewed by the security team and tested in a non-production environment before deployment to production.
-
-**🏛️ Compliance Notice**: This infrastructure is designed to meet financial industry compliance requirements. Maintain all audit trails and documentation for regulatory purposes.

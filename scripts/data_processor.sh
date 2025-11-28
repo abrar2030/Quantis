@@ -18,7 +18,7 @@
 #   --output DIR          Output directory for processed data
 #   --help                Show this help message
 #
-# Author: Manus AI
+# Author: Abrar Ahmed
 # Date: May 22, 2025
 
 set -e  # Exit immediately if a command exits with a non-zero status

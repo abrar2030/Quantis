@@ -3,7 +3,7 @@
 #
 # This script makes all the automation scripts in the directory executable.
 #
-# Author: Manus AI
+# Author: Abrar Ahmed
 # Date: May 22, 2025
 
 # Colors for terminal output

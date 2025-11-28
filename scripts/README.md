@@ -43,4 +43,4 @@ These scripts are provided under the same license as the Quantis repository.
 
 ## Author
 
-Created by Manus AI on May 22, 2025
+Created by Abrar Ahmed on May 22, 2025

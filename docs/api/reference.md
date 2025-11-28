@@ -399,7 +399,3 @@ Request body:
 ```
 
 When registered events occur, the API will send a POST request to the specified URL with event details.
-
-## Support
-
-For API support, contact the Quantis team at api-support@quantis.example.com or open an issue in the GitHub repository.

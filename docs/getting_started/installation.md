@@ -284,7 +284,6 @@ If you encounter issues not covered in this guide:
 
 1. Check the project's GitHub issues for similar problems
 2. Consult the troubleshooting section in the user manual
-3. Contact the Quantis support team at support@quantis.example.com
 
 ## Next Steps
 
