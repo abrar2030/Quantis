@@ -283,6 +283,9 @@ import json
 import sys
 import os
 
+from core.logging import get_logger
+logger = get_logger(__name__)
+
 def check_security_results():
     exit_code = 0
 
@@ -291,32 +294,30 @@ def check_security_results():
             bandit_data = json.load(f)
         high_severity = len([r for r in bandit_data.get('results', []) if r.get('issue_severity') == 'HIGH'])
         medium_severity = len([r for r in bandit_data.get('results', []) if r.get('issue_severity') == 'MEDIUM'])
-        print(f"Bandit SAST Results: {high_severity} high, {medium_severity} medium severity issues")
+        logger.info(f"Bandit SAST Results: {high_severity} high, {medium_severity} medium severity issues")
         if high_severity > 0:
-            print("❌ High severity security issues found!")
+            logger.info("❌ High severity security issues found!")
             exit_code = 1
         elif medium_severity > 10:
-            print("⚠️  Too many medium severity issues found!")
+            logger.info("⚠️  Too many medium severity issues found!")
             exit_code = 1
 
     if os.path.exists('safety-report.json'):
         with open('safety-report.json', 'r') as f:
             safety_data = json.load(f)
         if isinstance(safety_data, list) and len(safety_data) > 0:
-            print(f"Safety Results: {len(safety_data)} vulnerable dependencies found")
-            print("❌ Vulnerable dependencies found!")
+            logger.info(f"Safety Results: {len(safety_data)} vulnerable dependencies found")
+            logger.info("❌ Vulnerable dependencies found!")
             exit_code = 1
         else:
-            print("✅ No vulnerable dependencies found")
-
+            logger.info("✅ No vulnerable dependencies found")
     if os.path.exists('semgrep-report.json'):
         with open('semgrep-report.json', 'r') as f:
             semgrep_data = json.load(f)
         findings = len(semgrep_data.get('results', []))
-        print(f"Semgrep Results: {findings} findings")
+        logger.info(f"Semgrep Results: {findings} findings")
         if findings > 20:
-            print("⚠️  Many security findings detected")
-
+            logger.info("⚠️  Many security findings detected")
     return exit_code
 
 if __name__ == "__main__":

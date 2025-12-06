@@ -10,6 +10,10 @@ from sklearn.model_selection import train_test_split
 
 from .mlflow_tracking import log_experiment, register_model
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class TimeSeriesModel(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, num_layers=2):
@@ -105,8 +109,9 @@ def train_model(data_path, params=None):
         optimizer.step()
 
         if (epoch + 1) % 10 == 0:
-            print(f'Epoch [{epoch+1}/{params["epochs"]}], Loss: {loss.item():.4f}')
-
+            logger.info(
+                f'Epoch [{epoch+1}/{params["epochs"]}], Loss: {loss.item():.4f}'
+            )
     # Evaluate model
     model.eval()
     with torch.no_grad():
@@ -121,9 +126,8 @@ def train_model(data_path, params=None):
         mae = mean_absolute_error(y_test_np, y_pred_np)
         r2 = r2_score(y_test_np, y_pred_np)
 
-    print(f"Test Loss: {test_loss.item():.4f}")
-    print(f"MSE: {mse:.4f}, MAE: {mae:.4f}, R²: {r2:.4f}")
-
+    logger.info(f"Test Loss: {test_loss.item():.4f}")
+    logger.info(f"MSE: {mse:.4f}, MAE: {mae:.4f}, R²: {r2:.4f}")
     # Log metrics with MLflow
     metrics = {"mse": mse, "mae": mae, "r2": r2}
 
@@ -158,8 +162,7 @@ def train_model(data_path, params=None):
         log_experiment(params, metrics, model)
         register_model("time_series_forecaster", mlflow.active_run().info.run_id)
     except Exception as e:
-        print(f"MLflow logging failed: {e}")
-
+        logger.info(f"MLflow logging failed: {e}")
     return wrapped_model
 
 

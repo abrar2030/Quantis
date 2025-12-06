@@ -12,6 +12,10 @@ from sqlalchemy.orm import Session
 from .. import models
 from .model_service import ModelService
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class PredictionService:
     def __init__(self, db: Session):
@@ -76,7 +80,7 @@ class PredictionService:
             return prediction
 
         except Exception as e:
-            print(f"Error creating prediction: {e}")
+            logger.info(f"Error creating prediction: {e}")
             raise ValueError(f"Prediction failed: {str(e)}")
 
     def get_prediction_by_id(self, prediction_id: int) -> Optional[models.Prediction]:
@@ -191,7 +195,7 @@ class PredictionService:
                 prediction = self.create_prediction(user_id, model_id, input_data)
                 predictions.append(prediction)
             except Exception as e:
-                print(f"Error in batch prediction: {e}")
+                logger.info(f"Error in batch prediction: {e}")
                 # Continue with other predictions
                 continue
 
