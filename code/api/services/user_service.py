@@ -4,21 +4,20 @@ User service for user management operations
 
 from datetime import datetime, timedelta
 from typing import List, Optional
-
 import models
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 
 class UserService:
-    def __init__(self, db: Session):
+
+    def __init__(self, db: Session) -> Any:
         self.db = db
 
     def create_user(
         self, username: str, email: str, password: str, role: str = "user"
     ) -> models.User:
         """Create a new user"""
-        # Check if user already exists
         existing_user = (
             self.db.query(models.User)
             .filter(
@@ -27,18 +26,14 @@ class UserService:
             )
             .first()
         )
-
         if existing_user:
             raise ValueError("User with this username or email already exists")
-
-        # Create new user
         user = models.User(
             username=username,
             email=email,
             hashed_password=models.models.User.hash_password(password),
             role=role,
         )
-
         self.db.add(user)
         self.db.commit()
         self.db.refresh(user)
@@ -56,9 +51,7 @@ class UserService:
             )
             .first()
         )
-
         if user and user.verify_password(password):
-            # Update last login
             user.last_login = datetime.utcnow()
             self.db.commit()
             return user
@@ -105,14 +98,12 @@ class UserService:
         user = self.get_user_by_id(user_id)
         if not user:
             return None
-
         for key, value in kwargs.items():
             if hasattr(user, key) and key != "id":
                 if key == "password":
                     user.hashed_password = models.models.User.hash_password(value)
                 else:
                     setattr(user, key, value)
-
         user.updated_at = datetime.utcnow()
         self.db.commit()
         self.db.refresh(user)
@@ -123,7 +114,6 @@ class UserService:
         user = self.get_user_by_id(user_id)
         if not user:
             return False
-
         user.is_active = False
         user.updated_at = datetime.utcnow()
         self.db.commit()
@@ -134,32 +124,23 @@ class UserService:
         user = self.get_user_by_id(user_id)
         if not user:
             raise ValueError("User not found")
-
-        # Generate new API key
         key = models.ApiKey.generate_key()
         key_hash = models.ApiKey.hash_key(key)
-
-        # Calculate expiration date
         expires_at = (
             datetime.utcnow() + timedelta(days=expires_days)
             if expires_days > 0
             else None
         )
-
-        # Create API key record
         api_key = models.ApiKey(
             key_hash=key_hash, user_id=user_id, name=name, expires_at=expires_at
         )
-
         self.db.add(api_key)
         self.db.commit()
-
         return key
 
     def validate_api_key(self, key: str) -> Optional[dict]:
         """Validate API key and return user info"""
         key_hash = models.ApiKey.hash_key(key)
-
         api_key = (
             self.db.query(models.ApiKey)
             .filter(
@@ -169,23 +150,15 @@ class UserService:
             )
             .first()
         )
-
         if not api_key:
             return None
-
-        # Check if key is expired
         if api_key.expires_at and api_key.expires_at < datetime.utcnow():
             return None
-
-        # Get user
         user = self.get_user_by_id(api_key.user_id)
         if not user:
             return None
-
-        # Update last used timestamp
         api_key.last_used = datetime.utcnow()
         self.db.commit()
-
         return {
             "user_id": user.id,
             "username": user.username,
@@ -200,7 +173,6 @@ class UserService:
     def revoke_api_key(self, key: str) -> bool:
         """Revoke API key"""
         key_hash = models.ApiKey.hash_key(key)
-
         api_key = (
             self.db.query(models.ApiKey)
             .filter(models.ApiKey.key_hash == key_hash)
@@ -208,7 +180,6 @@ class UserService:
         )
         if not api_key:
             return False
-
         api_key.is_active = False
         self.db.commit()
         return True

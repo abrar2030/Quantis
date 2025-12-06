@@ -9,15 +9,11 @@ from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
-
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
-
 from ..models import Transaction
 
 logger = logging.getLogger(__name__)
-
-# Set decimal precision for financial calculations
 decimal.getcontext().prec = 28
 decimal.getcontext().rounding = ROUND_HALF_UP
 
@@ -68,19 +64,13 @@ class FinancialCalculationService:
     ) -> Decimal:
         """Calculate compound interest with high precision"""
         try:
-            # Convert to Decimal for precision
             principal = Decimal(str(principal))
             rate = Decimal(str(rate))
-
-            # Compound interest formula: A = P(1 + r/n)^(nt)
             rate_per_period = rate / Decimal(str(compound_frequency))
             exponent = compound_frequency * time_periods
-
-            amount = principal * ((Decimal("1") + rate_per_period) ** exponent)
+            amount = principal * (Decimal("1") + rate_per_period) ** exponent
             interest = amount - principal
-
             return interest.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
         except Exception as e:
             logger.error(f"Error calculating interest: {e}")
             raise ValueError(f"Error in calculation: {e}")
@@ -93,12 +83,8 @@ class FinancialCalculationService:
         try:
             future_value = Decimal(str(future_value))
             discount_rate = Decimal(str(discount_rate))
-
-            # PV = FV / (1 + r)^n
-            present_value = future_value / ((Decimal("1") + discount_rate) ** periods)
-
+            present_value = future_value / (Decimal("1") + discount_rate) ** periods
             return present_value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
         except Exception as e:
             logger.error(f"Error calculating present value: {e}")
             raise ValueError(f"Error in calculation: {e}")
@@ -111,14 +97,11 @@ class FinancialCalculationService:
         try:
             npv = Decimal("0.00")
             discount_rate = Decimal(str(discount_rate))
-
             for period, cash_flow in enumerate(cash_flows):
                 cash_flow = Decimal(str(cash_flow))
-                pv = cash_flow / ((Decimal("1") + discount_rate) ** period)
+                pv = cash_flow / (Decimal("1") + discount_rate) ** period
                 npv += pv
-
             return npv.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
         except Exception as e:
             logger.error(f"Error calculating NPV: {e}")
             raise ValueError(f"Error in calculation: {e}")
@@ -129,35 +112,26 @@ class FinancialCalculationService:
     ) -> Optional[Decimal]:
         """Calculate Internal Rate of Return using Newton-Raphson method"""
         try:
-            # Simplified IRR calculation - in production, use more robust numerical methods
             rate = initial_guess
             tolerance = Decimal("0.0001")
             max_iterations = 100
-
             for _ in range(max_iterations):
                 npv = Decimal("0.00")
                 npv_derivative = Decimal("0.00")
-
                 for period, cash_flow in enumerate(cash_flows):
                     cash_flow = Decimal(str(cash_flow))
                     factor = (Decimal("1") + rate) ** period
                     npv += cash_flow / factor
-
                     if period > 0:
-                        npv_derivative -= (period * cash_flow) / (
-                            (Decimal("1") + rate) ** (period + 1)
+                        npv_derivative -= (
+                            period * cash_flow / (Decimal("1") + rate) ** (period + 1)
                         )
-
                 if abs(npv) < tolerance:
                     return rate.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
-
                 if npv_derivative == 0:
                     break
-
-                rate = rate - (npv / npv_derivative)
-
+                rate = rate - npv / npv_derivative
             raise ValueError("IRR calculation failed to converge.")
-
         except Exception as e:
             logger.error(f"Error calculating IRR: {e}")
             raise ValueError(f"Error calculating IRR: {e}")
@@ -166,7 +140,7 @@ class FinancialCalculationService:
 class RiskAssessmentService:
     """Service for financial risk assessment and management"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> Any:
         self.db = db
 
     def assess_transaction_risk(
@@ -180,33 +154,23 @@ class RiskAssessmentService:
         try:
             risk_factors = []
             risk_score = 0
-
-            # Amount-based risk assessment
             if transaction_amount > Decimal("10000"):
                 risk_factors.append("High transaction amount")
                 risk_score += 30
             elif transaction_amount > Decimal("5000"):
                 risk_factors.append("Medium transaction amount")
                 risk_score += 15
-
-            # User history risk assessment
             user_risk = self._assess_user_risk(user_id)
             risk_score += user_risk["score"]
             risk_factors.extend(user_risk["factors"])
-
-            # Transaction type risk
             high_risk_types = [TransactionType.WITHDRAWAL, TransactionType.TRANSFER]
             if transaction_type in high_risk_types:
                 risk_factors.append(f"High-risk transaction type: {transaction_type}")
                 risk_score += 20
-
-            # Counterparty risk (if applicable)
             if counterparty_info:
                 counterparty_risk = self._assess_counterparty_risk(counterparty_info)
                 risk_score += counterparty_risk["score"]
                 risk_factors.extend(counterparty_risk["factors"])
-
-            # Determine risk level
             if risk_score >= 70:
                 risk_level = RiskLevel.CRITICAL
             elif risk_score >= 50:
@@ -215,7 +179,6 @@ class RiskAssessmentService:
                 risk_level = RiskLevel.MEDIUM
             else:
                 risk_level = RiskLevel.LOW
-
             return {
                 "risk_level": risk_level,
                 "risk_score": risk_score,
@@ -223,7 +186,6 @@ class RiskAssessmentService:
                 "requires_approval": risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL],
                 "requires_additional_verification": risk_level == RiskLevel.CRITICAL,
             }
-
         except Exception as e:
             logger.error(f"Error assessing transaction risk: {e}")
             return {
@@ -237,7 +199,6 @@ class RiskAssessmentService:
     def _assess_user_risk(self, user_id: int) -> Dict[str, Any]:
         """Assess risk based on user's transaction history"""
         try:
-            # Get user's recent transaction history
             recent_transactions = (
                 self.db.query(Transaction)
                 .filter(
@@ -249,19 +210,14 @@ class RiskAssessmentService:
                 )
                 .all()
             )
-
             risk_score = 0
             risk_factors = []
-
-            # Frequency-based risk
             if len(recent_transactions) > 50:
                 risk_factors.append("High transaction frequency")
                 risk_score += 25
             elif len(recent_transactions) > 20:
                 risk_factors.append("Medium transaction frequency")
                 risk_score += 10
-
-            # Failed transaction ratio
             failed_transactions = [
                 t for t in recent_transactions if t.status == TransactionStatus.FAILED
             ]
@@ -273,17 +229,13 @@ class RiskAssessmentService:
                 elif failure_rate > 0.1:
                     risk_factors.append("Medium transaction failure rate")
                     risk_score += 10
-
-            # Large transaction pattern
             large_transactions = [
                 t for t in recent_transactions if t.amount > Decimal("5000")
             ]
             if len(large_transactions) > 5:
                 risk_factors.append("Frequent large transactions")
                 risk_score += 15
-
             return {"score": risk_score, "factors": risk_factors}
-
         except Exception as e:
             logger.error(f"Error assessing user risk: {e}")
             return {"score": 50, "factors": ["User risk assessment error"]}
@@ -294,31 +246,24 @@ class RiskAssessmentService:
         """Assess risk based on counterparty information"""
         risk_score = 0
         risk_factors = []
-
-        # Country-based risk (simplified)
-        high_risk_countries = ["XX", "YY", "ZZ"]  # Placeholder country codes
+        high_risk_countries = ["XX", "YY", "ZZ"]
         country = counterparty_info.get("country", "").upper()
         if country in high_risk_countries:
             risk_factors.append(f"High-risk country: {country}")
             risk_score += 30
-
-        # New counterparty risk
         if counterparty_info.get("is_new_counterparty", False):
             risk_factors.append("New counterparty")
             risk_score += 15
-
-        # Sanctions screening (placeholder)
         if counterparty_info.get("sanctions_hit", False):
             risk_factors.append("Potential sanctions match")
             risk_score += 50
-
         return {"score": risk_score, "factors": risk_factors}
 
 
 class ComplianceMonitoringService:
     """Service for monitoring compliance with financial regulations"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> Any:
         self.db = db
 
     def monitor_transaction_limits(
@@ -329,7 +274,6 @@ class ComplianceMonitoringService:
     ) -> Dict[str, Any]:
         """Monitor transaction limits for compliance"""
         try:
-            # Daily limits
             today = datetime.utcnow().date()
             daily_transactions = self.db.query(func.sum(Transaction.amount)).filter(
                 and_(
@@ -338,10 +282,7 @@ class ComplianceMonitoringService:
                     Transaction.status == TransactionStatus.COMPLETED,
                 )
             ).scalar() or Decimal("0")
-
-            daily_limit = Decimal("50000")  # $50,000 daily limit
-
-            # Monthly limits
+            daily_limit = Decimal("50000")
             month_start = datetime.utcnow().replace(day=1).date()
             monthly_transactions = self.db.query(func.sum(Transaction.amount)).filter(
                 and_(
@@ -350,11 +291,8 @@ class ComplianceMonitoringService:
                     Transaction.status == TransactionStatus.COMPLETED,
                 )
             ).scalar() or Decimal("0")
-
-            monthly_limit = Decimal("500000")  # $500,000 monthly limit
-
+            monthly_limit = Decimal("500000")
             violations = []
-
             if daily_transactions + transaction_amount > daily_limit:
                 violations.append(
                     {
@@ -364,7 +302,6 @@ class ComplianceMonitoringService:
                         "attempted": transaction_amount,
                     }
                 )
-
             if monthly_transactions + transaction_amount > monthly_limit:
                 violations.append(
                     {
@@ -374,7 +311,6 @@ class ComplianceMonitoringService:
                         "attempted": transaction_amount,
                     }
                 )
-
             return {
                 "compliant": len(violations) == 0,
                 "violations": violations,
@@ -389,7 +325,6 @@ class ComplianceMonitoringService:
                     "remaining": monthly_limit - monthly_transactions,
                 },
             }
-
         except Exception as e:
             logger.error(f"Error monitoring transaction limits: {e}")
             return {
@@ -419,25 +354,17 @@ class ComplianceMonitoringService:
                 "transaction_monitoring": True,
                 "reasons": [],
             }
-
-            # Large transaction reporting threshold (e.g., $10,000)
             if transaction_amount >= Decimal("10000"):
                 requirements["kyc_required"] = True
                 requirements["reasons"].append("Large transaction amount")
-
-            # Enhanced due diligence for very large amounts
             if transaction_amount >= Decimal("50000"):
                 requirements["enhanced_due_diligence"] = True
                 requirements["reasons"].append("Very large transaction amount")
-
-            # Check for suspicious patterns
             suspicious_patterns = self._detect_suspicious_patterns(user_id)
             if suspicious_patterns:
                 requirements["suspicious_activity_report"] = True
                 requirements["reasons"].extend(suspicious_patterns)
-
             return requirements
-
         except Exception as e:
             logger.error(f"Error checking AML requirements: {e}")
             return {
@@ -452,8 +379,6 @@ class ComplianceMonitoringService:
         """Detect suspicious transaction patterns"""
         try:
             patterns = []
-
-            # Get recent transactions
             recent_transactions = (
                 self.db.query(Transaction)
                 .filter(
@@ -464,19 +389,13 @@ class ComplianceMonitoringService:
                 )
                 .all()
             )
-
-            # Pattern 1: Rapid succession of transactions
             if len(recent_transactions) > 20:
                 patterns.append("High frequency transactions")
-
-            # Pattern 2: Round number transactions (potential structuring)
             round_numbers = [
                 t for t in recent_transactions if t.amount % Decimal("1000") == 0
             ]
             if len(round_numbers) > 5:
                 patterns.append("Multiple round number transactions")
-
-            # Pattern 3: Just-under-threshold transactions
             threshold = Decimal("9999")
             near_threshold = [
                 t
@@ -485,9 +404,7 @@ class ComplianceMonitoringService:
             ]
             if len(near_threshold) > 2:
                 patterns.append("Multiple transactions just under reporting threshold")
-
             return patterns
-
         except Exception as e:
             logger.error(f"Error detecting suspicious patterns: {e}")
             return ["Pattern detection error"]
@@ -496,7 +413,7 @@ class ComplianceMonitoringService:
 class FinancialReportingService:
     """Service for financial reporting and analytics"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> Any:
         self.db = db
 
     def generate_transaction_summary(
@@ -515,7 +432,6 @@ class FinancialReportingService:
                 )
                 .all()
             )
-
             summary = {
                 "period": {
                     "start_date": start_date.isoformat(),
@@ -529,43 +445,32 @@ class FinancialReportingService:
                 "largest_transaction": Decimal("0"),
                 "smallest_transaction": None,
             }
-
             if not transactions:
                 return summary
-
-            # Calculate totals and breakdowns
             amounts = [t.amount for t in transactions]
             summary["total_volume"] = sum(amounts)
             summary["average_amount"] = summary["total_volume"] / len(transactions)
             summary["largest_transaction"] = max(amounts)
             summary["smallest_transaction"] = min(amounts)
-
-            # Group by type
             for transaction in transactions:
                 tx_type = transaction.transaction_type
                 if tx_type not in summary["by_type"]:
                     summary["by_type"][tx_type] = {"count": 0, "volume": Decimal("0")}
                 summary["by_type"][tx_type]["count"] += 1
                 summary["by_type"][tx_type]["volume"] += transaction.amount
-
-            # Group by status
             for transaction in transactions:
                 status = transaction.status
                 if status not in summary["by_status"]:
                     summary["by_status"][status] = {"count": 0, "volume": Decimal("0")}
                 summary["by_status"][status]["count"] += 1
                 summary["by_status"][status]["volume"] += transaction.amount
-
-            # Convert Decimal to string for JSON serialization
             summary = self._convert_decimals_to_strings(summary)
-
             return summary
-
         except Exception as e:
             logger.error(f"Error generating transaction summary: {e}")
             return {"error": str(e)}
 
-    def _convert_decimals_to_strings(self, obj):
+    def _convert_decimals_to_strings(self, obj: Any) -> Any:
         """Convert Decimal objects to strings for JSON serialization"""
         if isinstance(obj, dict):
             return {
@@ -580,11 +485,10 @@ class FinancialReportingService:
             return obj
 
 
-# Service instances
 calculation_service = FinancialCalculationService()
 
 
-def get_financial_services(db: Session):
+def get_financial_services(db: Session) -> Any:
     """Get financial service instances"""
     return {
         "calculation": calculation_service,

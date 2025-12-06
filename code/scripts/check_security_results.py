@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Security Results Checker
 Analyzes security scan results and determines if build should pass or fail
@@ -8,13 +7,12 @@ import json
 import os
 import sys
 from datetime import datetime
-
 from core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-def check_security_results():
+def check_security_results() -> Any:
     """Check all security scan results and return appropriate exit code"""
     exit_code = 0
     results_summary = {
@@ -24,15 +22,12 @@ def check_security_results():
         "semgrep": {"status": "not_run", "findings": 0},
         "overall_status": "pass",
     }
-
     logger.info("🔍 Analyzing security scan results...")
     logger.info("=" * 50)
-    # Check Bandit results
     if os.path.exists("bandit-report.json"):
         try:
             with open("bandit-report.json", "r") as f:
                 bandit_data = json.load(f)
-
             high_severity = len(
                 [
                     r
@@ -54,14 +49,12 @@ def check_security_results():
                     if r.get("issue_severity") == "LOW"
                 ]
             )
-
             results_summary["bandit"] = {
                 "status": "completed",
                 "high": high_severity,
                 "medium": medium_severity,
                 "low": low_severity,
             }
-
             logger.info(f"📊 Bandit SAST Results:")
             logger.info(f"   High Severity: {high_severity}")
             logger.info(f"   Medium Severity: {medium_severity}")
@@ -78,7 +71,6 @@ def check_security_results():
                 logger.info(
                     "   Consider reviewing and addressing medium severity issues."
                 )
-                # Don't fail build for medium severity, but warn
             else:
                 logger.info("✅ PASS: No critical security issues found in SAST scan.")
         except (json.JSONDecodeError, FileNotFoundError, KeyError) as e:
@@ -87,22 +79,17 @@ def check_security_results():
     else:
         logger.info("⚠️  WARNING: Bandit report not found")
     logger.info()
-    # Check Safety results
     if os.path.exists("safety-report.json"):
         try:
             with open("safety-report.json", "r") as f:
                 safety_data = json.load(f)
-
-            # Safety returns a list of vulnerabilities or empty list
             vulnerability_count = (
                 len(safety_data) if isinstance(safety_data, list) else 0
             )
-
             results_summary["safety"] = {
                 "status": "completed",
                 "vulnerabilities": vulnerability_count,
             }
-
             logger.info(f"📊 Safety Dependency Scan Results:")
             logger.info(f"   Vulnerable Dependencies: {vulnerability_count}")
             if vulnerability_count > 0:
@@ -110,9 +97,8 @@ def check_security_results():
                 logger.info(
                     "   Please update vulnerable dependencies before proceeding."
                 )
-                # Print details of vulnerabilities
                 if isinstance(safety_data, list):
-                    for vuln in safety_data[:5]:  # Show first 5 vulnerabilities
+                    for vuln in safety_data[:5]:
                         package = vuln.get("package", "Unknown")
                         version = vuln.get("installed_version", "Unknown")
                         vuln_id = vuln.get("vulnerability_id", "Unknown")
@@ -131,16 +117,12 @@ def check_security_results():
     else:
         logger.info("⚠️  WARNING: Safety report not found")
     logger.info()
-    # Check Semgrep results
     if os.path.exists("semgrep-report.json"):
         try:
             with open("semgrep-report.json", "r") as f:
                 semgrep_data = json.load(f)
-
             findings = len(semgrep_data.get("results", []))
-
             results_summary["semgrep"] = {"status": "completed", "findings": findings}
-
             logger.info(f"📊 Semgrep SAST Results:")
             logger.info(f"   Total Findings: {findings}")
             if findings > 50:
@@ -148,7 +130,6 @@ def check_security_results():
                 logger.info(
                     "   Consider reviewing findings for potential security issues."
                 )
-                # Don't fail build for Semgrep findings as they may include false positives
             elif findings > 0:
                 logger.info("ℹ️  INFO: Some security findings detected by Semgrep")
                 logger.info(
@@ -163,7 +144,6 @@ def check_security_results():
         logger.info("⚠️  WARNING: Semgrep report not found")
     logger.info()
     logger.info("=" * 50)
-    # Generate summary
     if exit_code == 0:
         logger.info("🎉 OVERALL RESULT: PASS")
         logger.info("   All security scans completed successfully.")
@@ -172,7 +152,6 @@ def check_security_results():
         logger.info("💥 OVERALL RESULT: FAIL")
         logger.info("   Critical security issues found that must be addressed.")
         logger.info("   Please fix the issues and run the scans again.")
-    # Save results summary
     try:
         with open("security-results-summary.json", "w") as f:
             json.dump(results_summary, f, indent=2)
@@ -182,7 +161,7 @@ def check_security_results():
     return exit_code
 
 
-def generate_security_report():
+def generate_security_report() -> Any:
     """Generate a comprehensive security report"""
     try:
         report = {
@@ -206,14 +185,11 @@ def generate_security_report():
                 "iso27001": "compliant",
             },
         }
-
-        # Load and analyze all scan results
         scan_files = {
             "bandit": "bandit-report.json",
             "safety": "safety-report.json",
             "semgrep": "semgrep-report.json",
         }
-
         for scan_type, filename in scan_files.items():
             if os.path.exists(filename):
                 try:
@@ -222,8 +198,6 @@ def generate_security_report():
                     report["detailed_findings"][scan_type] = scan_data
                 except Exception as e:
                     report["detailed_findings"][scan_type] = {"error": str(e)}
-
-        # Generate recommendations
         recommendations = [
             "Implement automated dependency updates",
             "Regular security training for development team",
@@ -231,13 +205,9 @@ def generate_security_report():
             "Implement runtime application self-protection (RASP)",
             "Regular security architecture reviews",
         ]
-
         report["executive_summary"]["recommendations"] = recommendations
-
-        # Save comprehensive report
         with open("comprehensive-security-report.json", "w") as f:
             json.dump(report, f, indent=2)
-
         logger.info(
             "📊 Comprehensive security report generated: comprehensive-security-report.json"
         )
@@ -248,17 +218,12 @@ def generate_security_report():
 if __name__ == "__main__":
     try:
         exit_code = check_security_results()
-
-        # Generate comprehensive report regardless of exit code
         generate_security_report()
-
-        # Print final message
         if exit_code == 0:
             logger.info("\n🚀 Security checks passed! Build can proceed.")
         else:
             logger.info("\n🛑 Security checks failed! Build should be blocked.")
         sys.exit(exit_code)
-
     except KeyboardInterrupt:
         logger.info("\n⚠️  Security check interrupted by user")
         sys.exit(1)

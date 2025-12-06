@@ -7,24 +7,22 @@ import os
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-
 import joblib
 import numpy as np
 import pandas as pd
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
-
 from .. import models_enhanced as models
 from ..config import get_settings
 
-# Logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
 class ModelService:
-    def __init__(self, db: Session):
+
+    def __init__(self, db: Session) -> Any:
         self.db = db
 
     def create_model_record(
@@ -41,7 +39,6 @@ class ModelService:
         owner = self.db.query(models.User).filter(models.User.id == owner_id).first()
         if not owner:
             raise ValueError("Owner not found")
-
         dataset = (
             self.db.query(models.Dataset)
             .filter(
@@ -53,7 +50,6 @@ class ModelService:
         )
         if not dataset:
             raise ValueError("Dataset not found or is deleted")
-
         model = models.Model(
             name=name,
             description=description,
@@ -64,7 +60,6 @@ class ModelService:
             status=models.ModelStatus.CREATED,
             tags=tags or [],
         )
-
         self.db.add(model)
         self.db.commit()
         self.db.refresh(model)
@@ -143,13 +138,11 @@ class ModelService:
                 settings.model_storage_directory, f"model_{model_id}.pkl"
             )
             joblib.dump(trained_model, file_path)
-
             model.file_path = file_path
             model.status = models.ModelStatus.TRAINED
             model.trained_at = datetime.utcnow()
             if metrics:
                 model.metrics = metrics
-
             self.db.commit()
             logger.info(f"Model {model_id} saved and status updated to TRAINED.")
             return True
@@ -185,8 +178,6 @@ class ModelService:
             model.status = models.ModelStatus.TRAINING
             self.db.commit()
             logger.info(f"Model {model_id} status updated to TRAINING.")
-
-            # Simulate training
             time.sleep(np.random.uniform(5, 15))
             X = data.select_dtypes(include=np.number).fillna(0)
             if X.empty:
@@ -195,10 +186,8 @@ class ModelService:
             X = X.iloc[:, :-1]
             if X.empty or y.empty:
                 raise ValueError("Insufficient data for training.")
-
             trained_model = None
             metrics = {}
-
             model_type = model.model_type.lower()
             dummy_models = {
                 "tft": DummyTFTModel,
@@ -208,13 +197,11 @@ class ModelService:
                 "random_forest": DummyRandomForestModel,
                 "xgboost": DummyXGBoostModel,
             }
-
             if model_type in dummy_models:
                 trained_model = dummy_models[model_type]()
                 metrics.update(trained_model.train(X, y, model.hyperparameters))
             else:
                 raise ValueError(f"Unsupported model type: {model.model_type}")
-
             return self.save_trained_model(model_id, trained_model, metrics)
         except Exception as e:
             logger.error(f"Error training model {model_id}: {e}")
@@ -241,17 +228,13 @@ class ModelService:
             return None
 
 
-# -------------------
-# Dummy models for demonstration
-# -------------------
-
-
 class DummyTFTModel:
-    def __init__(self):
+
+    def __init__(self) -> Any:
         self.model_type = "TFT"
         self.weights = np.random.randn(10, 5)
 
-    def train(self, X, y, hyperparameters: Dict = None):
+    def train(self, X: Any, y: Any, hyperparameters: Dict = None) -> Any:
         logger.info(f"Training Dummy TFT Model with hyperparameters: {hyperparameters}")
         time.sleep(1)
         return {
@@ -263,7 +246,7 @@ class DummyTFTModel:
             "epochs": hyperparameters.get("epochs", 100) if hyperparameters else 100,
         }
 
-    def predict(self, X):
+    def predict(self, X: Any) -> Any:
         if isinstance(X, pd.DataFrame):
             X = X.values
         if len(X.shape) == 1:
@@ -276,11 +259,12 @@ class DummyTFTModel:
 
 
 class DummyLSTMModel:
-    def __init__(self):
+
+    def __init__(self) -> Any:
         self.model_type = "LSTM"
         self.weights = np.random.randn(8, 3)
 
-    def train(self, X, y, hyperparameters: Dict = None):
+    def train(self, X: Any, y: Any, hyperparameters: Dict = None) -> Any:
         logger.info(
             f"Training Dummy LSTM Model with hyperparameters: {hyperparameters}"
         )
@@ -294,7 +278,7 @@ class DummyLSTMModel:
             "epochs": hyperparameters.get("epochs", 50) if hyperparameters else 50,
         }
 
-    def predict(self, X):
+    def predict(self, X: Any) -> Any:
         if isinstance(X, pd.DataFrame):
             X = X.values
         if len(X.shape) == 1:
@@ -307,11 +291,12 @@ class DummyLSTMModel:
 
 
 class DummyARIMAModel:
-    def __init__(self):
+
+    def __init__(self) -> Any:
         self.model_type = "ARIMA"
         self.coefficients = np.random.randn(5)
 
-    def train(self, X, y, hyperparameters: Dict = None):
+    def train(self, X: Any, y: Any, hyperparameters: Dict = None) -> Any:
         logger.info(
             f"Training Dummy ARIMA Model with hyperparameters: {hyperparameters}"
         )
@@ -323,7 +308,7 @@ class DummyARIMAModel:
             "training_time": np.random.uniform(5, 60),
         }
 
-    def predict(self, X):
+    def predict(self, X: Any) -> Any:
         if isinstance(X, pd.DataFrame):
             X = X.values
         if len(X.shape) == 1:
@@ -333,12 +318,13 @@ class DummyARIMAModel:
 
 
 class DummyLinearModel:
-    def __init__(self):
+
+    def __init__(self) -> Any:
         self.model_type = "Linear"
         self.weights = np.random.randn(6)
         self.bias = np.random.randn()
 
-    def train(self, X, y, hyperparameters: Dict = None):
+    def train(self, X: Any, y: Any, hyperparameters: Dict = None) -> Any:
         logger.info(
             f"Training Dummy Linear Model with hyperparameters: {hyperparameters}"
         )
@@ -351,7 +337,7 @@ class DummyLinearModel:
             "training_time": np.random.uniform(1, 30),
         }
 
-    def predict(self, X):
+    def predict(self, X: Any) -> Any:
         if isinstance(X, pd.DataFrame):
             X = X.values
         if len(X.shape) == 1:
@@ -364,12 +350,13 @@ class DummyLinearModel:
 
 
 class DummyRandomForestModel:
-    def __init__(self):
+
+    def __init__(self) -> Any:
         self.model_type = "RandomForest"
         self.n_estimators = 100
         self.features = None
 
-    def train(self, X, y, hyperparameters: Dict = None):
+    def train(self, X: Any, y: Any, hyperparameters: Dict = None) -> Any:
         logger.info(
             f"Training Dummy Random Forest Model with hyperparameters: {hyperparameters}"
         )
@@ -385,19 +372,20 @@ class DummyRandomForestModel:
             "training_time": np.random.uniform(20, 400),
         }
 
-    def predict(self, X):
+    def predict(self, X: Any) -> Any:
         if isinstance(X, pd.DataFrame) and self.features:
             X = X[self.features].values
         return np.random.rand(X.shape[0], 1) * 100
 
 
 class DummyXGBoostModel:
-    def __init__(self):
+
+    def __init__(self) -> Any:
         self.model_type = "XGBoost"
         self.n_estimators = 100
         self.features = None
 
-    def train(self, X, y, hyperparameters: Dict = None):
+    def train(self, X: Any, y: Any, hyperparameters: Dict = None) -> Any:
         logger.info(
             f"Training Dummy XGBoost Model with hyperparameters: {hyperparameters}"
         )
@@ -413,7 +401,7 @@ class DummyXGBoostModel:
             "training_time": np.random.uniform(30, 600),
         }
 
-    def predict(self, X):
+    def predict(self, X: Any) -> Any:
         if isinstance(X, pd.DataFrame) and self.features:
             X = X[self.features].values
         return np.random.rand(X.shape[0], 1) * 100

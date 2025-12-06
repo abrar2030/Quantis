@@ -1,7 +1,7 @@
 from sagemaker.pytorch import PyTorchModel
 
 
-def deploy_to_sagemaker():
+def deploy_to_sagemaker() -> Any:
     model = PyTorchModel(
         entry_point="inference.py",
         role="SageMakerRole",

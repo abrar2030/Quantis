@@ -10,7 +10,6 @@ import subprocess
 from datetime import datetime
 from typing import Any, Dict, List
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 class SecurityScanningService:
     """Service for integrating security scanning tools"""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.scan_results_dir = "/tmp/security_scans"
         os.makedirs(self.scan_results_dir, exist_ok=True)
 
@@ -33,7 +32,6 @@ class SecurityScanningService:
                 text=True,
                 timeout=300,
             )
-
             vulnerabilities = []
             if result.stdout:
                 try:
@@ -42,24 +40,19 @@ class SecurityScanningService:
                         vulnerabilities = []
                 except json.JSONDecodeError:
                     vulnerabilities = []
-
             scan_results = {
                 "status": "success" if not vulnerabilities else "vulnerabilities_found",
                 "vulnerabilities": vulnerabilities,
                 "timestamp": datetime.utcnow().isoformat(),
                 "raw_output": result.stdout,
             }
-
-            # Save results
             results_file = os.path.join(
                 self.scan_results_dir,
                 f"dependency_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
             )
             with open(results_file, "w") as f:
                 json.dump(scan_results, f, indent=2)
-
             return scan_results
-
         except subprocess.TimeoutExpired:
             logger.error("Dependency scan timed out")
             return {"status": "timeout", "timestamp": datetime.utcnow().isoformat()}
@@ -86,13 +79,11 @@ class SecurityScanningService:
                     bandit_results = json.load(f)
             else:
                 bandit_results = {"results": [], "metrics": {}}
-
             counts = {"high": 0, "medium": 0, "low": 0}
             for r in bandit_results.get("results", []):
                 severity = r.get("issue_severity", "").lower()
                 if severity in counts:
                     counts[severity] += 1
-
             scan_results = {
                 "status": "completed",
                 "tool": "bandit",
@@ -102,17 +93,13 @@ class SecurityScanningService:
                 "medium_severity_count": counts["medium"],
                 "low_severity_count": counts["low"],
             }
-
-            # Save results
             results_file = os.path.join(
                 self.scan_results_dir,
                 f"sast_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
             )
             with open(results_file, "w") as f:
                 json.dump(scan_results, f, indent=2)
-
             return scan_results
-
         except subprocess.TimeoutExpired:
             logger.error("Bandit scan timed out")
             return {"status": "timeout", "timestamp": datetime.utcnow().isoformat()}
@@ -141,7 +128,6 @@ class SecurityScanningService:
                         semgrep_results = {"results": []}
                 except json.JSONDecodeError:
                     semgrep_results = {"results": []}
-
             scan_results = {
                 "status": "completed",
                 "tool": "semgrep",
@@ -149,17 +135,13 @@ class SecurityScanningService:
                 "timestamp": datetime.utcnow().isoformat(),
                 "findings_count": len(semgrep_results.get("results", [])),
             }
-
-            # Save results
             results_file = os.path.join(
                 self.scan_results_dir,
                 f"semgrep_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
             )
             with open(results_file, "w") as f:
                 json.dump(scan_results, f, indent=2)
-
             return scan_results
-
         except subprocess.TimeoutExpired:
             logger.error("Semgrep scan timed out")
             return {"status": "timeout", "timestamp": datetime.utcnow().isoformat()}
@@ -177,7 +159,6 @@ class SecurityScanningService:
             dependency_results = self.run_dependency_scan()
             bandit_results = self.run_bandit_sast_scan()
             semgrep_results = self.run_semgrep_sast_scan()
-
             report = {
                 "report_timestamp": datetime.utcnow().isoformat(),
                 "summary": {
@@ -200,17 +181,13 @@ class SecurityScanningService:
                     dependency_results, bandit_results, semgrep_results
                 ),
             }
-
-            # Save comprehensive report
             report_file = os.path.join(
                 self.scan_results_dir,
                 f"security_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
             )
             with open(report_file, "w") as f:
                 json.dump(report, f, indent=2)
-
             return report
-
         except Exception as e:
             logger.error(f"Error generating security report: {e}")
             return {
@@ -224,8 +201,6 @@ class SecurityScanningService:
     ) -> List[str]:
         """Generate security recommendations based on scan results"""
         recommendations = []
-
-        # Dependency recommendations
         vuln_count = len(dependency_results.get("vulnerabilities", []))
         if vuln_count > 0:
             recommendations.append(
@@ -234,21 +209,16 @@ class SecurityScanningService:
             recommendations.append(
                 "Implement automated dependency scanning in CI/CD pipeline"
             )
-
-        # SAST recommendations
         high_severity = bandit_results.get("high_severity_count", 0)
         if high_severity > 0:
             recommendations.append(
                 f"Address {high_severity} high-severity security issues identified by SAST scanning"
             )
-
         medium_severity = bandit_results.get("medium_severity_count", 0)
         if medium_severity > 5:
             recommendations.append(
                 f"Review and address {medium_severity} medium-severity security issues"
             )
-
-        # General recommendations
         recommendations.extend(
             [
                 "Implement regular security scanning in CI/CD pipeline",
@@ -258,7 +228,6 @@ class SecurityScanningService:
                 "Maintain security training for development team",
             ]
         )
-
         return recommendations
 
 
@@ -268,63 +237,18 @@ class CICDSecurityIntegration:
     @staticmethod
     def generate_github_actions_workflow() -> str:
         """Generate GitHub Actions workflow for security scanning"""
-        return """<GitHub Actions workflow YAML from your original code>"""
+        return "<GitHub Actions workflow YAML from your original code>"
 
     @staticmethod
     def generate_gitlab_ci_config() -> str:
         """Generate GitLab CI configuration for security scanning"""
-        return """<GitLab CI YAML from your original code>"""
+        return "<GitLab CI YAML from your original code>"
 
     @staticmethod
     def generate_security_check_script() -> str:
         """Generate Python script to check security results"""
-        return """#!/usr/bin/env python3
-import json
-import sys
-import os
-
-from core.logging import get_logger
-logger = get_logger(__name__)
-
-def check_security_results():
-    exit_code = 0
-
-    if os.path.exists('bandit-report.json'):
-        with open('bandit-report.json', 'r') as f:
-            bandit_data = json.load(f)
-        high_severity = len([r for r in bandit_data.get('results', []) if r.get('issue_severity') == 'HIGH'])
-        medium_severity = len([r for r in bandit_data.get('results', []) if r.get('issue_severity') == 'MEDIUM'])
-        logger.info(f"Bandit SAST Results: {high_severity} high, {medium_severity} medium severity issues")
-        if high_severity > 0:
-            logger.info("❌ High severity security issues found!")
-            exit_code = 1
-        elif medium_severity > 10:
-            logger.info("⚠️  Too many medium severity issues found!")
-            exit_code = 1
-
-    if os.path.exists('safety-report.json'):
-        with open('safety-report.json', 'r') as f:
-            safety_data = json.load(f)
-        if isinstance(safety_data, list) and len(safety_data) > 0:
-            logger.info(f"Safety Results: {len(safety_data)} vulnerable dependencies found")
-            logger.info("❌ Vulnerable dependencies found!")
-            exit_code = 1
-        else:
-            logger.info("✅ No vulnerable dependencies found")
-    if os.path.exists('semgrep-report.json'):
-        with open('semgrep-report.json', 'r') as f:
-            semgrep_data = json.load(f)
-        findings = len(semgrep_data.get('results', []))
-        logger.info(f"Semgrep Results: {findings} findings")
-        if findings > 20:
-            logger.info("⚠️  Many security findings detected")
-    return exit_code
-
-if __name__ == "__main__":
-    sys.exit(check_security_results())
-"""
+        return "#!/usr/bin/env python3\nimport json\nimport sys\nimport os\n\nfrom core.logging import get_logger\nlogger = get_logger(__name__)\n\ndef check_security_results():\n    exit_code = 0\n\n    if os.path.exists('bandit-report.json'):\n        with open('bandit-report.json', 'r') as f:\n            bandit_data = json.load(f)\n        high_severity = len([r for r in bandit_data.get('results', []) if r.get('issue_severity') == 'HIGH'])\n        medium_severity = len([r for r in bandit_data.get('results', []) if r.get('issue_severity') == 'MEDIUM'])\n        logger.info(f\"Bandit SAST Results: {high_severity} high, {medium_severity} medium severity issues\")\n        if high_severity > 0:\n            logger.info(\"❌ High severity security issues found!\")\n            exit_code = 1\n        elif medium_severity > 10:\n            logger.info(\"⚠️  Too many medium severity issues found!\")\n            exit_code = 1\n\n    if os.path.exists('safety-report.json'):\n        with open('safety-report.json', 'r') as f:\n            safety_data = json.load(f)\n        if isinstance(safety_data, list) and len(safety_data) > 0:\n            logger.info(f\"Safety Results: {len(safety_data)} vulnerable dependencies found\")\n            logger.info(\"❌ Vulnerable dependencies found!\")\n            exit_code = 1\n        else:\n            logger.info(\"✅ No vulnerable dependencies found\")\n    if os.path.exists('semgrep-report.json'):\n        with open('semgrep-report.json', 'r') as f:\n            semgrep_data = json.load(f)\n        findings = len(semgrep_data.get('results', []))\n        logger.info(f\"Semgrep Results: {findings} findings\")\n        if findings > 20:\n            logger.info(\"⚠️  Many security findings detected\")\n    return exit_code\n\nif __name__ == \"__main__\":\n    sys.exit(check_security_results())\n"
 
 
-# Service instances
 security_scanning_service = SecurityScanningService()
 cicd_integration = CICDSecurityIntegration()

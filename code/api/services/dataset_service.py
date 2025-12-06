@@ -4,11 +4,9 @@ Dataset service for data management operations
 
 import os
 from typing import Any, Dict, List, Optional
-
 import pandas as pd
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
-
 from .. import models_enhanced as models
 from ..config import get_settings
 from ..database_enhanced import EncryptionManager
@@ -17,7 +15,8 @@ settings = get_settings()
 
 
 class DatasetService:
-    def __init__(self, db: Session):
+
+    def __init__(self, db: Session) -> Any:
         self.db = db
 
     def create_dataset_record(
@@ -36,11 +35,9 @@ class DatasetService:
         frequency: Optional[str] = None,
     ) -> models.Dataset:
         """Create a new dataset record in the database."""
-        # Validate owner exists
         owner = self.db.query(models.User).filter(models.User.id == owner_id).first()
         if not owner:
             raise ValueError("Owner not found")
-
         dataset = models.Dataset(
             name=name,
             description=description,
@@ -55,7 +52,6 @@ class DatasetService:
             source=source,
             frequency=frequency,
         )
-
         self.db.add(dataset)
         self.db.commit()
         self.db.refresh(dataset)
@@ -107,7 +103,6 @@ class DatasetService:
         dataset = self.get_dataset_by_id(dataset_id)
         if not dataset:
             return None
-
         for key, value in kwargs.items():
             if hasattr(dataset, key) and key not in [
                 "id",
@@ -121,7 +116,6 @@ class DatasetService:
                 "status",
             ]:
                 setattr(dataset, key, value)
-
         self.db.commit()
         self.db.refresh(dataset)
         return dataset
@@ -131,7 +125,6 @@ class DatasetService:
         dataset = self.get_dataset_by_id(dataset_id)
         if not dataset:
             return False
-
         dataset.is_deleted = True
         dataset.deleted_at = datetime.utcnow()
         dataset.deleted_by_id = deleted_by_id
@@ -144,13 +137,11 @@ class DatasetService:
         """Load dataset data as pandas DataFrame, with decryption if enabled"""
         if not os.path.exists(file_path):
             return None
-
         try:
             if settings.compliance.enable_data_encryption:
                 with open(file_path, "r", encoding="utf-8") as f:
                     encrypted_content = f.read()
                 decrypted_content = encryption_manager.decrypt(encrypted_content)
-                # Save to a temporary file for pandas to read
                 with tempfile.NamedTemporaryFile(
                     delete=False, suffix=".tmp"
                 ) as tmp_file:
@@ -158,17 +149,15 @@ class DatasetService:
                     tmp_file_path = tmp_file.name
             else:
                 tmp_file_path = file_path
-
             if tmp_file_path.endswith(".csv") or tmp_file_path.endswith(".tmp"):
                 return pd.read_csv(tmp_file_path)
             elif tmp_file_path.endswith(".json"):
                 return pd.read_json(tmp_file_path)
             elif tmp_file_path.endswith(tuple(settings.allowed_file_types)):
-                # Handle other allowed types if necessary
                 if tmp_file_path.endswith((".xlsx", ".xls")):
                     return pd.read_excel(tmp_file_path)
                 else:
-                    return None  # Or raise an error for unsupported format
+                    return None
             else:
                 return None
         except Exception as e:
@@ -178,7 +167,7 @@ class DatasetService:
             if (
                 settings.compliance.enable_data_encryption
                 and os.path.exists(tmp_file_path)
-                and tmp_file_path != file_path
+                and (tmp_file_path != file_path)
             ):
                 os.remove(tmp_file_path)
 
@@ -196,13 +185,10 @@ class DatasetService:
             ),
             "categorical_stats": {},
         }
-
-        # Add categorical statistics
         categorical_cols = data.select_dtypes(include=["object", "category"]).columns
         for col in categorical_cols:
             stats["categorical_stats"][col] = {
                 "unique_count": data[col].nunique(),
                 "top_values": data[col].value_counts().head(10).to_dict(),
             }
-
         return stats

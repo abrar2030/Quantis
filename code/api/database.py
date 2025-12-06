@@ -5,7 +5,6 @@ Database configuration and management for Quantis API
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
-
 import redis.asyncio as redis
 from cryptography.fernet import Fernet
 from redis.asyncio import Redis
@@ -13,70 +12,55 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
-
 from .config import get_settings
-from .models_enhanced import ConsentRecord  # Import new models
+from .models_enhanced import ConsentRecord
 from .models_enhanced import Base, DataMaskingConfig, DataRetentionPolicy, EncryptionKey
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
-
-# Determine database URL based on settings
-database_url = settings.database.get_database_url(
-    "postgresql"
-)  # Default to postgresql, can be configured
-
-# Synchronous database engine
+database_url = settings.database.get_database_url("postgresql")
 engine = create_engine(
     database_url,
-    echo=settings.logging.log_level == "DEBUG",  # Use logging setting for echo
+    echo=settings.logging.log_level == "DEBUG",
     poolclass=QueuePool,
     pool_size=settings.database.pool_size,
     max_overflow=settings.database.max_overflow,
     pool_timeout=settings.database.pool_timeout,
     pool_recycle=settings.database.pool_recycle,
-    pool_pre_ping=True,  # Verify connections before use
+    pool_pre_ping=True,
 )
-
-# Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Redis connection
 redis_client: Optional[Redis] = None
-
-# Encryption key cache
 _encryption_keys: Dict[str, Fernet] = {}
 
 
 @event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
+def set_sqlite_pragma(dbapi_connection: Any, connection_record: Any) -> Any:
     """Set SQLite pragmas for better performance and reliability"""
     if "sqlite" in database_url:
         cursor = dbapi_connection.cursor()
-        # Enable foreign key constraints
         cursor.execute("PRAGMA foreign_keys=ON")
-        # Set journal mode to WAL for better concurrency
         cursor.execute("PRAGMA journal_mode=WAL")
-        # Set synchronous mode to NORMAL for better performance
         cursor.execute("PRAGMA synchronous=NORMAL")
-        # Set cache size to 64MB
         cursor.execute("PRAGMA cache_size=-64000")
         cursor.close()
 
 
 @event.listens_for(Engine, "checkout")
-def receive_checkout(dbapi_connection, connection_record, connection_proxy):
+def receive_checkout(
+    dbapi_connection: Any, connection_record: Any, connection_proxy: Any
+) -> Any:
     """Log database connection checkout"""
     logger.debug("Database connection checked out")
 
 
 @event.listens_for(Engine, "checkin")
-def receive_checkin(dbapi_connection, connection_record):
+def receive_checkin(dbapi_connection: Any, connection_record: Any) -> Any:
     """Log database connection checkin"""
     logger.debug("Database connection checked in")
 
 
-def init_db():
+def init_db() -> Any:
     """Initialize database tables"""
     try:
         logger.info("Initializing database...")
@@ -106,10 +90,7 @@ async def get_redis() -> Redis:
     if redis_client is None:
         if not settings.redis_url:
             raise ValueError("Redis URL is not configured in settings.")
-        redis_client = redis.from_url(
-            settings.redis_url,
-            decode_responses=True,
-        )
+        redis_client = redis.from_url(settings.redis_url, decode_responses=True)
     return redis_client
 
 
@@ -125,17 +106,17 @@ class DatabaseManager:
     """Database management utilities"""
 
     @staticmethod
-    def create_tables():
+    def create_tables() -> Any:
         """Create all database tables"""
         Base.metadata.create_all(bind=engine)
 
     @staticmethod
-    def drop_tables():
+    def drop_tables() -> Any:
         """Drop all database tables"""
         Base.metadata.drop_all(bind=engine)
 
     @staticmethod
-    def get_table_info():
+    def get_table_info() -> Any:
         """Get information about database tables"""
         inspector = engine.inspect(engine)
         tables = {}
@@ -148,7 +129,7 @@ class DatabaseManager:
         return tables
 
     @staticmethod
-    def check_connection():
+    def check_connection() -> Any:
         """Check database connection health"""
         try:
             with engine.connect() as conn:
@@ -159,7 +140,7 @@ class DatabaseManager:
             return False
 
     @staticmethod
-    def get_connection_info():
+    def get_connection_info() -> Any:
         """Get database connection information"""
         pool = engine.pool
         return {
@@ -174,7 +155,7 @@ class DatabaseManager:
 class CacheManager:
     """Redis cache management utilities"""
 
-    def __init__(self, redis_client: Redis):
+    def __init__(self, redis_client: Redis) -> Any:
         self.redis = redis_client
 
     async def get(self, key: str) -> Optional[str]:
@@ -245,13 +226,13 @@ class CacheManager:
 class TransactionManager:
     """Database transaction management"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> Any:
         self.db = db
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         return self.db
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> Any:
         if exc_type is not None:
             self.db.rollback()
         else:
@@ -266,7 +247,6 @@ async def get_cache_manager() -> AsyncGenerator[CacheManager, None]:
     try:
         yield cache_manager
     finally:
-        # Redis connection is managed globally, no need to close here
         pass
 
 
@@ -282,10 +262,8 @@ def create_database_url(
     return f"{driver}://{username}:{password}@{host}:{port}/{database}"
 
 
-def migrate_database():
+def migrate_database() -> Any:
     """Run database migrations"""
-    # This would typically use Alembic for migrations
-    # For now, we'll just create tables
     try:
         logger.info("Running database migrations...")
         init_db()
@@ -298,16 +276,12 @@ def migrate_database():
 def health_check() -> dict:
     """Perform comprehensive health check"""
     health_status = {"database": False, "redis": False, "timestamp": None}
-
-    # Check database
     try:
         with engine.connect() as conn:
             conn.execute("SELECT 1")
         health_status["database"] = True
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
-
-    # Check Redis
     try:
         import asyncio
 
@@ -319,18 +293,16 @@ def health_check() -> dict:
         health_status["redis"] = asyncio.run(check_redis())
     except Exception as e:
         logger.error(f"Redis health check failed: {e}")
-
     from datetime import datetime
 
     health_status["timestamp"] = datetime.utcnow().isoformat()
-
     return health_status
 
 
 class EncryptionManager:
     """Manages encryption and decryption of sensitive data."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> Any:
         self.db = db
 
     def _get_fernet(self, key_name: str) -> Fernet:
@@ -342,8 +314,6 @@ class EncryptionManager:
                 .first()
             )
             if not key_record:
-                # In a real KMS integration, this would fetch from KMS
-                # For now, generate a new key and store it
                 new_key_value = Fernet.generate_key().decode()
                 key_record = EncryptionKey(
                     key_name=key_name,
@@ -364,7 +334,7 @@ class EncryptionManager:
     ) -> str:
         """Encrypts data using the specified key."""
         if not settings.compliance.enable_data_encryption:
-            return data  # Return original data if encryption is disabled
+            return data
         try:
             f = self._get_fernet(key_name)
             encrypted_data = f.encrypt(data.encode()).decode()
@@ -381,7 +351,7 @@ class EncryptionManager:
     ) -> str:
         """Decrypts data using the specified key."""
         if not settings.compliance.enable_data_encryption:
-            return encrypted_data  # Return original data if encryption is disabled
+            return encrypted_data
         try:
             f = self._get_fernet(key_name)
             decrypted_data = f.decrypt(encrypted_data.encode()).decode()
@@ -395,14 +365,13 @@ class EncryptionManager:
 class DataRetentionManager:
     """Manages data retention and deletion based on policies."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> Any:
         self.db = db
 
-    def apply_retention_policy(self, data_type: str, query):
+    def apply_retention_policy(self, data_type: str, query: Any) -> Any:
         """Applies retention policy to a given query."""
         if not settings.compliance.enable_data_retention_policies:
-            return query  # Return original query if policies are disabled
-
+            return query
         policy = (
             self.db.query(DataRetentionPolicy)
             .filter_by(data_type=data_type, is_active=True)
@@ -412,18 +381,14 @@ class DataRetentionManager:
             retention_date = datetime.utcnow() - timedelta(
                 days=policy.retention_period_days
             )
-            return query.filter(
-                DataRetentionPolicy.created_at < retention_date
-            )  # Assuming created_at for retention
+            return query.filter(DataRetentionPolicy.created_at < retention_date)
         return query
 
-    def delete_expired_data(self):
+    def delete_expired_data(self) -> Any:
         """Deletes data that has exceeded its retention period."""
         if not settings.compliance.enable_data_retention_policies:
             logger.info("Data retention policies are disabled. Skipping data deletion.")
             return
-
-        # Example for AuditLog. Extend for other data types.
         audit_log_policy = (
             self.db.query(DataRetentionPolicy)
             .filter_by(data_type="audit_logs", is_active=True)
@@ -445,7 +410,7 @@ class DataRetentionManager:
 class ConsentManager:
     """Manages user consent records."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> Any:
         self.db = db
 
     def record_consent(
@@ -455,7 +420,6 @@ class ConsentManager:
         if not settings.compliance.enable_consent_management:
             logger.warning("Consent management is disabled. Consent not recorded.")
             return None
-
         consent = ConsentRecord(
             user_id=user_id,
             consent_type=consent_type,
@@ -468,12 +432,11 @@ class ConsentManager:
         logger.info(f"Consent recorded for user {user_id}, type: {consent_type}")
         return consent
 
-    def revoke_consent(self, user_id: int, consent_type: str):
+    def revoke_consent(self, user_id: int, consent_type: str) -> Any:
         """Revokes an existing consent for a user."""
         if not settings.compliance.enable_consent_management:
             logger.warning("Consent management is disabled. Consent not revoked.")
             return
-
         consent = (
             self.db.query(ConsentRecord)
             .filter_by(user_id=user_id, consent_type=consent_type, is_active=True)
@@ -496,7 +459,7 @@ class ConsentManager:
 class DataMaskingManager:
     """Applies data masking based on configured policies."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> Any:
         self.db = db
         self.masking_configs = self._load_masking_configs()
 
@@ -508,19 +471,16 @@ class DataMaskingManager:
     def mask_data(self, field_name: str, data: str) -> str:
         """Applies masking to a given data field based on configuration."""
         if not settings.compliance.enable_data_masking:
-            return data  # Return original data if masking is disabled
-
+            return data
         config = self.masking_configs.get(field_name)
         if not config:
-            return data  # No masking config found for this field
-
+            return data
         method = config.masking_method
         if method == "hash":
             return hashlib.sha256(data.encode()).hexdigest()
         elif method == "redact":
             return "[REDACTED]"
         elif method == "partial":
-            # Example: Mask all but last 4 characters
             if len(data) > 4:
                 return "*" * (len(data) - 4) + data[-4:]
             return "*" * len(data)
@@ -532,7 +492,6 @@ class DataMaskingManager:
         """Applies masking to all relevant fields in a dictionary object."""
         if not settings.compliance.enable_data_masking:
             return obj
-
         masked_obj = obj.copy()
         for field_name, config in self.masking_configs.items():
             if field_name in masked_obj:
@@ -542,21 +501,17 @@ class DataMaskingManager:
         return masked_obj
 
 
-# Dependency for EncryptionManager
 def get_encryption_manager(db: Session = Depends(get_db)) -> EncryptionManager:
     return EncryptionManager(db)
 
 
-# Dependency for DataRetentionManager
 def get_data_retention_manager(db: Session = Depends(get_db)) -> DataRetentionManager:
     return DataRetentionManager(db)
 
 
-# Dependency for ConsentManager
 def get_consent_manager(db: Session = Depends(get_db)) -> ConsentManager:
     return ConsentManager(db)
 
 
-# Dependency for DataMaskingManager
 def get_data_masking_manager(db: Session = Depends(get_db)) -> DataMaskingManager:
     return DataMaskingManager(db)

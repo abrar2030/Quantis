@@ -3,11 +3,9 @@ Model management endpoints
 """
 
 from typing import List, Optional
-
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
 from ..database import get_db
 from ..middleware.auth import (
     readonly_or_above,
@@ -21,7 +19,6 @@ from ..services.user_service import UserService
 router = APIRouter()
 
 
-# Pydantic models
 class ModelCreate(BaseModel):
     name: str
     description: str
@@ -61,7 +58,6 @@ class ModelMetrics(BaseModel):
     epochs: Optional[int]
 
 
-# Model CRUD endpoints
 @router.post("/models", response_model=ModelResponse)
 async def create_model(
     model_data: ModelCreate,
@@ -71,15 +67,11 @@ async def create_model(
     """Create a new model."""
     model_service = ModelService(db)
     dataset_service = DatasetService(db)
-
-    # Verify dataset exists and user has access
     dataset = dataset_service.get_dataset_by_id(model_data.dataset_id)
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
-
     if current_user["role"] != "admin" and dataset.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied to dataset")
-
     try:
         model = model_service.create_model(
             name=model_data.name,
@@ -89,7 +81,6 @@ async def create_model(
             dataset_id=model_data.dataset_id,
             hyperparameters=model_data.hyperparameters,
         )
-
         return ModelResponse(
             id=model.id,
             name=model.name,
@@ -107,7 +98,6 @@ async def create_model(
             updated_at=model.updated_at.isoformat() if model.updated_at else None,
             trained_at=model.trained_at.isoformat() if model.trained_at else None,
         )
-
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -124,26 +114,19 @@ async def get_models(
     """Get models for the current user."""
     model_service = ModelService(db)
     dataset_service = DatasetService(db)
-
     if current_user["role"] == "admin":
         models = model_service.get_all_models(skip, limit)
     else:
         models = model_service.get_models_by_owner(current_user["user_id"], skip, limit)
-
-    # Filter by status and model_type if provided
     if status:
         models = [m for m in models if m.status == status]
     if model_type:
         models = [m for m in models if m.model_type == model_type]
-
-    # Get additional info
     user_service = UserService(db)
-
     result = []
     for model in models:
         owner = user_service.get_user_by_id(model.owner_id)
         dataset = dataset_service.get_dataset_by_id(model.dataset_id)
-
         result.append(
             ModelResponse(
                 id=model.id,
@@ -163,7 +146,6 @@ async def get_models(
                 trained_at=model.trained_at.isoformat() if model.trained_at else None,
             )
         )
-
     return result
 
 
@@ -176,20 +158,14 @@ async def get_model(
     """Get model by ID."""
     model_service = ModelService(db)
     dataset_service = DatasetService(db)
-
     model = model_service.get_model_by_id(model_id)
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-
-    # Check permissions
     if current_user["role"] != "admin" and model.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-
-    # Get additional info
     user_service = UserService(db)
     owner = user_service.get_user_by_id(model.owner_id)
     dataset = dataset_service.get_dataset_by_id(model.dataset_id)
-
     return ModelResponse(
         id=model.id,
         name=model.name,
@@ -219,15 +195,10 @@ async def update_model(
     """Update model information."""
     model_service = ModelService(db)
     model = model_service.get_model_by_id(model_id)
-
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-
-    # Check permissions
     if current_user["role"] != "admin" and model.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-
-    # Update model
     updated_model = model_service.update_model(
         model_id,
         name=model_update.name,
@@ -235,14 +206,10 @@ async def update_model(
         model_type=model_update.model_type,
         hyperparameters=model_update.hyperparameters,
     )
-
     if not updated_model:
         raise HTTPException(status_code=500, detail="Failed to update model")
-
-    # Get additional info for response
     dataset_service = DatasetService(db)
     dataset = dataset_service.get_dataset_by_id(updated_model.dataset_id)
-
     return ModelResponse(
         id=updated_model.id,
         name=updated_model.name,
@@ -275,22 +242,16 @@ async def delete_model(
     """Delete model."""
     model_service = ModelService(db)
     model = model_service.get_model_by_id(model_id)
-
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-
-    # Check permissions
     if current_user["role"] != "admin" and model.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-
     success = model_service.delete_model(model_id)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete model")
-
     return {"message": "Model deleted successfully"}
 
 
-# Model training endpoints
 @router.post("/models/{model_id}/train")
 async def train_model(
     model_id: int,
@@ -302,29 +263,21 @@ async def train_model(
     """Start model training."""
     model_service = ModelService(db)
     model = model_service.get_model_by_id(model_id)
-
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-
-    # Check permissions
     if current_user["role"] != "admin" and model.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-
     if model.status == "training":
         raise HTTPException(status_code=400, detail="Model is already training")
-
-    # Update hyperparameters if provided
     if training_request.hyperparameters:
         model_service.update_model(
             model_id, hyperparameters=training_request.hyperparameters
         )
 
-    # Start training in background
-    def train_model_task():
+    def train_model_task() -> Any:
         model_service.train_dummy_model(model_id)
 
     background_tasks.add_task(train_model_task)
-
     return {"message": "Model training started", "model_id": model_id}
 
 
@@ -337,14 +290,10 @@ async def get_training_status(
     """Get model training status."""
     model_service = ModelService(db)
     model = model_service.get_model_by_id(model_id)
-
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-
-    # Check permissions
     if current_user["role"] != "admin" and model.owner_id != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-
     return {
         "model_id": model.id,
         "status": model.status,
@@ -363,26 +312,20 @@ async def get_model_metrics(
     """Get model training metrics."""
     model_service = ModelService(db)
     model = model_service.get_model_by_id(model_id)
-
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
-
-    # Check permissions
     if (
         current_user["role"] not in ["admin", "readonly"]
         and model.owner_id != current_user["user_id"]
     ):
         raise HTTPException(status_code=403, detail="Access denied")
-
     if not model.metrics:
         raise HTTPException(
             status_code=404, detail="No metrics available for this model"
         )
-
     return ModelMetrics(**model.metrics)
 
 
-# Model comparison and analysis
 @router.get("/models/compare")
 async def compare_models(
     model_ids: str = Query(..., description="Comma-separated list of model IDs"),
@@ -391,30 +334,24 @@ async def compare_models(
 ):
     """Compare multiple models."""
     model_service = ModelService(db)
-
     try:
         model_id_list = [int(id.strip()) for id in model_ids.split(",")]
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid model IDs format")
-
     if len(model_id_list) > 10:
         raise HTTPException(
             status_code=400, detail="Cannot compare more than 10 models at once"
         )
-
     comparison_data = []
     for model_id in model_id_list:
         model = model_service.get_model_by_id(model_id)
         if not model:
             continue
-
-        # Check permissions
         if (
             current_user["role"] not in ["admin", "readonly"]
             and model.owner_id != current_user["user_id"]
         ):
             continue
-
         comparison_data.append(
             {
                 "id": model.id,
@@ -427,11 +364,9 @@ async def compare_models(
                 ),
             }
         )
-
     return {"models": comparison_data, "comparison_count": len(comparison_data)}
 
 
-# Model types and templates
 @router.get("/models/types")
 async def get_model_types(current_user: dict = Depends(readonly_or_above)):
     """Get available model types and their descriptions."""

@@ -4,19 +4,11 @@ Pydantic schemas for Quantis API with comprehensive validation
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-
 from pydantic import UUID4, BaseModel, EmailStr, Field, validator
 from pydantic.types import confloat, conint, constr
-
-from .models_enhanced import (
-    DatasetStatus,
-    ModelStatus,
-    ModelType,
-    NotificationType,
-)
+from .models_enhanced import DatasetStatus, ModelStatus, ModelType, NotificationType
 
 
-# Base schemas
 class BaseSchema(BaseModel):
     """Base schema with common configuration"""
 
@@ -40,7 +32,6 @@ class UUIDMixin(BaseModel):
     uuid: Optional[UUID4] = None
 
 
-# User schemas
 class UserBase(BaseSchema):
     """Base user schema"""
 
@@ -48,19 +39,17 @@ class UserBase(BaseSchema):
         ...,
         min_length=3,
         max_length=50,
-        pattern=r"^[a-zA-Z0-9_]+$",
+        pattern="^[a-zA-Z0-9_]+$",
         description="Username (3-50 characters, alphanumeric and underscore only)",
     )
     email: EmailStr = Field(..., description="Valid email address")
     first_name: Optional[str] = Field(None, max_length=50, description="First name")
     last_name: Optional[str] = Field(None, max_length=50, description="Last name")
     phone_number: Optional[str] = Field(
-        None, pattern=r"^\+?1?\d{9,15}$", description="Phone number"
+        None, pattern="^\\+?1?\\d{9,15}$", description="Phone number"
     )
     timezone: Optional[str] = Field("UTC", description="User timezone")
-    role_id: Optional[int] = Field(
-        None, description="ID of the user's role"
-    )  # Changed from role to role_id
+    role_id: Optional[int] = Field(None, description="ID of the user's role")
 
 
 class UserCreate(UserBase):
@@ -72,22 +61,22 @@ class UserCreate(UserBase):
     confirm_password: str = Field(..., description="Password confirmation")
 
     @validator("confirm_password")
-    def passwords_match(cls, v, values):
+    def passwords_match(cls: Any, v: Any, values: Any) -> Any:
         if "password" in values and v != values["password"]:
             raise ValueError("Passwords do not match")
         return v
 
     @validator("password")
-    def validate_password_strength(cls, v):
+    def validate_password_strength(cls: Any, v: Any) -> Any:
         if len(v) < 12:
             raise ValueError("Password must be at least 12 characters long")
-        if not any(c.isupper() for c in v):
+        if not any((c.isupper() for c in v)):
             raise ValueError("Password must contain at least one uppercase letter")
-        if not any(c.islower() for c in v):
+        if not any((c.islower() for c in v)):
             raise ValueError("Password must contain at least one lowercase letter")
-        if not any(c.isdigit() for c in v):
+        if not any((c.isdigit() for c in v)):
             raise ValueError("Password must contain at least one digit")
-        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v):
+        if not any((c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v)):
             raise ValueError("Password must contain at least one special character")
         return v
 
@@ -97,7 +86,7 @@ class UserUpdate(BaseSchema):
 
     first_name: Optional[str] = Field(None, max_length=50)
     last_name: Optional[str] = Field(None, max_length=50)
-    phone_number: Optional[str] = Field(None, pattern=r"^\+?1?\d{9,15}$")
+    phone_number: Optional[str] = Field(None, pattern="^\\+?1?\\d{9,15}$")
     timezone: Optional[str] = None
     preferences: Optional[Dict[str, Any]] = None
     is_mfa_enabled: Optional[bool] = Field(
@@ -114,13 +103,13 @@ class UserResponse(UserBase, TimestampMixin, UUIDMixin):
     is_mfa_enabled: bool
     last_login: Optional[datetime] = None
     full_name: Optional[str] = None
-    role: Optional[str] = Field(None, description="User's role name")  # Added role name
+    role: Optional[str] = Field(None, description="User's role name")
     permissions: Optional[List[str]] = Field(
         None, description="List of permissions associated with the user's role"
-    )  # Added permissions
+    )
 
     @validator("full_name", always=True)
-    def compute_full_name(cls, v, values):
+    def compute_full_name(cls: Any, v: Any, values: Any) -> Any:
         if values.get("first_name") and values.get("last_name"):
             return f"{values['first_name']} {values['last_name']}"
         return values.get("username")
@@ -148,27 +137,26 @@ class PasswordChange(BaseSchema):
     confirm_password: str = Field(..., description="New password confirmation")
 
     @validator("confirm_password")
-    def passwords_match(cls, v, values):
+    def passwords_match(cls: Any, v: Any, values: Any) -> Any:
         if "new_password" in values and v != values["new_password"]:
             raise ValueError("Passwords do not match")
         return v
 
     @validator("new_password")
-    def validate_new_password_strength(cls, v):
+    def validate_new_password_strength(cls: Any, v: Any) -> Any:
         if len(v) < 12:
             raise ValueError("Password must be at least 12 characters long")
-        if not any(c.isupper() for c in v):
+        if not any((c.isupper() for c in v)):
             raise ValueError("Password must contain at least one uppercase letter")
-        if not any(c.islower() for c in v):
+        if not any((c.islower() for c in v)):
             raise ValueError("Password must contain at least one lowercase letter")
-        if not any(c.isdigit() for c in v):
+        if not any((c.isdigit() for c in v)):
             raise ValueError("Password must contain at least one digit")
-        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v):
+        if not any((c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v)):
             raise ValueError("Password must contain at least one special character")
         return v
 
 
-# Authentication schemas
 class Token(BaseSchema):
     """Schema for authentication token"""
 
@@ -184,7 +172,6 @@ class TokenRefresh(BaseSchema):
     refresh_token: str = Field(..., description="Refresh token")
 
 
-# MFA schemas
 class MFAEnable(BaseSchema):
     """Schema for enabling MFA"""
 
@@ -212,7 +199,6 @@ class MFAResponse(BaseSchema):
     message: str = Field(..., description="Instructions for MFA setup")
 
 
-# API Key schemas
 class ApiKeyBase(BaseSchema):
     """Base API key schema"""
 
@@ -248,7 +234,6 @@ class ApiKeyWithSecret(ApiKeyResponse):
     key: str = Field(..., description="Full API key (shown only once)")
 
 
-# Dataset schemas
 class DatasetBase(BaseSchema):
     """Base dataset schema"""
 
@@ -298,7 +283,6 @@ class DatasetUpload(BaseSchema):
     frequency: Optional[str] = Field(None, description="Data frequency")
 
 
-# Model schemas
 class ModelBase(BaseSchema):
     """Base model schema"""
 
@@ -380,7 +364,6 @@ class ModelTraining(BaseSchema):
     )
 
 
-# Prediction schemas
 class PredictionBase(BaseSchema):
     """Base prediction schema"""
 
@@ -435,7 +418,6 @@ class PredictionFeedback(BaseSchema):
     notes: Optional[str] = Field(None, description="Feedback notes")
 
 
-# Notification schemas
 class NotificationBase(BaseSchema):
     """Base notification schema"""
 
@@ -471,7 +453,6 @@ class NotificationResponse(NotificationBase, TimestampMixin):
     retry_count: int
 
 
-# Data Quality schemas
 class DataQualityReportResponse(BaseSchema, TimestampMixin):
     """Schema for data quality report response"""
 
@@ -490,7 +471,6 @@ class DataQualityReportResponse(BaseSchema, TimestampMixin):
     issues_found: List[str]
 
 
-# Market Data schemas
 class MarketDataBase(BaseSchema):
     """Base market data schema"""
 
@@ -518,7 +498,6 @@ class MarketDataResponse(MarketDataBase, TimestampMixin):
     id: int
 
 
-# Role and Permission schemas
 class PermissionBase(BaseSchema):
     """Base permission schema"""
 
@@ -565,7 +544,6 @@ class RoleResponse(RoleBase, TimestampMixin):
     )
 
 
-# Data Retention Policy schemas
 class DataRetentionPolicyBase(BaseSchema):
     """Base data retention policy schema"""
 
@@ -589,7 +567,6 @@ class DataRetentionPolicyResponse(DataRetentionPolicyBase, TimestampMixin):
     id: int
 
 
-# Consent Record schemas
 class ConsentRecordBase(BaseSchema):
     """Base consent record schema"""
 
@@ -614,7 +591,6 @@ class ConsentRecordResponse(ConsentRecordBase, TimestampMixin):
     given_at: datetime
 
 
-# Data Masking Config schemas
 class DataMaskingConfigBase(BaseSchema):
     """Base data masking configuration schema"""
 
@@ -642,7 +618,6 @@ class DataMaskingConfigResponse(DataMaskingConfigBase, TimestampMixin):
     id: int
 
 
-# Encryption Key schemas
 class EncryptionKeyBase(BaseSchema):
     """Base encryption key schema"""
 
@@ -677,7 +652,6 @@ class EncryptionKeyResponse(EncryptionKeyBase, TimestampMixin):
     id: int
 
 
-# Financial schemas
 class TransactionBase(BaseSchema):
     """Base transaction schema"""
 

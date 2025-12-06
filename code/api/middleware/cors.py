@@ -3,7 +3,6 @@ CORS middleware for handling cross-origin requests
 """
 
 from typing import List, Optional
-
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -14,7 +13,7 @@ class EnhancedCORSMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app,
+        app: Any,
         allow_origins: List[str] = None,
         allow_credentials: bool = True,
         allow_methods: List[str] = None,
@@ -22,10 +21,8 @@ class EnhancedCORSMiddleware(BaseHTTPMiddleware):
         expose_headers: List[str] = None,
         max_age: int = 600,
         allow_origin_regex: Optional[str] = None,
-    ):
+    ) -> Any:
         super().__init__(app)
-
-        # Default values for startup-ready configuration
         self.allow_origins = allow_origins or ["*"]
         self.allow_credentials = allow_credentials
         self.allow_methods = allow_methods or [
@@ -57,19 +54,13 @@ class EnhancedCORSMiddleware(BaseHTTPMiddleware):
         self.allow_origin_regex = allow_origin_regex
 
     async def dispatch(self, request: Request, call_next):
-        # Handle preflight requests
         if request.method == "OPTIONS":
             return self._create_preflight_response(request)
-
-        # Process the request
         response = await call_next(request)
-
-        # Add CORS headers to the response
         self._add_cors_headers(request, response)
-
         return response
 
-    def _create_preflight_response(self, request: Request):
+    def _create_preflight_response(self, request: Request) -> Any:
         """Create response for preflight OPTIONS requests"""
         from fastapi.responses import Response
 
@@ -77,17 +68,13 @@ class EnhancedCORSMiddleware(BaseHTTPMiddleware):
         self._add_cors_headers(request, response)
         return response
 
-    def _add_cors_headers(self, request: Request, response):
+    def _add_cors_headers(self, request: Request, response: Any) -> Any:
         """Add CORS headers to response"""
         origin = request.headers.get("origin")
-
-        # Check if origin is allowed
         if self._is_origin_allowed(origin):
             response.headers["Access-Control-Allow-Origin"] = origin or "*"
-
         if self.allow_credentials:
             response.headers["Access-Control-Allow-Credentials"] = "true"
-
         response.headers["Access-Control-Allow-Methods"] = ", ".join(self.allow_methods)
         response.headers["Access-Control-Allow-Headers"] = ", ".join(self.allow_headers)
         response.headers["Access-Control-Expose-Headers"] = ", ".join(
@@ -99,27 +86,20 @@ class EnhancedCORSMiddleware(BaseHTTPMiddleware):
         """Check if the origin is allowed"""
         if not origin:
             return True
-
         if "*" in self.allow_origins:
             return True
-
         if origin in self.allow_origins:
             return True
-
-        # Check regex pattern if provided
         if self.allow_origin_regex:
             import re
 
             return bool(re.match(self.allow_origin_regex, origin))
-
         return False
 
 
-def setup_cors(app, environment: str = "development"):
+def setup_cors(app: Any, environment: str = "development") -> Any:
     """Setup CORS middleware based on environment"""
-
     if environment == "production":
-        # Production settings - more restrictive
         allowed_origins = [
             "https://yourdomain.com",
             "https://www.yourdomain.com",
@@ -127,7 +107,6 @@ def setup_cors(app, environment: str = "development"):
         ]
         allow_credentials = True
     elif environment == "staging":
-        # Staging settings
         allowed_origins = [
             "https://staging.yourdomain.com",
             "https://dev.yourdomain.com",
@@ -136,10 +115,8 @@ def setup_cors(app, environment: str = "development"):
         ]
         allow_credentials = True
     else:
-        # Development settings - more permissive
         allowed_origins = ["*"]
-        allow_credentials = False  # Can't use credentials with wildcard origin
-
+        allow_credentials = False
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
@@ -166,7 +143,6 @@ def setup_cors(app, environment: str = "development"):
 
 def get_cors_config(environment: str = "development") -> dict:
     """Get CORS configuration for the given environment"""
-
     configs = {
         "development": {
             "allow_origins": ["*"],
@@ -207,5 +183,4 @@ def get_cors_config(environment: str = "development") -> dict:
             "max_age": 86400,
         },
     }
-
     return configs.get(environment, configs["development"])

@@ -6,7 +6,6 @@ import json
 import time
 from contextlib import asynccontextmanager
 from typing import Dict
-
 import structlog
 from fastapi import (
     Depends,
@@ -25,15 +24,9 @@ from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
-
 from .auth_enhanced import AuditLogger, rate_limit
 from .config import Settings, get_settings
-from .database_enhanced import (
-    close_redis,
-    get_db,
-    health_check,
-    init_db,
-)
+from .database_enhanced import close_redis, get_db, health_check, init_db
 from .endpoints import (
     auth_enhanced,
     datasets_enhanced,
@@ -48,9 +41,6 @@ from .endpoints import (
 from .models_enhanced import User
 from .schemas_enhanced import HealthCheck
 
-# ---------------------------
-# Structured Logging
-# ---------------------------
 structlog.configure(
     processors=[
         structlog.stdlib.filter_by_level,
@@ -68,24 +58,17 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 logger = structlog.get_logger(__name__)
-
-# ---------------------------
-# Settings & Metrics
-# ---------------------------
 settings: Settings = get_settings()
-
 REQUEST_COUNT = Counter(
     "quantis_requests_total",
     "Total number of requests",
     ["method", "endpoint", "status_code"],
 )
-
 REQUEST_DURATION = Histogram(
     "quantis_request_duration_seconds",
     "Request duration in seconds",
     ["method", "endpoint"],
 )
-
 WEBSOCKET_CONNECTIONS = Counter(
     "quantis_websocket_connections_total",
     "Total number of WebSocket connections",
@@ -93,9 +76,6 @@ WEBSOCKET_CONNECTIONS = Counter(
 )
 
 
-# ---------------------------
-# Middleware
-# ---------------------------
 class MetricsMiddleware(BaseHTTPMiddleware):
     """Collect request metrics"""
 
@@ -103,17 +83,14 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         start_time = time.time()
         response = await call_next(request)
         duration = time.time() - start_time
-
         endpoint = request.url.path
         method = request.method
         status_code = response.status_code
-
         REQUEST_COUNT.labels(
             method=method, endpoint=endpoint, status_code=status_code
         ).inc()
         REQUEST_DURATION.labels(method=method, endpoint=endpoint).observe(duration)
         response.headers["X-Response-Time"] = str(duration)
-
         return response
 
 
@@ -121,10 +98,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
     """Audit logging for sensitive requests"""
 
     async def dispatch(self, request: Request, call_next):
-        request_id = f"req_{int(time.time() * 1e6)}"
+        request_id = f"req_{int(time.time() * 1000000.0)}"
         request.state.request_id = request_id
         response = await call_next(request)
-
         if settings.logging.enable_audit_logging and request.method in [
             "POST",
             "PUT",
@@ -135,7 +111,6 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 user: User = getattr(request.state, "user", None)
                 user_id = user.id if user else None
                 db = next(get_db())
-
                 AuditLogger.log_event(
                     db=db,
                     user_id=user_id,
@@ -147,17 +122,13 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 )
             except Exception as e:
                 logger.error("Audit logging failed", error=str(e))
-
         return response
 
 
-# ---------------------------
-# WebSocket Manager
-# ---------------------------
 class WebSocketManager:
     """Manage WebSocket connections"""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.active_connections: Dict[str, Dict[str, WebSocket]] = {}
         self.user_connections: Dict[int, list] = {}
 
@@ -168,7 +139,7 @@ class WebSocketManager:
         WEBSOCKET_CONNECTIONS.labels(endpoint=connection_id).inc()
         logger.info("WebSocket connected", connection_id=connection_id, user_id=user_id)
 
-    def disconnect(self, connection_id: str, user_id: int):
+    def disconnect(self, connection_id: str, user_id: int) -> Any:
         self.active_connections.get(connection_id, {}).pop(str(user_id), None)
         if not self.active_connections.get(connection_id):
             self.active_connections.pop(connection_id, None)
@@ -201,9 +172,6 @@ class WebSocketManager:
 websocket_manager = WebSocketManager()
 
 
-# ---------------------------
-# Application Lifespan
-# ---------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting Quantis API...")
@@ -225,9 +193,6 @@ async def lifespan(app: FastAPI):
     logger.info("Quantis API shutdown complete")
 
 
-# ---------------------------
-# FastAPI App
-# ---------------------------
 app = FastAPI(
     title="Quantis API",
     version="2.0.0",
@@ -239,9 +204,6 @@ app = FastAPI(
 )
 
 
-# ---------------------------
-# Exception Handlers
-# ---------------------------
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request, exc):
     logger.warning(
@@ -259,9 +221,6 @@ async def validation_exception_handler(request, exc):
     return await request_validation_exception_handler(request, exc)
 
 
-# ---------------------------
-# Middleware Registration
-# ---------------------------
 app.add_middleware(MetricsMiddleware)
 app.add_middleware(AuditMiddleware)
 app.add_middleware(
@@ -275,9 +234,6 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
-# ---------------------------
-# Core Endpoints
-# ---------------------------
 @app.get("/health", response_model=HealthCheck, tags=["System"])
 async def health_check_endpoint(db=Depends(get_db)):
     try:
@@ -330,9 +286,6 @@ async def root():
     }
 
 
-# ---------------------------
-# Include Routers
-# ---------------------------
 app.include_router(auth_enhanced.router, prefix="/auth", tags=["Authentication"])
 app.include_router(users_enhanced.router, prefix="/users", tags=["Users"])
 app.include_router(datasets_enhanced.router, prefix="/datasets", tags=["Datasets"])
@@ -350,9 +303,6 @@ app.include_router(financial.router, prefix="/financial", tags=["Financial"])
 app.include_router(websocket_enhanced.router, prefix="/ws", tags=["WebSocket"])
 
 
-# ---------------------------
-# WebSocket Endpoint
-# ---------------------------
 @app.websocket("/ws/notifications/{user_id}")
 async def websocket_notifications(websocket: WebSocket, user_id: int):
     try:

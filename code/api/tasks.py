@@ -7,14 +7,12 @@ import os
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-
 import joblib
 import numpy as np
 import pandas as pd
 from celery import Celery, Task
 from celery.result import AsyncResult
 from sqlalchemy.orm import Session
-
 from .config import get_settings
 from .database_enhanced import SessionLocal
 from .models_enhanced import (
@@ -30,8 +28,6 @@ from .models_enhanced import (
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
-
-# Create Celery app
 celery_app = Celery(
     "quantis_tasks",
     broker=settings.celery.broker_url,
@@ -42,8 +38,6 @@ celery_app = Celery(
         "quantis.tasks.notification_tasks",
     ],
 )
-
-# Configure Celery
 celery_app.conf.update(
     task_serializer=settings.celery.task_serializer,
     result_serializer=settings.celery.result_serializer,
@@ -57,16 +51,16 @@ celery_app.conf.update(
     worker_disable_rate_limits=False,
     task_reject_on_worker_lost=True,
     task_ignore_result=False,
-    result_expires=3600,  # 1 hour
-    task_soft_time_limit=1800,  # 30 minutes
-    task_time_limit=3600,  # 1 hour
+    result_expires=3600,
+    task_soft_time_limit=1800,
+    task_time_limit=3600,
 )
 
 
 class DatabaseTask(Task):
     """Base task class with database session management"""
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> Any:
         """Execute task with database session"""
         db = SessionLocal()
         try:
@@ -78,7 +72,7 @@ class DatabaseTask(Task):
         finally:
             db.close()
 
-    def run_with_db(self, db: Session, *args, **kwargs):
+    def run_with_db(self, db: Session, *args, **kwargs) -> Any:
         """Override this method in subclasses"""
         raise NotImplementedError
 
@@ -87,20 +81,14 @@ class DatabaseTask(Task):
 def train_model_task(self, db: Session, model_id: int, user_id: int) -> Dict[str, Any]:
     """Train a machine learning model"""
     try:
-        # Get model and dataset
         model = db.query(Model).filter(Model.id == model_id).first()
         if not model:
             raise ValueError(f"Model {model_id} not found")
-
         dataset = db.query(Dataset).filter(Dataset.id == model.dataset_id).first()
         if not dataset:
             raise ValueError(f"Dataset {model.dataset_id} not found")
-
-        # Update model status
         model.status = ModelStatus.TRAINING
         db.commit()
-
-        # Load dataset
         logger.info(f"Loading dataset from {dataset.file_path}")
         if dataset.file_path.endswith(".csv"):
             data = pd.read_csv(dataset.file_path)
@@ -108,71 +96,52 @@ def train_model_task(self, db: Session, model_id: int, user_id: int) -> Dict[str
             data = pd.read_parquet(dataset.file_path)
         else:
             raise ValueError(f"Unsupported file format: {dataset.file_path}")
-
-        # Prepare features and target
         feature_columns = model.feature_columns or []
         target_column = model.target_column
-
         if not feature_columns:
-            # Use all numeric columns except target as features
             numeric_columns = data.select_dtypes(include=[np.number]).columns.tolist()
             if target_column in numeric_columns:
                 numeric_columns.remove(target_column)
             feature_columns = numeric_columns
-
         X = data[feature_columns]
         y = data[target_column] if target_column else None
-
-        # Split data
         from sklearn.model_selection import train_test_split
 
         test_size = model.training_config.get("test_size", 0.2)
         random_state = model.training_config.get("random_state", 42)
-
         if y is not None:
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=test_size, random_state=random_state
             )
         else:
-            # For unsupervised learning
             X_train, X_test = train_test_split(
                 X, test_size=test_size, random_state=random_state
             )
-            y_train, y_test = None, None
-
-        # Train model based on type
+            y_train, y_test = (None, None)
         trained_model = None
         metrics = {}
-
         if model.model_type.value == "linear_regression":
             from sklearn.linear_model import LinearRegression
             from sklearn.metrics import mean_squared_error, r2_score
 
             trained_model = LinearRegression(**model.hyperparameters)
             trained_model.fit(X_train, y_train)
-
-            # Calculate metrics
             y_pred_train = trained_model.predict(X_train)
             y_pred_test = trained_model.predict(X_test)
-
             metrics = {
                 "train_mse": float(mean_squared_error(y_train, y_pred_train)),
                 "test_mse": float(mean_squared_error(y_test, y_pred_test)),
                 "train_r2": float(r2_score(y_train, y_pred_train)),
                 "test_r2": float(r2_score(y_test, y_pred_test)),
             }
-
         elif model.model_type.value == "random_forest":
             from sklearn.ensemble import RandomForestRegressor
             from sklearn.metrics import mean_squared_error, r2_score
 
             trained_model = RandomForestRegressor(**model.hyperparameters)
             trained_model.fit(X_train, y_train)
-
-            # Calculate metrics
             y_pred_train = trained_model.predict(X_train)
             y_pred_test = trained_model.predict(X_test)
-
             metrics = {
                 "train_mse": float(mean_squared_error(y_train, y_pred_train)),
                 "test_mse": float(mean_squared_error(y_test, y_pred_test)),
@@ -182,7 +151,6 @@ def train_model_task(self, db: Session, model_id: int, user_id: int) -> Dict[str
                     zip(feature_columns, trained_model.feature_importances_.tolist())
                 ),
             }
-
         elif model.model_type.value == "xgboost":
             try:
                 import xgboost as xgb
@@ -190,11 +158,8 @@ def train_model_task(self, db: Session, model_id: int, user_id: int) -> Dict[str
 
                 trained_model = xgb.XGBRegressor(**model.hyperparameters)
                 trained_model.fit(X_train, y_train)
-
-                # Calculate metrics
                 y_pred_train = trained_model.predict(X_train)
                 y_pred_test = trained_model.predict(X_test)
-
                 metrics = {
                     "train_mse": float(mean_squared_error(y_train, y_pred_train)),
                     "test_mse": float(mean_squared_error(y_test, y_pred_test)),
@@ -208,18 +173,12 @@ def train_model_task(self, db: Session, model_id: int, user_id: int) -> Dict[str
                 }
             except ImportError:
                 raise ValueError("XGBoost not installed")
-
         else:
             raise ValueError(f"Unsupported model type: {model.model_type.value}")
-
-        # Save trained model
         model_dir = os.path.join(settings.ml.model_storage_path, str(model.id))
         os.makedirs(model_dir, exist_ok=True)
         model_file_path = os.path.join(model_dir, f"model_{model.version}.joblib")
-
         joblib.dump(trained_model, model_file_path)
-
-        # Update model in database
         model.file_path = model_file_path
         model.file_size = os.path.getsize(model_file_path)
         model.metrics = metrics
@@ -230,10 +189,7 @@ def train_model_task(self, db: Session, model_id: int, user_id: int) -> Dict[str
         model.training_samples = len(X_train)
         model.test_samples = len(X_test)
         model.feature_columns = feature_columns
-
         db.commit()
-
-        # Send notification
         send_notification_task.delay(
             user_id=user_id,
             title="Model Training Completed",
@@ -242,9 +198,7 @@ def train_model_task(self, db: Session, model_id: int, user_id: int) -> Dict[str
             category="model_training",
             data={"model_id": model_id, "metrics": metrics},
         )
-
         logger.info(f"Model {model_id} training completed successfully")
-
         return {
             "model_id": model_id,
             "status": "completed",
@@ -253,15 +207,11 @@ def train_model_task(self, db: Session, model_id: int, user_id: int) -> Dict[str
             "test_samples": len(X_test),
             "file_path": model_file_path,
         }
-
     except Exception as e:
-        # Update model status to failed
         model = db.query(Model).filter(Model.id == model_id).first()
         if model:
             model.status = ModelStatus.FAILED
             db.commit()
-
-        # Send error notification
         send_notification_task.delay(
             user_id=user_id,
             title="Model Training Failed",
@@ -271,7 +221,6 @@ def train_model_task(self, db: Session, model_id: int, user_id: int) -> Dict[str
             priority="high",
             data={"model_id": model_id, "error": str(e)},
         )
-
         logger.error(f"Model {model_id} training failed: {e}")
         raise
 
@@ -287,22 +236,15 @@ def process_dataset_task(
         dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
         if not dataset:
             raise ValueError(f"Dataset {dataset_id} not found")
-
-        # Load dataset
         logger.info(f"Processing dataset {dataset_id}")
-
         if dataset.file_path.endswith(".csv"):
             data = pd.read_csv(dataset.file_path)
         elif dataset.file_path.endswith(".parquet"):
             data = pd.read_parquet(dataset.file_path)
         else:
             raise ValueError(f"Unsupported file format: {dataset.file_path}")
-
-        # Basic statistics
         row_count = len(data)
         column_count = len(data.columns)
-
-        # Column analysis
         columns_info = {}
         for col in data.columns:
             col_info = {
@@ -312,7 +254,6 @@ def process_dataset_task(
                 "unique_count": int(data[col].nunique()),
                 "unique_percentage": float(data[col].nunique() / len(data) * 100),
             }
-
             if data[col].dtype in ["int64", "float64"]:
                 col_info.update(
                     {
@@ -343,17 +284,11 @@ def process_dataset_task(
                         ),
                     }
                 )
-
             columns_info[col] = col_info
-
-        # Data quality analysis
         missing_values_count = int(data.isnull().sum().sum())
         duplicate_rows_count = int(data.duplicated().sum())
-
-        # Outlier detection for numeric columns
         outliers_count = 0
         numeric_columns = data.select_dtypes(include=[np.number]).columns
-
         for col in numeric_columns:
             Q1 = data[col].quantile(0.25)
             Q3 = data[col].quantile(0.75)
@@ -363,8 +298,6 @@ def process_dataset_task(
             outliers_count += int(
                 ((data[col] < lower_bound) | (data[col] > upper_bound)).sum()
             )
-
-        # Calculate quality score
         completeness_score = (
             1 - missing_values_count / (row_count * column_count)
         ) * 100
@@ -372,11 +305,9 @@ def process_dataset_task(
             (1 - duplicate_rows_count / row_count) * 100 if row_count > 0 else 100
         )
         consistency_score = (
-            max(0, 100 - (outliers_count / row_count * 100)) if row_count > 0 else 100
+            max(0, 100 - outliers_count / row_count * 100) if row_count > 0 else 100
         )
         quality_score = (completeness_score + uniqueness_score + consistency_score) / 3
-
-        # Update dataset
         dataset.row_count = row_count
         dataset.columns_info = columns_info
         dataset.missing_values_count = missing_values_count
@@ -384,8 +315,6 @@ def process_dataset_task(
         dataset.outliers_count = outliers_count
         dataset.quality_score = quality_score
         dataset.status = "ready"
-
-        # Detect date columns and set date range
         date_columns = []
         for col in data.columns:
             if data[col].dtype == "object":
@@ -394,23 +323,18 @@ def process_dataset_task(
                     date_columns.append(col)
                 except:
                     pass
-
         if date_columns:
-            # Use first date column for date range
             date_col = date_columns[0]
             date_series = pd.to_datetime(data[date_col], errors="coerce")
             dataset.start_date = date_series.min()
             dataset.end_date = date_series.max()
-
         db.commit()
-
-        # Create data quality report
         quality_report = DataQualityReport(
             dataset_id=dataset_id,
             completeness_score=completeness_score,
-            accuracy_score=85.0,  # Placeholder - would need more sophisticated analysis
+            accuracy_score=85.0,
             consistency_score=consistency_score,
-            validity_score=90.0,  # Placeholder - would need validation rules
+            validity_score=90.0,
             overall_score=quality_score,
             column_analysis=columns_info,
             outliers_analysis={
@@ -450,19 +374,14 @@ def process_dataset_task(
                 ),
             ],
         )
-
-        # Remove None values from lists
         quality_report.recommendations = [
             r for r in quality_report.recommendations if r is not None
         ]
         quality_report.issues_found = [
             i for i in quality_report.issues_found if i is not None
         ]
-
         db.add(quality_report)
         db.commit()
-
-        # Send notification
         send_notification_task.delay(
             user_id=user_id,
             title="Dataset Processing Completed",
@@ -475,9 +394,7 @@ def process_dataset_task(
                 "quality_score": quality_score,
             },
         )
-
         logger.info(f"Dataset {dataset_id} processing completed successfully")
-
         return {
             "dataset_id": dataset_id,
             "status": "completed",
@@ -488,15 +405,11 @@ def process_dataset_task(
             "duplicate_rows_count": duplicate_rows_count,
             "outliers_count": outliers_count,
         }
-
     except Exception as e:
-        # Update dataset status to error
         dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
         if dataset:
             dataset.status = "error"
             db.commit()
-
-        # Send error notification
         send_notification_task.delay(
             user_id=user_id,
             title="Dataset Processing Failed",
@@ -506,7 +419,6 @@ def process_dataset_task(
             priority="high",
             data={"dataset_id": dataset_id, "error": str(e)},
         )
-
         logger.error(f"Dataset {dataset_id} processing failed: {e}")
         raise
 
@@ -520,30 +432,17 @@ def batch_predict_task(
         model = db.query(Model).filter(Model.id == model_id).first()
         if not model:
             raise ValueError(f"Model {model_id} not found")
-
         if model.status != ModelStatus.TRAINED:
             raise ValueError(f"Model {model_id} is not trained")
-
-        # Load trained model
         trained_model = joblib.load(model.file_path)
-
-        # Prepare input data
         input_df = pd.DataFrame(input_data)
-
-        # Ensure all required features are present
         missing_features = set(model.feature_columns) - set(input_df.columns)
         if missing_features:
             raise ValueError(f"Missing features: {missing_features}")
-
-        # Select only the required features in the correct order
         X = input_df[model.feature_columns]
-
-        # Make predictions
         start_time = time.time()
         predictions = trained_model.predict(X)
         execution_time_ms = int((time.time() - start_time) * 1000)
-
-        # Store predictions in database
         prediction_results = []
         for i, (input_row, prediction) in enumerate(zip(input_data, predictions)):
             prediction_obj = Prediction(
@@ -559,10 +458,7 @@ def batch_predict_task(
             prediction_results.append(
                 {"input": input_row, "prediction": float(prediction)}
             )
-
         db.commit()
-
-        # Send notification
         send_notification_task.delay(
             user_id=user_id,
             title="Batch Prediction Completed",
@@ -575,9 +471,7 @@ def batch_predict_task(
                 "execution_time_ms": execution_time_ms,
             },
         )
-
         logger.info(f"Batch prediction for model {model_id} completed successfully")
-
         return {
             "model_id": model_id,
             "status": "completed",
@@ -585,9 +479,7 @@ def batch_predict_task(
             "execution_time_ms": execution_time_ms,
             "predictions": prediction_results,
         }
-
     except Exception as e:
-        # Send error notification
         send_notification_task.delay(
             user_id=user_id,
             title="Batch Prediction Failed",
@@ -597,7 +489,6 @@ def batch_predict_task(
             priority="high",
             data={"model_id": model_id, "error": str(e)},
         )
-
         logger.error(f"Batch prediction for model {model_id} failed: {e}")
         raise
 
@@ -621,8 +512,6 @@ def send_notification_task(
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise ValueError(f"User {user_id} not found")
-
-        # Create notification record
         notification = Notification(
             user_id=user_id,
             title=title,
@@ -632,56 +521,35 @@ def send_notification_task(
             priority=priority,
             data=data or {},
         )
-
         db.add(notification)
         db.commit()
         db.refresh(notification)
-
-        # Send notification based on type
         delivery_status = "sent"
         delivery_error = None
-
         try:
             if notification_type == NotificationType.EMAIL.value:
-                # Send email notification
-                # This would integrate with an email service
                 logger.info(f"Sending email notification to {user.email}")
-
             elif notification_type == NotificationType.SMS.value:
-                # Send SMS notification
-                # This would integrate with an SMS service
                 logger.info(f"Sending SMS notification to {user.phone_number}")
-
             elif notification_type == NotificationType.WEBHOOK.value:
-                # Send webhook notification
-                # This would make HTTP requests to user's webhook URL
                 logger.info(f"Sending webhook notification")
-
             elif notification_type == NotificationType.IN_APP.value:
-                # In-app notification (already stored in database)
                 logger.info(f"In-app notification created")
-
-            # Update notification status
             notification.is_sent = True
             notification.sent_at = datetime.utcnow()
             notification.delivery_status = delivery_status
-
         except Exception as e:
             delivery_error = str(e)
             notification.delivery_status = "failed"
             notification.delivery_error = delivery_error
             notification.retry_count += 1
-
             logger.error(f"Failed to send notification: {e}")
-
         db.commit()
-
         return {
             "notification_id": notification.id,
             "status": delivery_status,
             "error": delivery_error,
         }
-
     except Exception as e:
         logger.error(f"Failed to create notification: {e}")
         raise
@@ -694,39 +562,29 @@ def fetch_market_data_task(
     """Fetch market data for given symbols"""
     try:
         import yfinance as yf
-
         from .models_enhanced import MarketData
 
         db = SessionLocal()
-
         try:
             results = {}
-
             for symbol in symbols:
                 logger.info(f"Fetching market data for {symbol}")
-
-                # Fetch data from Yahoo Finance
                 ticker = yf.Ticker(symbol)
                 data = ticker.history(start=start_date, end=end_date)
-
                 if data.empty:
                     logger.warning(f"No data found for symbol {symbol}")
                     continue
-
-                # Store data in database
                 records_added = 0
                 for date, row in data.iterrows():
                     market_data = MarketData(
                         symbol=symbol,
-                        exchange="NASDAQ",  # Default exchange
+                        exchange="NASDAQ",
                         open_price=float(row["Open"]),
                         high_price=float(row["High"]),
                         low_price=float(row["Low"]),
                         close_price=float(row["Close"]),
                         volume=int(row["Volume"]),
-                        adjusted_close=float(
-                            row["Close"]
-                        ),  # Yahoo Finance already provides adjusted close
+                        adjusted_close=float(row["Close"]),
                         data_date=date.date(),
                         timestamp=datetime.utcnow(),
                         source="yahoo_finance",
@@ -734,8 +592,6 @@ def fetch_market_data_task(
                         is_validated=True,
                         quality_score=95.0,
                     )
-
-                    # Check if record already exists
                     existing = (
                         db.query(MarketData)
                         .filter(
@@ -745,34 +601,26 @@ def fetch_market_data_task(
                         )
                         .first()
                     )
-
                     if not existing:
                         db.add(market_data)
                         records_added += 1
-
                 db.commit()
                 results[symbol] = {
                     "records_added": records_added,
                     "date_range": f"{start_date} to {end_date}",
                 }
-
                 logger.info(f"Added {records_added} records for {symbol}")
-
             return {"status": "completed", "symbols": symbols, "results": results}
-
         finally:
             db.close()
-
     except Exception as e:
         logger.error(f"Failed to fetch market data: {e}")
         raise
 
 
-# Task monitoring and management
 def get_task_status(task_id: str) -> Dict[str, Any]:
     """Get status of a Celery task"""
     result = AsyncResult(task_id, app=celery_app)
-
     return {
         "task_id": task_id,
         "status": result.status,
@@ -797,10 +645,8 @@ def get_active_tasks() -> List[Dict[str, Any]]:
     try:
         inspect = celery_app.control.inspect()
         active_tasks = inspect.active()
-
         if not active_tasks:
             return []
-
         tasks = []
         for worker, task_list in active_tasks.items():
             for task in task_list:
@@ -814,7 +660,6 @@ def get_active_tasks() -> List[Dict[str, Any]]:
                         "time_start": task["time_start"],
                     }
                 )
-
         return tasks
     except Exception as e:
         logger.error(f"Failed to get active tasks: {e}")

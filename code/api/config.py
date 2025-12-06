@@ -3,7 +3,6 @@ Configuration management for the Quantis API
 """
 
 from typing import List, Optional
-
 from pydantic import BaseSettings, Field, validator
 
 
@@ -51,21 +50,16 @@ class SecuritySettings(BaseSettings):
 class DatabaseSettings(BaseSettings):
     """Database-specific settings"""
 
-    # PostgreSQL settings
     postgres_user: Optional[str] = Field(None, env="POSTGRES_USER")
     postgres_password: Optional[str] = Field(None, env="POSTGRES_PASSWORD")
     postgres_host: Optional[str] = Field(None, env="POSTGRES_HOST")
     postgres_port: int = Field(5432, env="POSTGRES_PORT")
     postgres_db: Optional[str] = Field(None, env="POSTGRES_DB")
-
-    # MySQL settings
     mysql_user: Optional[str] = Field(None, env="MYSQL_USER")
     mysql_password: Optional[str] = Field(None, env="MYSQL_PASSWORD")
     mysql_host: Optional[str] = Field(None, env="MYSQL_HOST")
     mysql_port: int = Field(3306, env="MYSQL_PORT")
     mysql_db: Optional[str] = Field(None, env="MYSQL_DB")
-
-    # Connection pool settings
     pool_size: int = Field(5, description="Database connection pool size.")
     max_overflow: int = Field(
         10, description="Maximum overflow connections in the pool."
@@ -89,19 +83,12 @@ class DatabaseSettings(BaseSettings):
                 self.postgres_db,
             ]
         ):
-            return (
-                f"postgresql://{self.postgres_user}:{self.postgres_password}"
-                f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-            )
+            return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         elif db_type == "mysql" and all(
             [self.mysql_user, self.mysql_password, self.mysql_host, self.mysql_db]
         ):
-            return (
-                f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}"
-                f"@{self.mysql_host}:{self.mysql_port}/{self.mysql_db}"
-            )
+            return f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_db}"
         else:
-            # Default to SQLite
             return "sqlite:///./quantis.db"
 
 
@@ -189,18 +176,13 @@ class ComplianceSettings(BaseSettings):
 class Settings(BaseSettings):
     """Main application settings"""
 
-    # Application settings
     app_name: str = "Quantis API"
     app_version: str = "1.0.0"
     environment: str = "development"
     debug: bool = False
-
-    # Server settings
     host: str = "0.0.0.0"
     port: int = 8000
     reload: bool = False
-
-    # CORS settings
     cors_origins: List[str] = Field(["*"], description="Allowed CORS origins.")
     cors_credentials: bool = Field(False, description="Allow CORS credentials.")
     cors_methods: List[str] = Field(
@@ -208,8 +190,6 @@ class Settings(BaseSettings):
         description="Allowed CORS methods.",
     )
     cors_headers: List[str] = Field(["*"], description="Allowed CORS headers.")
-
-    # Rate limiting
     rate_limit_requests_per_minute: int = Field(
         60, description="Default rate limit for general requests."
     )
@@ -219,8 +199,6 @@ class Settings(BaseSettings):
     rate_limit_public_requests_per_minute: int = Field(
         30, description="Rate limit for public endpoints."
     )
-
-    # File upload settings
     max_upload_size: int = Field(
         10 * 1024 * 1024, description="Maximum file upload size in bytes (e.g., 10MB)."
     )
@@ -231,8 +209,6 @@ class Settings(BaseSettings):
     upload_directory: str = Field(
         "./uploads", description="Directory for file uploads."
     )
-
-    # Model settings
     model_directory: str = Field(
         "./models", description="Directory for storing ML models."
     )
@@ -242,21 +218,15 @@ class Settings(BaseSettings):
     model_training_timeout: int = Field(
         3600, description="Timeout for model training in seconds (1 hour)."
     )
-
-    # Prediction settings
     max_batch_size: int = Field(1000, description="Maximum batch size for predictions.")
     prediction_timeout: int = Field(
         30, description="Timeout for single prediction requests in seconds."
     )
-
-    # Monitoring and metrics
     enable_metrics: bool = Field(True, description="Enable metrics exposure.")
     metrics_endpoint: str = Field("/metrics", description="Endpoint for metrics.")
     health_check_endpoint: str = Field(
         "/health", description="Endpoint for health checks."
     )
-
-    # External services
     redis_url: Optional[str] = Field(
         None, env="REDIS_URL", description="Redis connection URL."
     )
@@ -265,72 +235,55 @@ class Settings(BaseSettings):
         env="CELERY_BROKER_URL",
         description="Celery broker URL for background tasks.",
     )
-
-    # Email settings (for notifications)
     smtp_server: Optional[str] = Field(None, env="SMTP_SERVER")
     smtp_port: int = Field(587, env="SMTP_PORT")
     smtp_username: Optional[str] = Field(None, env="SMTP_USERNAME")
     smtp_password: Optional[str] = Field(None, env="SMTP_PASSWORD")
     smtp_use_tls: bool = Field(True, env="SMTP_USE_TLS")
-
-    # Nested settings
-    security: SecuritySettings = Field(
-        default_factory=SecuritySettings
-    )  # Nested security settings
-    database: DatabaseSettings = Field(
-        default_factory=DatabaseSettings
-    )  # Nested database settings
-    encryption: EncryptionSettings = Field(
-        default_factory=EncryptionSettings
-    )  # Nested encryption settings
-    logging: LoggingSettings = Field(
-        default_factory=LoggingSettings
-    )  # Nested logging settings
-    compliance: ComplianceSettings = Field(
-        default_factory=ComplianceSettings
-    )  # Nested compliance settings
+    security: SecuritySettings = Field(default_factory=SecuritySettings)
+    database: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    encryption: EncryptionSettings = Field(default_factory=EncryptionSettings)
+    logging: LoggingSettings = Field(default_factory=LoggingSettings)
+    compliance: ComplianceSettings = Field(default_factory=ComplianceSettings)
 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
 
-        # Allow nested settings to be loaded from environment variables with their prefixes
         @classmethod
-        def customise_sources(cls, init_settings, env_settings, file_secret_settings):
-            return (
-                init_settings,
-                env_settings,
-                file_secret_settings,
-            )
+        def customise_sources(
+            cls: Any, init_settings: Any, env_settings: Any, file_secret_settings: Any
+        ) -> Any:
+            return (init_settings, env_settings, file_secret_settings)
 
     @validator("environment")
-    def validate_environment(cls, v):
+    def validate_environment(cls: Any, v: Any) -> Any:
         allowed_envs = ["development", "staging", "production", "testing"]
         if v not in allowed_envs:
             raise ValueError(f"Environment must be one of: {allowed_envs}")
         return v
 
     @validator("cors_origins", pre=True)
-    def parse_cors_origins(cls, v):
+    def parse_cors_origins(cls: Any, v: Any) -> Any:
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
         return v
 
     @validator("cors_methods", pre=True)
-    def parse_cors_methods(cls, v):
+    def parse_cors_methods(cls: Any, v: Any) -> Any:
         if isinstance(v, str):
             return [method.strip().upper() for method in v.split(",")]
         return v
 
     @validator("cors_headers", pre=True)
-    def parse_cors_headers(cls, v):
+    def parse_cors_headers(cls: Any, v: Any) -> Any:
         if isinstance(v, str):
             return [header.strip() for header in v.split(",")]
         return v
 
     @validator("allowed_file_types", pre=True)
-    def parse_allowed_file_types(cls, v):
+    def parse_allowed_file_types(cls: Any, v: Any) -> Any:
         if isinstance(v, str):
             return [ext.strip() for ext in v.split(",")]
         return v
@@ -348,7 +301,6 @@ class Settings(BaseSettings):
         return self.environment == "testing"
 
 
-# Global settings instance
 _settings: Optional[Settings] = None
 
 
@@ -357,34 +309,30 @@ def get_settings() -> Settings:
     global _settings
     if _settings is None:
         _settings = Settings()
-        _settings.security = SecuritySettings()  # Initialize nested settings explicitly
+        _settings.security = SecuritySettings()
         _settings.database = DatabaseSettings()
         _settings.encryption = EncryptionSettings()
         _settings.logging = LoggingSettings()
         _settings.compliance = ComplianceSettings()
-        load_environment_config(_settings)  # Pass the settings object
+        load_environment_config(_settings)
     return _settings
 
 
-def update_settings(settings_obj: Settings, **kwargs):
+def update_settings(settings_obj: Settings, **kwargs) -> Any:
     """Update settings at runtime"""
     for key, value in kwargs.items():
         if hasattr(settings_obj, key):
             setattr(settings_obj, key, value)
 
 
-def load_environment_config(settings_obj: Settings):
+def load_environment_config(settings_obj: Settings) -> Any:
     """Load configuration based on environment"""
     env = settings_obj.environment
-
     if env == "production":
-        # Production-specific settings
         settings_obj.debug = False
         settings_obj.reload = False
         settings_obj.cors_credentials = True
         settings_obj.logging.log_level = "WARNING"
-
-        # Ensure security settings are set
         if (
             settings_obj.security.secret_key
             == "your-secret-key-change-this-in-production"
@@ -392,27 +340,20 @@ def load_environment_config(settings_obj: Settings):
             raise ValueError("SECRET_KEY must be set in production")
         if settings_obj.security.jwt_secret == "your-jwt-key-change-this-in-production":
             raise ValueError("JWT_SECRET must be set in production")
-
     elif env == "staging":
-        # Staging-specific settings
         settings_obj.debug = False
         settings_obj.reload = False
         settings_obj.cors_credentials = True
         settings_obj.logging.log_level = "INFO"
-
     elif env == "development":
-        # Development-specific settings
         settings_obj.debug = True
         settings_obj.reload = True
         settings_obj.cors_credentials = False
         settings_obj.logging.log_level = "DEBUG"
-
     elif env == "testing":
-        # Testing-specific settings
         settings_obj.debug = True
         settings_obj.database.database_url = "sqlite:///:memory:"
         settings_obj.logging.log_level = "ERROR"
 
 
-# Initialize settings on import
 get_settings()

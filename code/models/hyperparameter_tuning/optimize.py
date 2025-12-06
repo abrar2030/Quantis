@@ -1,14 +1,11 @@
 import optuna
-
-# from optuna.integration import PyTorchLightningPruningCallback # F401: Unused import
 from pytorch_forecasting.models import TemporalFusionTransformer
+from ..train_model import train_and_validate
 
-from ..train_model import train_and_validate  # From ../train_model.py
 
-
-def objective(trial):
+def objective(trial: Any) -> Any:
     params = {
-        "learning_rate": trial.suggest_loguniform("lr", 1e-5, 1e-2),
+        "learning_rate": trial.suggest_loguniform("lr", 1e-05, 0.01),
         "hidden_size": trial.suggest_categorical("hidden", [256, 512, 1024]),
         "dropout": trial.suggest_uniform("dropout", 0.1, 0.5),
     }
