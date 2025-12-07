@@ -40,7 +40,3 @@ All scripts include detailed help information. Run any script with the `--help` 
 ## License
 
 These scripts are provided under the same license as the Quantis repository.
-
-## Author
-
-Created by Abrar Ahmed on May 22, 2025
