@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.appName }}-config
+  name: quantis-config
 data:
-  API_URL: {{ .Values.backend.apiUrl }}
-  REDIS_HOST: {{ .Values.appName }}-redis
-  REDIS_PORT: "{{ .Values.redis.containerPort }}"
-  DATABASE_HOST: {{ .Values.appName }}-database
-  DATABASE_PORT: "{{ .Values.database.containerPort }}"
-  DATABASE_NAME: {{ .Values.database.name }}
-  DATABASE_USER: {{ .Values.database.user }}
-  LOG_LEVEL: {{ .Values.logLevel }}
+  API_URL: http://app-backend
+  REDIS_HOST: quantis-redis
+  REDIS_PORT: '6379'
+  DATABASE_HOST: quantis-database
+  DATABASE_PORT: '3306'
+  DATABASE_NAME: quantisdb
+  DATABASE_USER: appuser
+  LOG_LEVEL: debug

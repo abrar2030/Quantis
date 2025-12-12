@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.appName }}-frontend
+  name: quantis-frontend
   labels:
-    app: {{ .Values.appName }}-frontend
+    app: quantis-frontend
 spec:
-  type: {{ .Values.frontend.service.type }}
+  type: ClusterIP
   ports:
-  - port: {{ .Values.frontend.servicePort }}
-    targetPort: {{ .Values.frontend.containerPort }}
-    protocol: TCP
-    name: http
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
   selector:
-    app: {{ .Values.appName }}-frontend
+    app: quantis-frontend
