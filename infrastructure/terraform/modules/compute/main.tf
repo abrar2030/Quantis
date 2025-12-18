@@ -48,7 +48,7 @@ resource "aws_launch_template" "main" {
       volume_type           = var.root_volume_type
       volume_size           = var.root_volume_size
       encrypted             = true
-      kms_key_id           = var.kms_key_id
+      kms_key_id            = var.kms_key_id
       delete_on_termination = true
     }
   }
@@ -60,7 +60,7 @@ resource "aws_launch_template" "main" {
       volume_type           = var.data_volume_type
       volume_size           = var.data_volume_size
       encrypted             = true
-      kms_key_id           = var.kms_key_id
+      kms_key_id            = var.kms_key_id
       delete_on_termination = false
     }
   }
@@ -71,14 +71,14 @@ resource "aws_launch_template" "main" {
     environment        = var.environment
     cloudwatch_config  = var.cloudwatch_config
     ssm_parameter_path = var.ssm_parameter_path
-    s3_bucket         = var.app_data_bucket
-    kms_key_id        = var.kms_key_id
+    s3_bucket          = var.app_data_bucket
+    kms_key_id         = var.kms_key_id
   }))
 
   # Metadata options for enhanced security
   metadata_options {
     http_endpoint               = "enabled"
-    http_tokens                = "required"  # Require IMDSv2
+    http_tokens                 = "required" # Require IMDSv2
     http_put_response_hop_limit = 1
     instance_metadata_tags      = "enabled"
   }
@@ -91,8 +91,8 @@ resource "aws_launch_template" "main" {
   # Network interfaces
   network_interfaces {
     associate_public_ip_address = false
-    security_groups            = [var.security_group_id]
-    delete_on_termination      = true
+    security_groups             = [var.security_group_id]
+    delete_on_termination       = true
   }
 
   tag_specifications {
@@ -129,10 +129,10 @@ resource "aws_launch_template" "main" {
 
 # Auto Scaling Group
 resource "aws_autoscaling_group" "main" {
-  name                = "${var.app_name}-${var.environment}-asg"
-  vpc_zone_identifier = var.private_subnet_ids
-  target_group_arns   = var.target_group_arns
-  health_check_type   = "ELB"
+  name                      = "${var.app_name}-${var.environment}-asg"
+  vpc_zone_identifier       = var.private_subnet_ids
+  target_group_arns         = var.target_group_arns
+  health_check_type         = "ELB"
   health_check_grace_period = var.health_check_grace_period
 
   min_size         = var.min_size
@@ -144,7 +144,7 @@ resource "aws_autoscaling_group" "main" {
     strategy = "Rolling"
     preferences {
       min_healthy_percentage = 50
-      instance_warmup       = var.instance_warmup
+      instance_warmup        = var.instance_warmup
     }
     triggers = ["tag"]
   }
@@ -177,7 +177,7 @@ resource "aws_autoscaling_group" "main" {
 
   lifecycle {
     create_before_destroy = true
-    ignore_changes       = [desired_capacity]
+    ignore_changes        = [desired_capacity]
   }
 }
 
@@ -186,25 +186,25 @@ resource "aws_autoscaling_policy" "scale_up" {
   name                   = "${var.app_name}-${var.environment}-scale-up"
   scaling_adjustment     = var.scale_up_adjustment
   adjustment_type        = "ChangeInCapacity"
-  cooldown              = var.scale_up_cooldown
+  cooldown               = var.scale_up_cooldown
   autoscaling_group_name = aws_autoscaling_group.main.name
-  policy_type           = "SimpleScaling"
+  policy_type            = "SimpleScaling"
 }
 
 resource "aws_autoscaling_policy" "scale_down" {
   name                   = "${var.app_name}-${var.environment}-scale-down"
   scaling_adjustment     = var.scale_down_adjustment
   adjustment_type        = "ChangeInCapacity"
-  cooldown              = var.scale_down_cooldown
+  cooldown               = var.scale_down_cooldown
   autoscaling_group_name = aws_autoscaling_group.main.name
-  policy_type           = "SimpleScaling"
+  policy_type            = "SimpleScaling"
 }
 
 # Target Tracking Scaling Policy for CPU
 resource "aws_autoscaling_policy" "target_tracking_cpu" {
   name                   = "${var.app_name}-${var.environment}-target-tracking-cpu"
   autoscaling_group_name = aws_autoscaling_group.main.name
-  policy_type           = "TargetTrackingScaling"
+  policy_type            = "TargetTrackingScaling"
 
   target_tracking_configuration {
     predefined_metric_specification {
@@ -384,11 +384,11 @@ resource "aws_lb" "main" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.alb_security_group_id]
-  subnets           = var.public_subnet_ids
+  subnets            = var.public_subnet_ids
 
   enable_deletion_protection = var.environment == "prod"
-  enable_http2              = true
-  enable_waf_fail_open      = false
+  enable_http2               = true
+  enable_waf_fail_open       = false
 
   # Access logs
   access_logs {
@@ -509,9 +509,9 @@ resource "aws_cloudwatch_log_group" "app_logs" {
 resource "aws_ssm_parameter" "app_config" {
   for_each = var.app_parameters
 
-  name  = "${var.ssm_parameter_path}/${each.key}"
-  type  = each.value.type
-  value = each.value.value
+  name        = "${var.ssm_parameter_path}/${each.key}"
+  type        = each.value.type
+  value       = each.value.value
   description = each.value.description
 
   tags = merge(var.common_tags, {
@@ -526,19 +526,19 @@ resource "aws_ssm_parameter" "app_config" {
 resource "aws_autoscaling_schedule" "scale_down_evening" {
   count                  = var.enable_scheduled_scaling && var.environment != "prod" ? 1 : 0
   scheduled_action_name  = "${var.app_name}-${var.environment}-scale-down-evening"
-  min_size              = 0
-  max_size              = var.max_size
-  desired_capacity      = 0
-  recurrence            = "0 20 * * MON-FRI"  # 8 PM weekdays
+  min_size               = 0
+  max_size               = var.max_size
+  desired_capacity       = 0
+  recurrence             = "0 20 * * MON-FRI" # 8 PM weekdays
   autoscaling_group_name = aws_autoscaling_group.main.name
 }
 
 resource "aws_autoscaling_schedule" "scale_up_morning" {
   count                  = var.enable_scheduled_scaling && var.environment != "prod" ? 1 : 0
   scheduled_action_name  = "${var.app_name}-${var.environment}-scale-up-morning"
-  min_size              = var.min_size
-  max_size              = var.max_size
-  desired_capacity      = var.desired_capacity
-  recurrence            = "0 8 * * MON-FRI"   # 8 AM weekdays
+  min_size               = var.min_size
+  max_size               = var.max_size
+  desired_capacity       = var.desired_capacity
+  recurrence             = "0 8 * * MON-FRI" # 8 AM weekdays
   autoscaling_group_name = aws_autoscaling_group.main.name
 }

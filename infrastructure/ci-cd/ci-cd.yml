@@ -1,3 +1,9 @@
+# SECURITY NOTICE:
+# - All secrets must be stored in GitHub Secrets/GitLab CI Variables
+# - Never commit credentials to version control
+# - Use ${{ secrets.SECRET_NAME }} syntax for sensitive values
+# - Enable secret scanning in repository settings
+
 name: Quantis CI/CD
 
 on:

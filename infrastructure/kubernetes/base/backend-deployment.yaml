@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: quantis-backend
-          image: registry.example.com/app/backend:latest
+          image: YOUR_REGISTRY_URL/app/backend:1.0.0
           imagePullPolicy: Always
           ports:
             - containerPort: 3000

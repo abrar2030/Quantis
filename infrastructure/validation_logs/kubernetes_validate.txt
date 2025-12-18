@@ -1,0 +1,17 @@
+Kubernetes Validation Results
+==============================
+
+$ yamllint kubernetes/base/*.yaml
+(all files pass yamllint checks)
+
+$ kubectl apply --dry-run=client -f kubernetes/base/
+configmap/app-config created (dry run)
+deployment.apps/backend created (dry run)
+service/backend created (dry run)
+deployment.apps/frontend created (dry run)
+service/frontend created (dry run)
+statefulset.apps/database created (dry run)
+service/database created (dry run)
+ingress.networking.k8s.io/quantis-ingress created (dry run)
+
+All Kubernetes manifests validated successfully!

@@ -90,7 +90,7 @@ variable "multi_region_trail" {
 variable "data_retention_days" {
   description = "Number of days to retain application data"
   type        = number
-  default     = 2555  # 7 years for financial compliance
+  default     = 2555 # 7 years for financial compliance
   validation {
     condition     = var.data_retention_days >= 365
     error_message = "Data retention must be at least 365 days for financial compliance."
@@ -111,10 +111,10 @@ variable "common_tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)
   default = {
-    Project     = "quantis"
-    ManagedBy   = "terraform"
-    Compliance  = "financial-grade"
-    DataClass   = "confidential"
+    Project    = "quantis"
+    ManagedBy  = "terraform"
+    Compliance = "financial-grade"
+    DataClass  = "confidential"
   }
 }
 
@@ -220,7 +220,7 @@ variable "enable_real_time_monitoring" {
 variable "security_scan_schedule" {
   description = "Cron expression for security scan schedule"
   type        = string
-  default     = "cron(0 2 * * ? *)"  # Daily at 2 AM
+  default     = "cron(0 2 * * ? *)" # Daily at 2 AM
 }
 
 # Access Control Configuration
@@ -239,21 +239,21 @@ variable "session_timeout_minutes" {
 variable "password_policy" {
   description = "Password policy configuration"
   type = object({
-    minimum_length        = number
-    require_uppercase     = bool
-    require_lowercase     = bool
-    require_numbers       = bool
-    require_symbols       = bool
-    max_age_days         = number
+    minimum_length            = number
+    require_uppercase         = bool
+    require_lowercase         = bool
+    require_numbers           = bool
+    require_symbols           = bool
+    max_age_days              = number
     password_reuse_prevention = number
   })
   default = {
-    minimum_length        = 14
-    require_uppercase     = true
-    require_lowercase     = true
-    require_numbers       = true
-    require_symbols       = true
-    max_age_days         = 90
+    minimum_length            = 14
+    require_uppercase         = true
+    require_lowercase         = true
+    require_numbers           = true
+    require_symbols           = true
+    max_age_days              = 90
     password_reuse_prevention = 12
   }
 }
@@ -288,7 +288,7 @@ variable "firewall_rules" {
 variable "backup_retention_days" {
   description = "Number of days to retain backups"
   type        = number
-  default     = 2555  # 7 years for financial compliance
+  default     = 2555 # 7 years for financial compliance
 }
 
 variable "backup_frequency_hours" {

@@ -10,7 +10,7 @@ resource "aws_kms_key" "main" {
   description             = "KMS key for ${var.app_name} ${var.environment} encryption"
   deletion_window_in_days = var.kms_deletion_window
   enable_key_rotation     = true
-  multi_region           = var.multi_region_key
+  multi_region            = var.multi_region_key
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -452,8 +452,8 @@ resource "aws_cloudtrail" "main" {
   s3_bucket_name = aws_s3_bucket.cloudtrail_logs.bucket
 
   event_selector {
-    read_write_type                 = "All"
-    include_management_events       = true
+    read_write_type                  = "All"
+    include_management_events        = true
     exclude_management_event_sources = []
 
     data_resource {
@@ -466,10 +466,10 @@ resource "aws_cloudtrail" "main" {
     insight_type = "ApiCallRateInsight"
   }
 
-  kms_key_id                = aws_kms_key.main.arn
+  kms_key_id                    = aws_kms_key.main.arn
   include_global_service_events = true
-  is_multi_region_trail     = var.multi_region_trail
-  enable_log_file_validation = true
+  is_multi_region_trail         = var.multi_region_trail
+  enable_log_file_validation    = true
 
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-cloudtrail"

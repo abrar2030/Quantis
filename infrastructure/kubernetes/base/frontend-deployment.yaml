@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: quantis-frontend
-          image: registry.example.com/app/frontend:latest
+          image: YOUR_REGISTRY_URL/app/frontend:1.0.0
           imagePullPolicy: Always
           ports:
             - containerPort: 80

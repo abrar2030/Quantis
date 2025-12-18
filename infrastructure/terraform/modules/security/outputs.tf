@@ -161,17 +161,17 @@ output "flow_log_role_arn" {
 output "security_features_enabled" {
   description = "Summary of enabled security features"
   value = {
-    encryption_at_rest        = var.enable_encryption_at_rest
-    encryption_in_transit     = var.enable_encryption_in_transit
-    audit_logging            = var.enable_audit_logging
-    threat_detection         = var.enable_threat_detection
-    vulnerability_scanning   = var.enable_vulnerability_scanning
-    compliance_monitoring    = var.enable_compliance_monitoring
-    network_monitoring       = var.enable_network_monitoring
-    data_loss_prevention     = var.enable_data_loss_prevention
-    waf_protection          = true
-    ddos_protection         = var.enable_ddos_protection
-    intrusion_detection     = var.enable_intrusion_detection
+    encryption_at_rest     = var.enable_encryption_at_rest
+    encryption_in_transit  = var.enable_encryption_in_transit
+    audit_logging          = var.enable_audit_logging
+    threat_detection       = var.enable_threat_detection
+    vulnerability_scanning = var.enable_vulnerability_scanning
+    compliance_monitoring  = var.enable_compliance_monitoring
+    network_monitoring     = var.enable_network_monitoring
+    data_loss_prevention   = var.enable_data_loss_prevention
+    waf_protection         = true
+    ddos_protection        = var.enable_ddos_protection
+    intrusion_detection    = var.enable_intrusion_detection
   }
 }
 
@@ -179,13 +179,13 @@ output "security_features_enabled" {
 output "compliance_features_enabled" {
   description = "Summary of enabled compliance features"
   value = {
-    pci_dss_compliance    = var.pci_dss_compliance
-    sox_compliance        = var.sox_compliance
-    gdpr_compliance       = var.gdpr_compliance
-    hipaa_compliance      = var.hipaa_compliance
-    iso_27001_compliance  = var.iso_27001_compliance
-    regulatory_reporting  = var.enable_regulatory_reporting
-    compliance_dashboard  = var.compliance_dashboard_enabled
+    pci_dss_compliance   = var.pci_dss_compliance
+    sox_compliance       = var.sox_compliance
+    gdpr_compliance      = var.gdpr_compliance
+    hipaa_compliance     = var.hipaa_compliance
+    iso_27001_compliance = var.iso_27001_compliance
+    regulatory_reporting = var.enable_regulatory_reporting
+    compliance_dashboard = var.compliance_dashboard_enabled
   }
 }
 
@@ -193,14 +193,14 @@ output "compliance_features_enabled" {
 output "data_protection_configuration" {
   description = "Summary of data protection configuration"
   value = {
-    data_retention_days           = var.data_retention_days
-    backup_retention_days         = var.backup_retention_days
-    backup_frequency_hours        = var.backup_frequency_hours
-    point_in_time_recovery       = var.enable_point_in_time_recovery
-    cross_region_backup          = var.cross_region_backup
-    kms_key_rotation_enabled     = true
-    s3_versioning_enabled        = true
-    s3_encryption_enabled        = true
+    data_retention_days      = var.data_retention_days
+    backup_retention_days    = var.backup_retention_days
+    backup_frequency_hours   = var.backup_frequency_hours
+    point_in_time_recovery   = var.enable_point_in_time_recovery
+    cross_region_backup      = var.cross_region_backup
+    kms_key_rotation_enabled = true
+    s3_versioning_enabled    = true
+    s3_encryption_enabled    = true
   }
 }
 
@@ -208,15 +208,15 @@ output "data_protection_configuration" {
 output "monitoring_configuration" {
   description = "Summary of monitoring and alerting configuration"
   value = {
-    cloudtrail_enabled           = true
-    guardduty_enabled           = true
-    config_enabled              = true
-    security_hub_enabled        = true
-    inspector_enabled           = true
-    vpc_flow_logs_enabled       = true
-    real_time_monitoring        = var.enable_real_time_monitoring
-    automated_response          = var.automated_response_enabled
-    log_retention_days          = var.log_retention_days
+    cloudtrail_enabled    = true
+    guardduty_enabled     = true
+    config_enabled        = true
+    security_hub_enabled  = true
+    inspector_enabled     = true
+    vpc_flow_logs_enabled = true
+    real_time_monitoring  = var.enable_real_time_monitoring
+    automated_response    = var.automated_response_enabled
+    log_retention_days    = var.log_retention_days
   }
 }
 
@@ -224,13 +224,13 @@ output "monitoring_configuration" {
 output "network_security_configuration" {
   description = "Summary of network security configuration"
   value = {
-    security_groups_count       = 5
-    network_acl_enabled        = true
-    waf_rules_count           = 6
-    rate_limiting_enabled     = true
-    geo_blocking_enabled      = true
-    ip_reputation_filtering   = true
-    sql_injection_protection  = true
+    security_groups_count    = 5
+    network_acl_enabled      = true
+    waf_rules_count          = 6
+    rate_limiting_enabled    = true
+    geo_blocking_enabled     = true
+    ip_reputation_filtering  = true
+    sql_injection_protection = true
     xss_protection           = true
   }
 }
@@ -239,9 +239,9 @@ output "network_security_configuration" {
 output "access_control_configuration" {
   description = "Summary of access control configuration"
   value = {
-    mfa_required              = var.enable_mfa_requirement
-    session_timeout_minutes   = var.session_timeout_minutes
-    password_policy_enforced  = true
+    mfa_required             = var.enable_mfa_requirement
+    session_timeout_minutes  = var.session_timeout_minutes
+    password_policy_enforced = true
     rbac_enabled             = true
     least_privilege_access   = true
     bastion_host_required    = true
@@ -252,11 +252,11 @@ output "access_control_configuration" {
 output "disaster_recovery_configuration" {
   description = "Summary of disaster recovery configuration"
   value = {
-    high_availability_enabled    = var.high_availability_enabled
-    disaster_recovery_enabled    = var.disaster_recovery_enabled
-    multi_region_deployment     = var.multi_region_trail
-    rto_hours                   = var.recovery_time_objective_hours
-    rpo_hours                   = var.recovery_point_objective_hours
-    automated_failover          = var.auto_scaling_enabled
+    high_availability_enabled = var.high_availability_enabled
+    disaster_recovery_enabled = var.disaster_recovery_enabled
+    multi_region_deployment   = var.multi_region_trail
+    rto_hours                 = var.recovery_time_objective_hours
+    rpo_hours                 = var.recovery_point_objective_hours
+    automated_failover        = var.auto_scaling_enabled
   }
 }

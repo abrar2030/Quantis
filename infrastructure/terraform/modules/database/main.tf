@@ -43,7 +43,7 @@ resource "aws_db_parameter_group" "main" {
 
   parameter {
     name  = "log_min_duration_statement"
-    value = "1000"  # Log queries taking more than 1 second
+    value = "1000" # Log queries taking more than 1 second
   }
 
   parameter {
@@ -79,7 +79,7 @@ resource "aws_db_parameter_group" "main" {
 
   parameter {
     name  = "work_mem"
-    value = var.work_mem_mb * 1024  # Convert MB to KB
+    value = var.work_mem_mb * 1024 # Convert MB to KB
   }
 
   parameter {
@@ -180,7 +180,7 @@ resource "aws_db_instance" "main" {
   max_allocated_storage = var.max_allocated_storage
   storage_type          = var.storage_type
   storage_encrypted     = true
-  kms_key_id           = var.kms_key_id
+  kms_key_id            = var.kms_key_id
 
   # Database configuration
   db_name  = var.database_name
@@ -198,19 +198,19 @@ resource "aws_db_instance" "main" {
   option_group_name    = var.engine == "mysql" ? aws_db_option_group.main[0].name : null
 
   # Backup configuration
-  backup_retention_period = var.backup_retention_period
-  backup_window          = var.backup_window
-  copy_tags_to_snapshot  = true
+  backup_retention_period  = var.backup_retention_period
+  backup_window            = var.backup_window
+  copy_tags_to_snapshot    = true
   delete_automated_backups = false
 
   # Maintenance configuration
-  maintenance_window         = var.maintenance_window
-  auto_minor_version_upgrade = var.auto_minor_version_upgrade
+  maintenance_window          = var.maintenance_window
+  auto_minor_version_upgrade  = var.auto_minor_version_upgrade
   allow_major_version_upgrade = false
 
   # High availability
-  multi_az               = var.multi_az
-  availability_zone      = var.multi_az ? null : data.aws_availability_zones.available.names[0]
+  multi_az          = var.multi_az
+  availability_zone = var.multi_az ? null : data.aws_availability_zones.available.names[0]
 
   # Monitoring and logging
   monitoring_interval = var.enhanced_monitoring_interval
@@ -220,12 +220,12 @@ resource "aws_db_instance" "main" {
 
   # Performance Insights
   performance_insights_enabled          = var.performance_insights_enabled
-  performance_insights_kms_key_id      = var.performance_insights_enabled ? var.kms_key_id : null
+  performance_insights_kms_key_id       = var.performance_insights_enabled ? var.kms_key_id : null
   performance_insights_retention_period = var.performance_insights_enabled ? var.performance_insights_retention_period : null
 
   # Security
-  deletion_protection = var.deletion_protection
-  skip_final_snapshot = var.skip_final_snapshot
+  deletion_protection       = var.deletion_protection
+  skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.app_name}-${var.environment}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
   # Apply changes immediately in non-production environments
@@ -260,7 +260,7 @@ resource "aws_db_instance" "read_replica" {
 
   # Storage configuration (inherited from source)
   storage_encrypted = true
-  kms_key_id       = var.kms_key_id
+  kms_key_id        = var.kms_key_id
 
   # Network configuration
   vpc_security_group_ids = [var.security_group_id]
@@ -272,7 +272,7 @@ resource "aws_db_instance" "read_replica" {
 
   # Performance Insights
   performance_insights_enabled          = var.performance_insights_enabled
-  performance_insights_kms_key_id      = var.performance_insights_enabled ? var.kms_key_id : null
+  performance_insights_kms_key_id       = var.performance_insights_enabled ? var.kms_key_id : null
   performance_insights_retention_period = var.performance_insights_enabled ? var.performance_insights_retention_period : null
 
   # Security
@@ -424,7 +424,7 @@ resource "aws_cloudwatch_metric_alarm" "database_free_storage_space" {
 resource "aws_secretsmanager_secret" "db_credentials" {
   name                    = "${var.app_name}-${var.environment}-db-credentials"
   description             = "Database credentials for ${var.app_name} ${var.environment}"
-  kms_key_id             = var.kms_key_id
+  kms_key_id              = var.kms_key_id
   recovery_window_in_days = var.environment == "prod" ? 30 : 0
 
   tags = merge(var.common_tags, {
@@ -499,18 +499,18 @@ resource "aws_cloudwatch_event_target" "db_events_sns" {
 
 # Database proxy for connection pooling and security
 resource "aws_db_proxy" "main" {
-  count                  = var.create_db_proxy ? 1 : 0
-  name                   = "${var.app_name}-${var.environment}-db-proxy"
-  engine_family         = var.engine == "postgres" ? "POSTGRESQL" : "MYSQL"
+  count         = var.create_db_proxy ? 1 : 0
+  name          = "${var.app_name}-${var.environment}-db-proxy"
+  engine_family = var.engine == "postgres" ? "POSTGRESQL" : "MYSQL"
   auth {
     auth_scheme = "SECRETS"
     secret_arn  = aws_secretsmanager_secret.db_credentials.arn
   }
-  role_arn               = aws_iam_role.db_proxy[0].arn
-  vpc_subnet_ids         = var.private_subnet_ids
-  require_tls           = true
-  idle_client_timeout   = var.proxy_idle_client_timeout
-  max_connections_percent = var.proxy_max_connections_percent
+  role_arn                     = aws_iam_role.db_proxy[0].arn
+  vpc_subnet_ids               = var.private_subnet_ids
+  require_tls                  = true
+  idle_client_timeout          = var.proxy_idle_client_timeout
+  max_connections_percent      = var.proxy_max_connections_percent
   max_idle_connections_percent = var.proxy_max_idle_connections_percent
 
   target {

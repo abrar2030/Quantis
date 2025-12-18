@@ -258,8 +258,8 @@ output "direct_connect_gateway_id" {
 output "network_configuration" {
   description = "Summary of network configuration"
   value = {
-    vpc_cidr                = aws_vpc.main.cidr_block
-    availability_zones      = data.aws_availability_zones.available.names
+    vpc_cidr               = aws_vpc.main.cidr_block
+    availability_zones     = data.aws_availability_zones.available.names
     public_subnets_count   = length(aws_subnet.public)
     private_subnets_count  = length(aws_subnet.private)
     database_subnets_count = length(aws_subnet.database)
@@ -276,11 +276,11 @@ output "security_configuration" {
   value = {
     network_acls_enabled      = var.enable_network_acls
     security_groups_enabled   = var.enable_security_groups
-    vpc_flow_logs_enabled    = var.enable_flow_logs
-    vpc_endpoints_enabled    = var.enable_vpc_endpoints
-    private_subnets_isolated = true
+    vpc_flow_logs_enabled     = var.enable_flow_logs
+    vpc_endpoints_enabled     = var.enable_vpc_endpoints
+    private_subnets_isolated  = true
     database_subnets_isolated = true
-    encryption_in_transit    = true
+    encryption_in_transit     = true
   }
 }
 
@@ -290,10 +290,10 @@ output "high_availability_configuration" {
   value = {
     multi_az_deployment       = var.multi_az_deployment
     availability_zones_count  = length(data.aws_availability_zones.available.names)
-    redundant_nat_gateways   = var.nat_gateway_per_az
+    redundant_nat_gateways    = var.nat_gateway_per_az
     cross_zone_load_balancing = var.cross_zone_load_balancing
     disaster_recovery_enabled = var.enable_disaster_recovery
-    backup_region            = var.backup_region
+    backup_region             = var.backup_region
   }
 }
 
@@ -304,9 +304,9 @@ output "compliance_configuration" {
     compliance_standards        = var.compliance_standards
     compliance_monitoring       = var.enable_compliance_monitoring
     data_residency_restrictions = var.data_residency_requirements.restrict_cross_border
-    allowed_regions            = var.data_residency_requirements.allowed_regions
-    encryption_required        = var.data_residency_requirements.encryption_required
-    audit_logging_enabled      = var.enable_flow_logs
+    allowed_regions             = var.data_residency_requirements.allowed_regions
+    encryption_required         = var.data_residency_requirements.encryption_required
+    audit_logging_enabled       = var.enable_flow_logs
   }
 }
 
@@ -315,10 +315,10 @@ output "cost_optimization_configuration" {
   description = "Summary of cost optimization configuration"
   value = {
     cost_optimization_enabled = var.enable_cost_optimization
-    single_nat_gateway       = var.single_nat_gateway
-    vpc_endpoints_enabled    = var.enable_vpc_endpoints
-    enhanced_networking      = var.enhanced_networking
-    placement_group_strategy = var.placement_group_strategy
+    single_nat_gateway        = var.single_nat_gateway
+    vpc_endpoints_enabled     = var.enable_vpc_endpoints
+    enhanced_networking       = var.enhanced_networking
+    placement_group_strategy  = var.placement_group_strategy
   }
 }
 
@@ -326,12 +326,12 @@ output "cost_optimization_configuration" {
 output "connectivity_options" {
   description = "Summary of connectivity options"
   value = {
-    internet_gateway_enabled  = true
+    internet_gateway_enabled = true
     nat_gateway_enabled      = var.enable_nat_gateway
-    vpn_enabled             = var.enable_vpn
-    direct_connect_enabled  = var.enable_direct_connect
-    transit_gateway_enabled = var.enable_transit_gateway
-    vpc_peering_ready       = true
+    vpn_enabled              = var.enable_vpn
+    direct_connect_enabled   = var.enable_direct_connect
+    transit_gateway_enabled  = var.enable_transit_gateway
+    vpc_peering_ready        = true
   }
 }
 
@@ -350,11 +350,11 @@ output "dns_configuration" {
 output "monitoring_configuration" {
   description = "Summary of monitoring configuration"
   value = {
-    vpc_flow_logs_enabled     = var.enable_flow_logs
+    vpc_flow_logs_enabled      = var.enable_flow_logs
     network_monitoring_enabled = var.enable_network_monitoring
-    traffic_mirroring_enabled = var.enable_traffic_mirroring
-    network_insights_enabled  = var.network_insights_enabled
-    cloudwatch_integration   = true
+    traffic_mirroring_enabled  = var.enable_traffic_mirroring
+    network_insights_enabled   = var.network_insights_enabled
+    cloudwatch_integration     = true
   }
 }
 

@@ -1,44 +1,26 @@
-output "vpc_id" {
-  description = "ID of the VPC"
-  value       = module.network.vpc_id
-}
-
-output "public_subnet_ids" {
-  description = "IDs of the public subnets"
-  value       = module.network.public_subnet_ids
-}
-
-output "private_subnet_ids" {
-  description = "IDs of the private subnets"
-  value       = module.network.private_subnet_ids
-}
-
-output "app_security_group_id" {
-  description = "ID of the application security group"
-  value       = module.security.app_security_group_id
-}
-
-output "db_security_group_id" {
-  description = "ID of the database security group"
-  value       = module.security.db_security_group_id
-}
-
-output "app_instance_ids" {
-  description = "IDs of the application instances"
-  value       = module.compute.instance_ids
-}
-
-output "app_instance_public_ips" {
-  description = "Public IPs of the application instances"
-  value       = module.compute.instance_public_ips
-}
-
-output "db_endpoint" {
-  description = "Endpoint of the database"
-  value       = module.database.db_endpoint
-}
+# Quantis Infrastructure Outputs
 
 output "s3_bucket_name" {
-  description = "Name of the S3 bucket"
-  value       = module.storage.s3_bucket_name
+  description = "Name of the S3 bucket for application data"
+  value       = aws_s3_bucket.app_data.bucket
+}
+
+output "s3_bucket_arn" {
+  description = "ARN of the S3 bucket"
+  value       = aws_s3_bucket.app_data.arn
+}
+
+output "ecr_repository_url" {
+  description = "URL of the ECR repository for model images"
+  value       = aws_ecr_repository.model.repository_url
+}
+
+output "sagemaker_role_arn" {
+  description = "ARN of the SageMaker execution role"
+  value       = aws_iam_role.sagemaker.arn
+}
+
+output "sagemaker_model_name" {
+  description = "Name of the SageMaker model"
+  value       = aws_sagemaker_model.main.name
 }

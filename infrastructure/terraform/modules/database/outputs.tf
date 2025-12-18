@@ -196,10 +196,10 @@ output "connection_info" {
   value = {
     primary_endpoint = aws_db_instance.main.endpoint
     proxy_endpoint   = var.create_db_proxy ? aws_db_proxy.main[0].endpoint : null
-    port            = aws_db_instance.main.port
-    database_name   = aws_db_instance.main.db_name
-    engine          = aws_db_instance.main.engine
-    engine_version  = aws_db_instance.main.engine_version
+    port             = aws_db_instance.main.port
+    database_name    = aws_db_instance.main.db_name
+    engine           = aws_db_instance.main.engine
+    engine_version   = aws_db_instance.main.engine_version
   }
   sensitive = true
 }
@@ -208,12 +208,12 @@ output "connection_info" {
 output "high_availability_config" {
   description = "High availability configuration summary"
   value = {
-    multi_az_enabled        = aws_db_instance.main.multi_az
-    read_replicas_count     = length(aws_db_instance.read_replica)
-    backup_retention_days   = aws_db_instance.main.backup_retention_period
-    automated_backups       = aws_db_instance.main.backup_retention_period > 0
-    deletion_protection     = aws_db_instance.main.deletion_protection
-    proxy_enabled          = var.create_db_proxy
+    multi_az_enabled      = aws_db_instance.main.multi_az
+    read_replicas_count   = length(aws_db_instance.read_replica)
+    backup_retention_days = aws_db_instance.main.backup_retention_period
+    automated_backups     = aws_db_instance.main.backup_retention_period > 0
+    deletion_protection   = aws_db_instance.main.deletion_protection
+    proxy_enabled         = var.create_db_proxy
   }
 }
 
@@ -221,12 +221,12 @@ output "high_availability_config" {
 output "security_config" {
   description = "Security configuration summary"
   value = {
-    encryption_at_rest      = aws_db_instance.main.storage_encrypted
-    kms_key_id             = aws_db_instance.main.kms_key_id
-    ssl_enforcement        = true
+    encryption_at_rest          = aws_db_instance.main.storage_encrypted
+    kms_key_id                  = aws_db_instance.main.kms_key_id
+    ssl_enforcement             = true
     secrets_manager_integration = true
-    vpc_security_groups    = aws_db_instance.main.vpc_security_group_ids
-    publicly_accessible    = aws_db_instance.main.publicly_accessible
+    vpc_security_groups         = aws_db_instance.main.vpc_security_group_ids
+    publicly_accessible         = aws_db_instance.main.publicly_accessible
   }
 }
 
@@ -234,13 +234,13 @@ output "security_config" {
 output "performance_config" {
   description = "Performance configuration summary"
   value = {
-    instance_class              = aws_db_instance.main.instance_class
-    allocated_storage          = aws_db_instance.main.allocated_storage
-    max_allocated_storage      = aws_db_instance.main.max_allocated_storage
-    storage_type               = aws_db_instance.main.storage_type
-    performance_insights       = aws_db_instance.main.performance_insights_enabled
-    enhanced_monitoring        = var.enhanced_monitoring_interval > 0
-    parameter_group           = aws_db_parameter_group.main.name
+    instance_class        = aws_db_instance.main.instance_class
+    allocated_storage     = aws_db_instance.main.allocated_storage
+    max_allocated_storage = aws_db_instance.main.max_allocated_storage
+    storage_type          = aws_db_instance.main.storage_type
+    performance_insights  = aws_db_instance.main.performance_insights_enabled
+    enhanced_monitoring   = var.enhanced_monitoring_interval > 0
+    parameter_group       = aws_db_parameter_group.main.name
   }
 }
 
@@ -248,13 +248,13 @@ output "performance_config" {
 output "monitoring_config" {
   description = "Monitoring configuration summary"
   value = {
-    enhanced_monitoring_interval    = var.enhanced_monitoring_interval
-    performance_insights_enabled   = var.performance_insights_enabled
-    cloudwatch_logs_exports        = var.enabled_cloudwatch_logs_exports
-    cpu_alarm_threshold           = var.cpu_alarm_threshold
-    connection_alarm_threshold    = var.connection_alarm_threshold
-    memory_alarm_threshold        = var.freeable_memory_alarm_threshold
-    storage_alarm_threshold       = var.free_storage_alarm_threshold
+    enhanced_monitoring_interval = var.enhanced_monitoring_interval
+    performance_insights_enabled = var.performance_insights_enabled
+    cloudwatch_logs_exports      = var.enabled_cloudwatch_logs_exports
+    cpu_alarm_threshold          = var.cpu_alarm_threshold
+    connection_alarm_threshold   = var.connection_alarm_threshold
+    memory_alarm_threshold       = var.freeable_memory_alarm_threshold
+    storage_alarm_threshold      = var.free_storage_alarm_threshold
   }
 }
 
@@ -263,11 +263,11 @@ output "backup_config" {
   description = "Backup configuration summary"
   value = {
     backup_retention_period = aws_db_instance.main.backup_retention_period
-    backup_window          = aws_db_instance.main.backup_window
-    maintenance_window     = aws_db_instance.main.maintenance_window
-    copy_tags_to_snapshot  = aws_db_instance.main.copy_tags_to_snapshot
+    backup_window           = aws_db_instance.main.backup_window
+    maintenance_window      = aws_db_instance.main.maintenance_window
+    copy_tags_to_snapshot   = aws_db_instance.main.copy_tags_to_snapshot
     manual_snapshot_created = var.create_manual_snapshot
-    skip_final_snapshot    = var.skip_final_snapshot
+    skip_final_snapshot     = var.skip_final_snapshot
   }
 }
 
@@ -275,13 +275,13 @@ output "backup_config" {
 output "compliance_info" {
   description = "Compliance-related information"
   value = {
-    audit_logging_enabled     = var.enable_audit_logging
-    encryption_at_rest       = var.enable_encryption_at_rest
-    encryption_in_transit    = var.enable_encryption_in_transit
-    point_in_time_recovery   = var.enable_point_in_time_recovery
-    compliance_standards     = var.compliance_standards
-    data_retention_policy    = var.data_retention_policy
-    security_hardening       = var.security_hardening
+    audit_logging_enabled  = var.enable_audit_logging
+    encryption_at_rest     = var.enable_encryption_at_rest
+    encryption_in_transit  = var.enable_encryption_in_transit
+    point_in_time_recovery = var.enable_point_in_time_recovery
+    compliance_standards   = var.compliance_standards
+    data_retention_policy  = var.data_retention_policy
+    security_hardening     = var.security_hardening
   }
 }
 
@@ -290,9 +290,9 @@ output "cost_optimization_config" {
   description = "Cost optimization configuration"
   value = {
     reserved_instances_eligible = var.cost_optimization.enable_reserved_instances
-    storage_autoscaling        = var.cost_optimization.enable_storage_autoscaling
-    compute_autoscaling        = var.cost_optimization.enable_compute_autoscaling
-    non_prod_shutdown_schedule = var.cost_optimization.schedule_non_prod_shutdown
+    storage_autoscaling         = var.cost_optimization.enable_storage_autoscaling
+    compute_autoscaling         = var.cost_optimization.enable_compute_autoscaling
+    non_prod_shutdown_schedule  = var.cost_optimization.schedule_non_prod_shutdown
   }
 }
 
@@ -301,11 +301,11 @@ output "disaster_recovery_config" {
   description = "Disaster recovery configuration"
   value = {
     cross_region_backup_enabled = var.disaster_recovery_config.enable_cross_region_backup
-    backup_region              = var.disaster_recovery_config.backup_region
-    recovery_time_objective    = var.disaster_recovery_config.rto_hours
-    recovery_point_objective   = var.disaster_recovery_config.rpo_hours
-    multi_az_deployment       = aws_db_instance.main.multi_az
-    read_replicas_for_dr      = length(aws_db_instance.read_replica) > 0
+    backup_region               = var.disaster_recovery_config.backup_region
+    recovery_time_objective     = var.disaster_recovery_config.rto_hours
+    recovery_point_objective    = var.disaster_recovery_config.rpo_hours
+    multi_az_deployment         = aws_db_instance.main.multi_az
+    read_replicas_for_dr        = length(aws_db_instance.read_replica) > 0
   }
 }
 

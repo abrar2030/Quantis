@@ -93,7 +93,7 @@ resource "aws_subnet" "database" {
 resource "aws_eip" "nat" {
   count = var.enable_nat_gateway ? length(var.public_subnet_cidrs) : 0
 
-  domain = "vpc"
+  domain     = "vpc"
   depends_on = [aws_internet_gateway.main]
 
   tags = merge(var.common_tags, {
@@ -226,17 +226,17 @@ resource "aws_vpc_endpoint" "dynamodb" {
 
 # Interface VPC Endpoints
 resource "aws_vpc_endpoint" "ec2" {
-  vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ec2"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  vpc_id             = aws_vpc.main.id
+  service_name       = "com.amazonaws.${data.aws_region.current.name}.ec2"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = aws_subnet.private[*].id
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
+        Effect    = "Allow"
         Principal = "*"
         Action = [
           "ec2:DescribeInstances",
@@ -257,11 +257,11 @@ resource "aws_vpc_endpoint" "ec2" {
 }
 
 resource "aws_vpc_endpoint" "ssm" {
-  vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ssm"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  vpc_id             = aws_vpc.main.id
+  service_name       = "com.amazonaws.${data.aws_region.current.name}.ssm"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = aws_subnet.private[*].id
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
 
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-ssm-endpoint"
@@ -272,11 +272,11 @@ resource "aws_vpc_endpoint" "ssm" {
 }
 
 resource "aws_vpc_endpoint" "ssm_messages" {
-  vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ssmmessages"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  vpc_id             = aws_vpc.main.id
+  service_name       = "com.amazonaws.${data.aws_region.current.name}.ssmmessages"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = aws_subnet.private[*].id
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
 
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-ssm-messages-endpoint"
@@ -287,11 +287,11 @@ resource "aws_vpc_endpoint" "ssm_messages" {
 }
 
 resource "aws_vpc_endpoint" "ec2_messages" {
-  vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.ec2messages"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  vpc_id             = aws_vpc.main.id
+  service_name       = "com.amazonaws.${data.aws_region.current.name}.ec2messages"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = aws_subnet.private[*].id
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
 
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-ec2-messages-endpoint"
@@ -302,11 +302,11 @@ resource "aws_vpc_endpoint" "ec2_messages" {
 }
 
 resource "aws_vpc_endpoint" "logs" {
-  vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.logs"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  vpc_id             = aws_vpc.main.id
+  service_name       = "com.amazonaws.${data.aws_region.current.name}.logs"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = aws_subnet.private[*].id
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
 
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-logs-endpoint"
@@ -317,11 +317,11 @@ resource "aws_vpc_endpoint" "logs" {
 }
 
 resource "aws_vpc_endpoint" "monitoring" {
-  vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.${data.aws_region.current.name}.monitoring"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  vpc_id             = aws_vpc.main.id
+  service_name       = "com.amazonaws.${data.aws_region.current.name}.monitoring"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = aws_subnet.private[*].id
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
 
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-monitoring-endpoint"
@@ -641,7 +641,7 @@ resource "aws_ec2_transit_gateway" "main" {
   default_route_table_association = "enable"
   default_route_table_propagation = "enable"
   dns_support                     = "enable"
-  vpn_ecmp_support               = "enable"
+  vpn_ecmp_support                = "enable"
 
   tags = merge(var.common_tags, {
     Name        = "${var.app_name}-${var.environment}-tgw"
@@ -715,7 +715,7 @@ resource "aws_vpn_connection" "main" {
 resource "aws_dx_gateway" "main" {
   count = var.enable_direct_connect ? 1 : 0
 
-  name           = "${var.app_name}-${var.environment}-dxgw"
+  name            = "${var.app_name}-${var.environment}-dxgw"
   amazon_side_asn = var.direct_connect_asn
 
   tags = merge(var.common_tags, {

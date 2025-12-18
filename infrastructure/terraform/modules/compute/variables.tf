@@ -269,9 +269,9 @@ variable "common_tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)
   default = {
-    Project     = "quantis"
-    ManagedBy   = "terraform"
-    Compliance  = "financial-grade"
-    DataClass   = "confidential"
+    Project    = "quantis"
+    ManagedBy  = "terraform"
+    Compliance = "financial-grade"
+    DataClass  = "confidential"
   }
 }

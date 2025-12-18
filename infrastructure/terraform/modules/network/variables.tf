@@ -255,13 +255,13 @@ variable "data_residency_requirements" {
   description = "Data residency requirements"
   type = object({
     restrict_cross_border = bool
-    allowed_regions      = list(string)
-    encryption_required  = bool
+    allowed_regions       = list(string)
+    encryption_required   = bool
   })
   default = {
     restrict_cross_border = true
-    allowed_regions      = ["us-east-1", "us-west-2"]
-    encryption_required  = true
+    allowed_regions       = ["us-east-1", "us-west-2"]
+    encryption_required   = true
   }
 }
 
@@ -306,10 +306,10 @@ variable "common_tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)
   default = {
-    Project     = "quantis"
-    ManagedBy   = "terraform"
-    Compliance  = "financial-grade"
-    DataClass   = "confidential"
+    Project    = "quantis"
+    ManagedBy  = "terraform"
+    Compliance = "financial-grade"
+    DataClass  = "confidential"
   }
 }
 
@@ -342,14 +342,14 @@ variable "ipv6_enabled" {
 variable "security_hardening" {
   description = "Security hardening configuration"
   type = object({
-    disable_api_termination     = bool
-    enable_detailed_monitoring  = bool
+    disable_api_termination    = bool
+    enable_detailed_monitoring = bool
     enable_ebs_optimization    = bool
     enable_source_dest_check   = bool
   })
   default = {
-    disable_api_termination     = true
-    enable_detailed_monitoring  = true
+    disable_api_termination    = true
+    enable_detailed_monitoring = true
     enable_ebs_optimization    = true
     enable_source_dest_check   = false
   }

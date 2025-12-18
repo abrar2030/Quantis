@@ -144,7 +144,7 @@ variable "read_replica_count" {
 variable "backup_retention_period" {
   description = "Backup retention period in days"
   type        = number
-  default     = 35  # Extended for financial compliance
+  default     = 35 # Extended for financial compliance
   validation {
     condition     = var.backup_retention_period >= 7 && var.backup_retention_period <= 35
     error_message = "Backup retention period must be between 7 and 35 days."
@@ -293,13 +293,13 @@ variable "connection_alarm_threshold" {
 variable "freeable_memory_alarm_threshold" {
   description = "Freeable memory threshold for alarm in bytes"
   type        = number
-  default     = 268435456  # 256 MB
+  default     = 268435456 # 256 MB
 }
 
 variable "free_storage_alarm_threshold" {
   description = "Free storage space threshold for alarm in bytes"
   type        = number
-  default     = 10737418240  # 10 GB
+  default     = 10737418240 # 10 GB
 }
 
 # Common Tags
@@ -307,10 +307,10 @@ variable "common_tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)
   default = {
-    Project     = "quantis"
-    ManagedBy   = "terraform"
-    Compliance  = "financial-grade"
-    DataClass   = "confidential"
+    Project    = "quantis"
+    ManagedBy  = "terraform"
+    Compliance = "financial-grade"
+    DataClass  = "confidential"
   }
 }
 
@@ -350,15 +350,15 @@ variable "data_retention_policy" {
   description = "Data retention policy configuration"
   type = object({
     transaction_data_days = number
-    audit_log_days       = number
-    backup_days          = number
-    archive_after_days   = number
+    audit_log_days        = number
+    backup_days           = number
+    archive_after_days    = number
   })
   default = {
-    transaction_data_days = 2555  # 7 years
-    audit_log_days       = 2555  # 7 years
-    backup_days          = 35
-    archive_after_days   = 365
+    transaction_data_days = 2555 # 7 years
+    audit_log_days        = 2555 # 7 years
+    backup_days           = 35
+    archive_after_days    = 365
   }
 }
 
@@ -367,15 +367,15 @@ variable "disaster_recovery_config" {
   description = "Disaster recovery configuration"
   type = object({
     enable_cross_region_backup = bool
-    backup_region             = string
-    rto_hours                = number
-    rpo_hours                = number
+    backup_region              = string
+    rto_hours                  = number
+    rpo_hours                  = number
   })
   default = {
     enable_cross_region_backup = true
-    backup_region             = "us-west-2"
-    rto_hours                = 4
-    rpo_hours                = 1
+    backup_region              = "us-west-2"
+    rto_hours                  = 4
+    rpo_hours                  = 1
   }
 }
 
@@ -385,14 +385,14 @@ variable "performance_config" {
   type = object({
     enable_query_optimization = bool
     enable_connection_pooling = bool
-    enable_read_scaling      = bool
-    enable_write_scaling     = bool
+    enable_read_scaling       = bool
+    enable_write_scaling      = bool
   })
   default = {
     enable_query_optimization = true
     enable_connection_pooling = true
-    enable_read_scaling      = true
-    enable_write_scaling     = false
+    enable_read_scaling       = true
+    enable_write_scaling      = false
   }
 }
 
@@ -400,13 +400,13 @@ variable "performance_config" {
 variable "security_hardening" {
   description = "Security hardening configuration"
   type = object({
-    enforce_ssl_connections    = bool
+    enforce_ssl_connections   = bool
     enable_row_level_security = bool
     enable_column_encryption  = bool
     enable_data_masking       = bool
   })
   default = {
-    enforce_ssl_connections    = true
+    enforce_ssl_connections   = true
     enable_row_level_security = true
     enable_column_encryption  = true
     enable_data_masking       = true
@@ -417,13 +417,13 @@ variable "security_hardening" {
 variable "cost_optimization" {
   description = "Cost optimization configuration"
   type = object({
-    enable_reserved_instances = bool
+    enable_reserved_instances  = bool
     enable_storage_autoscaling = bool
     enable_compute_autoscaling = bool
     schedule_non_prod_shutdown = bool
   })
   default = {
-    enable_reserved_instances = true
+    enable_reserved_instances  = true
     enable_storage_autoscaling = true
     enable_compute_autoscaling = false
     schedule_non_prod_shutdown = true

@@ -191,12 +191,12 @@ output "scale_up_schedule_arn" {
 output "compute_configuration" {
   description = "Summary of compute configuration"
   value = {
-    instance_type           = var.instance_type
-    min_size               = var.min_size
-    max_size               = var.max_size
-    desired_capacity       = var.desired_capacity
-    auto_scaling_enabled   = true
-    load_balancer_enabled  = true
+    instance_type         = var.instance_type
+    min_size              = var.min_size
+    max_size              = var.max_size
+    desired_capacity      = var.desired_capacity
+    auto_scaling_enabled  = true
+    load_balancer_enabled = true
     ssl_enabled           = true
     health_checks_enabled = true
     monitoring_enabled    = true
@@ -207,13 +207,13 @@ output "compute_configuration" {
 output "security_configuration" {
   description = "Summary of security configuration"
   value = {
-    encryption_at_rest     = true
-    encryption_in_transit  = true
+    encryption_at_rest    = true
+    encryption_in_transit = true
     iam_roles_enabled     = true
     security_groups       = [var.security_group_id, var.alb_security_group_id]
-    waf_enabled          = var.waf_web_acl_arn != ""
-    ssl_certificate      = var.ssl_certificate_arn
-    access_logs_enabled  = true
+    waf_enabled           = var.waf_web_acl_arn != ""
+    ssl_certificate       = var.ssl_certificate_arn
+    access_logs_enabled   = true
   }
 }
 
@@ -223,10 +223,10 @@ output "monitoring_configuration" {
   value = {
     cloudwatch_logs_enabled    = true
     cloudwatch_metrics_enabled = true
-    auto_scaling_alarms       = true
-    health_checks_enabled     = true
-    log_retention_days        = var.log_retention_days
-    custom_metrics_enabled    = true
+    auto_scaling_alarms        = true
+    health_checks_enabled      = true
+    log_retention_days         = var.log_retention_days
+    custom_metrics_enabled     = true
   }
 }
 
@@ -235,10 +235,10 @@ output "cost_optimization_features" {
   description = "Summary of cost optimization features"
   value = {
     scheduled_scaling_enabled = var.enable_scheduled_scaling
-    auto_scaling_enabled     = true
-    instance_right_sizing    = true
-    storage_optimization     = true
-    monitoring_cost_control  = true
+    auto_scaling_enabled      = true
+    instance_right_sizing     = true
+    storage_optimization      = true
+    monitoring_cost_control   = true
   }
 }
 
@@ -246,12 +246,12 @@ output "cost_optimization_features" {
 output "high_availability_configuration" {
   description = "Summary of high availability configuration"
   value = {
-    multi_az_deployment      = length(var.private_subnet_ids) > 1
-    auto_scaling_enabled     = true
-    load_balancer_enabled    = true
-    health_checks_enabled    = true
-    automatic_failover       = true
-    instance_replacement     = true
+    multi_az_deployment   = length(var.private_subnet_ids) > 1
+    auto_scaling_enabled  = true
+    load_balancer_enabled = true
+    health_checks_enabled = true
+    automatic_failover    = true
+    instance_replacement  = true
   }
 }
 
@@ -260,9 +260,9 @@ output "application_endpoints" {
   description = "Application endpoint information"
   value = {
     load_balancer_dns = aws_lb.main.dns_name
-    https_endpoint   = "https://${aws_lb.main.dns_name}"
-    health_check_url = "https://${aws_lb.main.dns_name}${var.health_check_path}"
-    application_port = var.app_port
+    https_endpoint    = "https://${aws_lb.main.dns_name}"
+    health_check_url  = "https://${aws_lb.main.dns_name}${var.health_check_path}"
+    application_port  = var.app_port
   }
   sensitive = false
 }
