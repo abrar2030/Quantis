@@ -3,8 +3,11 @@ Database configuration and management for Quantis API
 """
 
 import logging
+import hashlib
+from datetime import datetime, timedelta
+from fastapi import Depends
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 import redis.asyncio as redis
 from cryptography.fernet import Fernet
 from redis.asyncio import Redis
@@ -13,8 +16,8 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 from .config import get_settings
-from .models_enhanced import ConsentRecord
-from .models_enhanced import Base, DataMaskingConfig, DataRetentionPolicy, EncryptionKey
+from .models import ConsentRecord
+from .models import Base, DataMaskingConfig, DataRetentionPolicy, EncryptionKey
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

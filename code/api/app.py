@@ -5,7 +5,7 @@ FastAPI application with comprehensive backend features
 import json
 import time
 from contextlib import asynccontextmanager
-from typing import Dict
+from typing import Any, Dict
 import structlog
 from fastapi import (
     Depends,
@@ -17,6 +17,10 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -24,22 +28,22 @@ from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
-from .auth_enhanced import AuditLogger, rate_limit
+from .auth import AuditLogger, rate_limit
 from .config import Settings, get_settings
-from .database_enhanced import close_redis, get_db, health_check, init_db
+from .database import close_redis, get_db, get_redis, health_check, init_db
 from .endpoints import (
-    auth_enhanced,
-    datasets_enhanced,
+    auth,
+    datasets,
     financial,
-    models_enhanced,
-    monitoring_enhanced,
-    notifications_enhanced,
-    predictions_enhanced,
-    users_enhanced,
-    websocket_enhanced,
+    models as models_endpoint,
+    monitoring,
+    notifications,
+    prediction,
+    users,
+    websocket,
 )
-from .models_enhanced import User
-from .schemas_enhanced import HealthCheck
+from .models import User
+from .schemas import HealthCheck
 
 structlog.configure(
     processors=[
@@ -237,8 +241,14 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 @app.get("/health", response_model=HealthCheck, tags=["System"])
 async def health_check_endpoint(db=Depends(get_db)):
     try:
-        db_status = health_check(db)
-        redis_status = "ok" if await close_redis(check_only=True) else "error"
+        health_result = health_check()
+        db_status = "ok" if health_result["database"] else "error"
+        redis_status = "ok"
+        try:
+            redis_client = await get_redis()
+            await redis_client.ping()
+        except:
+            redis_status = "error"
         return {
             "status": "ok",
             "database": db_status,
@@ -286,21 +296,17 @@ async def root():
     }
 
 
-app.include_router(auth_enhanced.router, prefix="/auth", tags=["Authentication"])
-app.include_router(users_enhanced.router, prefix="/users", tags=["Users"])
-app.include_router(datasets_enhanced.router, prefix="/datasets", tags=["Datasets"])
-app.include_router(models_enhanced.router, prefix="/models", tags=["Models"])
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(users.router, prefix="/users", tags=["Users"])
+app.include_router(datasets.router, prefix="/datasets", tags=["Datasets"])
+app.include_router(models_endpoint.router, prefix="/models", tags=["Models"])
+app.include_router(prediction.router, prefix="/predictions", tags=["Predictions"])
 app.include_router(
-    predictions_enhanced.router, prefix="/predictions", tags=["Predictions"]
+    notifications.router, prefix="/notifications", tags=["Notifications"]
 )
-app.include_router(
-    notifications_enhanced.router, prefix="/notifications", tags=["Notifications"]
-)
-app.include_router(
-    monitoring_enhanced.router, prefix="/monitoring", tags=["Monitoring"]
-)
+app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
 app.include_router(financial.router, prefix="/financial", tags=["Financial"])
-app.include_router(websocket_enhanced.router, prefix="/ws", tags=["WebSocket"])
+app.include_router(websocket.router, prefix="/ws", tags=["WebSocket"])
 
 
 @app.websocket("/ws/notifications/{user_id}")

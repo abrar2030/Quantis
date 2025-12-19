@@ -9,11 +9,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from ..auth_enhanced import AuditLogger, get_current_active_user, has_permission
+from ..auth import AuditLogger, get_current_active_user, has_permission
 from ..config import Settings, get_settings
-from ..database_enhanced import DataMaskingManager, get_data_masking_manager, get_db
-from ..models_enhanced import Permission, Role, User
-from ..schemas_enhanced import (
+from ..database import DataMaskingManager, get_data_masking_manager, get_db
+from ..models import Permission, Role, User
+from ..schemas import (
     PermissionCreate,
     PermissionResponse,
     RoleCreate,

@@ -18,11 +18,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from .config import get_settings
-from .database_enhanced import get_db, get_redis
-from .models_enhanced import AuditLog
-from .models_enhanced import ApiKey, User, UserSession
-from .schemas_enhanced import Token
+from ..config import get_settings
+from ..database import get_db, get_redis
+from ..models import AuditLog
+from ..models import ApiKey, User, UserSession
+from ..schemas import Token
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

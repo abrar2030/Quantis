@@ -9,7 +9,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from .. import models_enhanced as models
 from ..config import get_settings
-from ..database_enhanced import EncryptionManager
+from ..database import EncryptionManager
 
 settings = get_settings()
 

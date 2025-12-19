@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from pydantic import UUID4, BaseModel, EmailStr, Field, validator
 from pydantic.types import confloat, conint, constr
-from .models_enhanced import DatasetStatus, ModelStatus, ModelType, NotificationType
+from .models import DatasetStatus, ModelStatus, ModelType, NotificationType
 
 
 class BaseSchema(BaseModel):
@@ -749,3 +749,12 @@ class ComplianceLimitsResponse(BaseSchema):
         ..., description="Monthly transaction limits and usage"
     )
     compliance_status: str = Field(..., description="Overall compliance status")
+
+
+class HealthCheck(BaseSchema):
+    """Schema for health check response"""
+
+    status: str = Field(..., description="Overall health status")
+    database: str = Field(..., description="Database health status")
+    redis: str = Field(..., description="Redis health status")
+    timestamp: float = Field(..., description="Timestamp of health check")

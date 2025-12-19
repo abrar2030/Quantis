@@ -23,9 +23,9 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from ..auth_enhanced import AuditLogger, get_current_active_user, has_permission
+from ..auth import AuditLogger, get_current_active_user, has_permission
 from ..config import Settings, get_settings
-from ..database_enhanced import (
+from ..database import (
     DataMaskingManager,
     DataRetentionManager,
     EncryptionManager,
@@ -34,8 +34,8 @@ from ..database_enhanced import (
     get_db,
     get_encryption_manager,
 )
-from ..models_enhanced import Dataset, DatasetStatus, User
-from ..schemas_enhanced import (
+from ..models import Dataset, DatasetStatus, User
+from ..schemas import (
     DatasetCreate,
     DatasetResponse,
     DatasetStats,

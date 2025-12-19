@@ -14,8 +14,8 @@ from celery import Celery, Task
 from celery.result import AsyncResult
 from sqlalchemy.orm import Session
 from .config import get_settings
-from .database_enhanced import SessionLocal
-from .models_enhanced import (
+from .database import SessionLocal
+from .models import (
     DataQualityReport,
     Dataset,
     Model,
@@ -562,7 +562,7 @@ def fetch_market_data_task(
     """Fetch market data for given symbols"""
     try:
         import yfinance as yf
-        from .models_enhanced import MarketData
+        from .models import MarketData
 
         db = SessionLocal()
         try:
