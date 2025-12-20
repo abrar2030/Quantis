@@ -105,5 +105,3 @@ The frontend is optimized for speed, accessibility, and security.
 | **Authentication**  | JWT-based authentication, token refresh, and automatic logout on inactivity.         |
 | **Data Protection** | HTTPS-only communication, input validation, and Content Security Policy (CSP).       |
 | **Development**     | Regular dependency updates, static code analysis, and security-focused code reviews. |
-
-This comprehensive frontend provides a robust, performant, and user-friendly interface for the Quantis platform, enabling users to effectively interact with time series data and forecasting models.
