@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
 import { Box, useMediaQuery } from '@mui/material';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
-const Layout = () => {
+const Layout = ({ children }) => {
   const theme = useMuiTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
@@ -46,7 +45,7 @@ const Layout = () => {
             backgroundColor: theme.palette.background.default,
           }}
         >
-          <Outlet />
+          {children}
         </Box>
       </Box>
     </Box>
