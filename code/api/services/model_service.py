@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
-from .. import models_enhanced as models
+from .. import models
 from ..config import get_settings
 
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +22,7 @@ settings = get_settings()
 
 class ModelService:
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def create_model_record(
@@ -230,7 +230,7 @@ class ModelService:
 
 class DummyTFTModel:
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.model_type = "TFT"
         self.weights = np.random.randn(10, 5)
 
@@ -260,7 +260,7 @@ class DummyTFTModel:
 
 class DummyLSTMModel:
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.model_type = "LSTM"
         self.weights = np.random.randn(8, 3)
 
@@ -292,7 +292,7 @@ class DummyLSTMModel:
 
 class DummyARIMAModel:
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.model_type = "ARIMA"
         self.coefficients = np.random.randn(5)
 
@@ -319,7 +319,7 @@ class DummyARIMAModel:
 
 class DummyLinearModel:
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.model_type = "Linear"
         self.weights = np.random.randn(6)
         self.bias = np.random.randn()
@@ -351,7 +351,7 @@ class DummyLinearModel:
 
 class DummyRandomForestModel:
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.model_type = "RandomForest"
         self.n_estimators = 100
         self.features = None
@@ -380,7 +380,7 @@ class DummyRandomForestModel:
 
 class DummyXGBoostModel:
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.model_type = "XGBoost"
         self.n_estimators = 100
         self.features = None

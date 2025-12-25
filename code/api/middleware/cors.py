@@ -2,7 +2,7 @@
 CORS middleware for handling cross-origin requests
 """
 
-from typing import List, Optional
+from typing import List, Optional, Any
 from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -14,14 +14,14 @@ class EnhancedCORSMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: Any,
-        allow_origins: List[str] = None,
+        allow_origins: Optional[List[str]] = None,
         allow_credentials: bool = True,
-        allow_methods: List[str] = None,
-        allow_headers: List[str] = None,
-        expose_headers: List[str] = None,
+        allow_methods: Optional[List[str]] = None,
+        allow_headers: Optional[List[str]] = None,
+        expose_headers: Optional[List[str]] = None,
         max_age: int = 600,
         allow_origin_regex: Optional[str] = None,
-    ) -> Any:
+    ) -> None:
         super().__init__(app)
         self.allow_origins = allow_origins or ["*"]
         self.allow_credentials = allow_credentials

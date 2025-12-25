@@ -4,14 +4,14 @@ User service for user management operations
 
 from datetime import datetime, timedelta
 from typing import List, Optional
-import models
+from .. import models
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 
 class UserService:
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def create_user(

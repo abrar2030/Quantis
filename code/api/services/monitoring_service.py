@@ -54,7 +54,7 @@ class DatabaseMetrics:
 class MonitoringService:
     """Service for monitoring system health and performance"""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
         self._start_time = time.time()
 

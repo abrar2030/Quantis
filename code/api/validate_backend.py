@@ -8,6 +8,8 @@ import sys
 import traceback
 from datetime import datetime
 
+from typing import Any
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -59,7 +61,7 @@ def test_database_connection() -> Any:
                 return False
         finally:
             db.close()
-        from models_enhanced import Base
+        from .models import Base
 
         Base.metadata.create_all(bind=engine)
         logger.info("✓ Database tables created successfully")
@@ -109,7 +111,7 @@ def test_data_models() -> Any:
     logger.info("Testing data models...")
     try:
         from database_enhanced import SessionLocal
-        from models_enhanced import (
+        from .models import (
             Dataset,
             Model,
             ModelStatus,

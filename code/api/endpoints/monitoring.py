@@ -12,10 +12,11 @@ from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 # Local application imports - adjust if your project layout differs
-from get_db import get_db
+from ..database import get_db
 import models
-from services.user_service import UserService
-from auth import readonly_or_above, admin_required, validate_api_key
+from ..services.user_service import UserService
+from ..auth import get_current_user, require_admin
+from ..models import User
 
 router = APIRouter()
 
@@ -81,7 +82,7 @@ class MetricEntry(BaseModel):
 # -----------------------
 @router.get("/health", response_model=SystemHealth)
 async def get_system_health(
-    current_user: dict = Depends(readonly_or_above),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Get overall system health status."""
@@ -130,7 +131,7 @@ async def get_system_health(
 # --------------------------
 @router.get("/stats", response_model=SystemStats)
 async def get_system_statistics(
-    current_user: dict = Depends(readonly_or_above),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Get system usage statistics."""
@@ -192,7 +193,7 @@ async def get_audit_logs(
     action: Optional[str] = Query(None),
     resource_type: Optional[str] = Query(None),
     user_id: Optional[int] = Query(None),
-    current_user: dict = Depends(admin_required),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Get audit logs (admin only)."""
@@ -246,7 +247,7 @@ async def create_audit_log(
     resource_type: str,
     resource_id: Optional[str] = None,
     details: Optional[dict] = None,
-    current_user: dict = Depends(validate_api_key),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Create an audit log entry."""
@@ -275,7 +276,7 @@ async def get_system_metrics(
     limit: int = Query(100, ge=1, le=1000),
     metric_name: Optional[str] = Query(None),
     hours: int = Query(24, ge=1, le=168),
-    current_user: dict = Depends(readonly_or_above),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Get system metrics."""
@@ -315,7 +316,7 @@ async def record_metric(
     metric_value: float,
     metric_unit: Optional[str] = None,
     tags: Optional[dict] = None,
-    current_user: dict = Depends(admin_required),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Record a system metric."""
@@ -339,7 +340,7 @@ async def record_metric(
 @router.get("/analytics/predictions")
 async def get_prediction_analytics(
     days: int = Query(7, ge=1, le=90),
-    current_user: dict = Depends(readonly_or_above),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Get prediction analytics over time."""
@@ -404,7 +405,7 @@ async def get_prediction_analytics(
 
 @router.get("/analytics/models")
 async def get_model_analytics(
-    current_user: dict = Depends(readonly_or_above),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Get model usage analytics."""
@@ -463,7 +464,7 @@ async def get_model_analytics(
 @router.post("/maintenance/cleanup")
 async def cleanup_system(
     days_old: int = Query(30, ge=7, le=365),
-    current_user: dict = Depends(admin_required),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Clean up old system data."""

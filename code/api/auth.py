@@ -6,7 +6,16 @@ from .endpoints.auth import (
     AuditLogger,
     rate_limit,
     get_current_user,
-    get_current_active_user,
+    require_permission,
+    require_admin,
+    require_verified_user,
 )
 
-__all__ = ["AuditLogger", "rate_limit", "get_current_user", "get_current_active_user"]
+__all__ = [
+    "AuditLogger",
+    "rate_limit",
+    "get_current_user",
+    "require_permission",
+    "require_admin",
+    "require_verified_user",
+]

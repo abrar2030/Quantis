@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class NotificationService:
     """Service for handling notifications and alerts"""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def create_notification(
@@ -30,7 +30,7 @@ class NotificationService:
         title: str,
         message: str,
         notification_type: str = "info",
-        metadata: Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> models.Notification:
         """Create a new notification"""
         notification = models.Notification(
@@ -131,7 +131,7 @@ class NotificationService:
         subject: str,
         message: str,
         html_message: Optional[str] = None,
-        attachments: List[str] = None,
+        attachments: Optional[List[str]] = None,
     ) -> bool:
         """Send email notification"""
         if not self._is_email_configured():

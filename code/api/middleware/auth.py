@@ -5,9 +5,9 @@ Authentication middleware with database integration
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
-import jwt
-from fastapi import Depends, HTTPException, Security
+from typing import Dict, List, Optional, Any
+from jose import jwt
+from fastapi import Depends, Header, HTTPException, Security
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from ..database import SessionLocal, get_db
@@ -96,7 +96,7 @@ async def validate_jwt_token(
 
 
 async def optional_auth(
-    api_key: str = Security(API_KEY_HEADER, auto_error=False),
+    api_key: Optional[str] = Header(None, alias="X-API-Key"),
     db: Session = Depends(get_db),
 ):
     """Optional authentication - returns user info if authenticated, None otherwise."""
@@ -110,7 +110,7 @@ async def optional_auth(
 
 class RoleChecker:
 
-    def __init__(self, required_roles: List[str]) -> Any:
+    def __init__(self, required_roles: List[str]) -> None:
         self.required_roles = required_roles
 
     def __call__(self, user: dict = Depends(validate_api_key)) -> Any:
@@ -124,7 +124,7 @@ class RoleChecker:
 
 class RateLimiter:
 
-    def __init__(self, requests_per_minute: int = 60) -> Any:
+    def __init__(self, requests_per_minute: int = 60) -> None:
         self.requests_per_minute = requests_per_minute
         self.request_history = {}
 
@@ -154,7 +154,7 @@ class RateLimiter:
 
 class IPRateLimiter:
 
-    def __init__(self, requests_per_minute: int = 30) -> Any:
+    def __init__(self, requests_per_minute: int = 30) -> None:
         self.requests_per_minute = requests_per_minute
         self.request_history = {}
 

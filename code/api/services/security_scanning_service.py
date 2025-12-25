@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class SecurityScanningService:
     """Service for integrating security scanning tools"""
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.scan_results_dir = "/tmp/security_scans"
         os.makedirs(self.scan_results_dir, exist_ok=True)
 

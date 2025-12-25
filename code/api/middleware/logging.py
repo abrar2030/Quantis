@@ -20,7 +20,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self, app: Any, log_requests: bool = True, log_responses: bool = True
-    ) -> Any:
+    ) -> None:
         super().__init__(app)
         self.log_requests = log_requests
         self.log_responses = log_responses
@@ -100,7 +100,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 class MetricsCollector:
     """Simple metrics collector for monitoring"""
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.request_count = 0
         self.error_count = 0
         self.total_response_time = 0.0

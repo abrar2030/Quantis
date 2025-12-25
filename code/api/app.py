@@ -112,7 +112,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
             "PATCH",
         ]:
             try:
-                user: User = getattr(request.state, "user", None)
+                user: Optional[User] = getattr(request.state, "user", None)
                 user_id = user.id if user else None
                 db = next(get_db())
                 AuditLogger.log_event(
@@ -132,7 +132,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
 class WebSocketManager:
     """Manage WebSocket connections"""
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.active_connections: Dict[str, Dict[str, WebSocket]] = {}
         self.user_connections: Dict[int, list] = {}
 

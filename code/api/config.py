@@ -95,7 +95,15 @@ class Settings(BaseSettings):
     # Enable features
     enable_metrics: bool = True
 
-    model_config = {"env_file": ".env", "case_sensitive": False, "extra": "ignore"}
+    # Storage configuration
+    storage_directory: str = "./models"
+
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": False,
+        "extra": "ignore",
+        "protected_namespaces": (),
+    }
 
 
 _settings: Optional[Settings] = None
@@ -118,4 +126,11 @@ def get_settings() -> Settings:
         object.__setattr__(_settings, "logging", LoggingConfig())
         object.__setattr__(_settings, "compliance", ComplianceConfig())
         object.__setattr__(_settings, "encryption", EncryptionConfig())
+
+        # For type checking, these need to exist
+        _settings.security  # type: ignore
+        _settings.database  # type: ignore
+        _settings.logging  # type: ignore
+        _settings.compliance  # type: ignore
+        _settings.encryption  # type: ignore
     return _settings

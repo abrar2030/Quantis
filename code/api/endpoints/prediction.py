@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from get_db import get_db
+from ..database import get_db
 
 # ✅ FIXED — remove "import" keyword issue
 # (You had: `import import`)
@@ -16,7 +16,7 @@ from get_db import get_db
 
 
 # ✅ FIXED — correct imports for middleware functions
-from middleware.auth import (
+from ..middleware.auth import (
     prediction_rate_limit,
     readonly_or_above,
     user_or_admin_required,
@@ -25,17 +25,17 @@ from middleware.auth import (
 )
 
 # ✅ FIXED — correct imports for schemas
-from schemas import PredictionRequest, PredictionResponse, ModelHealthResponse
+from ..schemas import PredictionCreate, PredictionResponse
 
 # ✅ FIXED — correct imports for services
-from services.prediction_service import PredictionService
-from services.model_service import ModelService
+from ..services.prediction_service import PredictionService
+from ..services.model_service import ModelService
 
 router = APIRouter()
 
 
 # Enhanced Pydantic models
-class BatchPredictionRequest(BaseModel):
+class BatchPredictionCreate(BaseModel):
     model_id: int
     input_data_list: List[List[float]]
 
@@ -69,7 +69,7 @@ class PredictionStats(BaseModel):
 # Enhanced prediction endpoints
 @router.post("/predict", response_model=PredictionResponse)
 async def predict(
-    request: PredictionRequest,
+    request: PredictionCreate,
     current_user: dict = Depends(user_or_admin_required),
     _: dict = Depends(prediction_rate_limit),
     db: Session = Depends(get_db),
@@ -129,7 +129,7 @@ async def predict_with_model(
 
 @router.post("/predict/batch", response_model=BatchPredictionResponse)
 async def batch_predict(
-    request: BatchPredictionRequest,
+    request: BatchPredictionCreate,
     current_user: dict = Depends(user_or_admin_required),
     db: Session = Depends(get_db),
 ):
@@ -269,7 +269,7 @@ async def get_prediction(
 
 
 # Model health endpoints
-@router.get("/models/{model_id}/health", response_model=ModelHealthResponse)
+@router.get("/models/{model_id}/health")
 async def check_model_health(
     model_id: int,
     current_user: dict = Depends(readonly_or_above),

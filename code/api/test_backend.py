@@ -5,6 +5,8 @@ Test script for Quantis API
 import os
 import sys
 
+from typing import Any
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import database
 import numpy as np

@@ -19,7 +19,7 @@ settings = get_settings()
 class FileService:
     """Service for handling file uploads and storage"""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.upload_dir = Path(settings.upload_directory)
         self.model_dir = Path(settings.model_directory)

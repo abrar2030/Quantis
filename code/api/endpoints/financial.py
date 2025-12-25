@@ -11,9 +11,10 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from ..auth import get_current_user, require_role
+from ..auth import AuditLogger, get_current_user, require_admin
 from ..database import get_db
-from ..middleware.logging import AuditLogger
+
+# AuditLogger imported from auth
 from ..models import Transaction, User
 from ..schemas import FinancialSummaryResponse, TransactionCreate, TransactionResponse
 from ..services.compliance_service import get_compliance_services
@@ -281,7 +282,7 @@ async def get_financial_summary(
 @router.post("/transactions/{transaction_id}/approve")
 async def approve_transaction(
     transaction_id: int,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Approve a pending transaction (admin only)"""
@@ -341,7 +342,7 @@ async def approve_transaction(
 async def reject_transaction(
     transaction_id: int,
     reason: str,
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Reject a pending transaction (admin only)"""

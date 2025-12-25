@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
-from .. import models_enhanced as models
+from .. import models
 from ..config import get_settings
 from ..database import EncryptionManager
 
@@ -16,7 +16,7 @@ settings = get_settings()
 
 class DatasetService:
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def create_dataset_record(

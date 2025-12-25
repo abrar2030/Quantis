@@ -26,12 +26,50 @@ from sqlalchemy import (
     UniqueConstraint,
     event,
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.types import TypeDecorator, CHAR
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 Base = declarative_base()
+
+
+class UUID(TypeDecorator):
+    """Platform-independent UUID type.
+    Uses PostgreSQL's UUID type when available, otherwise uses CHAR(36).
+    """
+
+    impl = CHAR
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(PG_UUID())
+        else:
+            return dialect.type_descriptor(CHAR(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        elif dialect.name == "postgresql":
+            return str(value)
+        else:
+            if isinstance(value, uuid.UUID):
+                return str(value)
+            else:
+                return str(uuid.UUID(value))
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        else:
+            if isinstance(value, uuid.UUID):
+                return value
+            else:
+                return uuid.UUID(value)
+
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -139,7 +177,7 @@ class Role(Base, AuditMixin):
 class User(Base, AuditMixin, SoftDeleteMixin):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
+    uuid = Column(UUID(), default=uuid.uuid4, unique=True, nullable=False)
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
@@ -251,7 +289,7 @@ class ApiKey(Base, AuditMixin, SoftDeleteMixin):
 class Dataset(Base, AuditMixin, SoftDeleteMixin):
     __tablename__ = "datasets"
     id = Column(Integer, primary_key=True, index=True)
-    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
+    uuid = Column(UUID(), default=uuid.uuid4, unique=True, nullable=False)
     name = Column(String(100), nullable=False)
     description = Column(Text)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -287,7 +325,7 @@ class Dataset(Base, AuditMixin, SoftDeleteMixin):
 class Model(Base, AuditMixin, SoftDeleteMixin):
     __tablename__ = "models"
     id = Column(Integer, primary_key=True, index=True)
-    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
+    uuid = Column(UUID(), default=uuid.uuid4, unique=True, nullable=False)
     name = Column(String(100), nullable=False)
     description = Column(Text)
     model_type = Column(Enum(ModelType), nullable=False)
@@ -336,7 +374,7 @@ class Model(Base, AuditMixin, SoftDeleteMixin):
 class Prediction(Base, AuditMixin):
     __tablename__ = "predictions"
     id = Column(Integer, primary_key=True, index=True)
-    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
+    uuid = Column(UUID(), default=uuid.uuid4, unique=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     model_id = Column(Integer, ForeignKey("models.id"), nullable=False)
     input_data = Column(JSON, nullable=False)
@@ -363,7 +401,7 @@ class Prediction(Base, AuditMixin):
 class Experiment(Base, AuditMixin):
     __tablename__ = "experiments"
     id = Column(Integer, primary_key=True, index=True)
-    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
+    uuid = Column(UUID(), default=uuid.uuid4, unique=True, nullable=False)
     name = Column(String(100), nullable=False)
     description = Column(Text)
     model_id = Column(Integer, ForeignKey("models.id"), nullable=False)

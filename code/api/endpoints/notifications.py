@@ -10,7 +10,7 @@ from ..config import get_settings
 from ..database import get_db
 from ..models import Notification, User
 from ..schemas import NotificationResponse
-from .auth import get_current_active_user
+from .auth import get_current_user
 
 router = APIRouter()
 settings = get_settings()
@@ -21,7 +21,7 @@ async def get_notifications(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     is_read: Optional[bool] = None,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Get user's notifications"""
@@ -39,7 +39,7 @@ async def get_notifications(
 @router.get("/{notification_id}", response_model=NotificationResponse)
 async def get_notification(
     notification_id: int,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Get a specific notification"""
@@ -60,7 +60,7 @@ async def get_notification(
 @router.patch("/{notification_id}/read")
 async def mark_notification_read(
     notification_id: int,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Mark a notification as read"""
@@ -87,7 +87,7 @@ async def mark_notification_read(
 
 @router.post("/mark-all-read")
 async def mark_all_notifications_read(
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Mark all notifications as read"""
@@ -110,7 +110,7 @@ async def mark_all_notifications_read(
 @router.delete("/{notification_id}")
 async def delete_notification(
     notification_id: int,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Delete a notification"""

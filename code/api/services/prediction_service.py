@@ -9,14 +9,14 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from .. import models
 from .model_service import ModelService
-from core.logging import get_logger
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class PredictionService:
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.model_service = ModelService(db)
 

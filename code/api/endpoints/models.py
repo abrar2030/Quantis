@@ -2,7 +2,7 @@
 Model management endpoints
 """
 
-from typing import List, Optional
+from typing import List, Optional, Any
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session

@@ -5,7 +5,7 @@ Error handling middleware for comprehensive error management
 import logging
 import traceback
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -67,7 +67,7 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
 
 
 def create_error_response(
-    status_code: int, message: str, details: Dict[str, Any] = None
+    status_code: int, message: str, details: Optional[Dict[str, Any]] = None
 ) -> JSONResponse:
     """Create a standardized error response"""
     content = {

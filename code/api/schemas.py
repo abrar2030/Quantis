@@ -283,6 +283,23 @@ class DatasetUpload(BaseSchema):
     frequency: Optional[str] = Field(None, description="Data frequency")
 
 
+class DatasetStats(BaseSchema):
+    """Schema for dataset statistics"""
+
+    shape: tuple = Field(..., description="Dataset shape (rows, columns)")
+    columns: List[str] = Field(..., description="Column names")
+    dtypes: Dict[str, str] = Field(..., description="Data types for each column")
+    missing_values: Dict[str, int] = Field(
+        ..., description="Missing value counts per column"
+    )
+    numeric_stats: Dict[str, Any] = Field(
+        default={}, description="Statistical summary for numeric columns"
+    )
+    categorical_stats: Dict[str, Any] = Field(
+        default={}, description="Statistics for categorical columns"
+    )
+
+
 class ModelBase(BaseSchema):
     """Base model schema"""
 

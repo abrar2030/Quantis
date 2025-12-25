@@ -140,7 +140,7 @@ class FinancialCalculationService:
 class RiskAssessmentService:
     """Service for financial risk assessment and management"""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def assess_transaction_risk(
@@ -148,7 +148,7 @@ class RiskAssessmentService:
         user_id: int,
         transaction_amount: Decimal,
         transaction_type: TransactionType,
-        counterparty_info: Dict[str, Any] = None,
+        counterparty_info: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Assess risk level for a financial transaction"""
         try:
@@ -263,7 +263,7 @@ class RiskAssessmentService:
 class ComplianceMonitoringService:
     """Service for monitoring compliance with financial regulations"""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def monitor_transaction_limits(
@@ -413,7 +413,7 @@ class ComplianceMonitoringService:
 class FinancialReportingService:
     """Service for financial reporting and analytics"""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def generate_transaction_summary(

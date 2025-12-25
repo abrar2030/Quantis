@@ -23,7 +23,7 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from ..auth import AuditLogger, get_current_active_user, has_permission
+from ..auth import AuditLogger, get_current_user, require_permission
 from ..config import Settings, get_settings
 from ..database import (
     DataMaskingManager,
@@ -54,11 +54,11 @@ router = APIRouter()
 # Dataset CRUD endpoints
 # ------------------------
 @router.post("/", response_model=DatasetResponse, status_code=status.HTTP_201_CREATED)
-@has_permission("create_dataset")
+@require_permission("create_dataset")
 async def create_dataset(
     dataset_data: DatasetCreate,
     request: Request,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Create a new dataset record (metadata only)."""
@@ -96,12 +96,12 @@ async def create_dataset(
 
 
 @router.post("/upload", response_model=DatasetResponse)
-@has_permission("upload_dataset")
+@require_permission("upload_dataset")
 async def upload_dataset(
     request: Request,
     dataset_upload: DatasetUpload = Depends(),
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     encryption_manager: EncryptionManager = Depends(get_encryption_manager),
 ):
@@ -207,19 +207,19 @@ async def upload_dataset(
 # Dataset Read Endpoints
 # ------------------------
 @router.get("/", response_model=List[DatasetResponse])
-@has_permission("read_datasets")
+@require_permission("read_datasets")
 async def get_datasets(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     request: Request = None,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     data_retention_manager: DataRetentionManager = Depends(get_data_retention_manager),
 ):
     """Get datasets for the current user or all datasets for admin."""
     DatasetService(db)
 
-    if has_permission("read_all_datasets")(current_user):
+    if require_permission("read_all_datasets")(current_user):
         query = db.query(Dataset).filter(Dataset.is_deleted == False)
     else:
         query = db.query(Dataset).filter(
@@ -236,7 +236,7 @@ async def get_datasets(
         resource_type="dataset",
         resource_name=(
             "all_datasets"
-            if has_permission("read_all_datasets")(current_user)
+            if require_permission("read_all_datasets")(current_user)
             else "user_datasets"
         ),
         request=request,
@@ -245,11 +245,11 @@ async def get_datasets(
 
 
 @router.get("/{dataset_id}", response_model=DatasetResponse)
-@has_permission("read_dataset")
+@require_permission("read_dataset")
 async def get_dataset(
     dataset_id: int,
     request: Request,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     data_masking_manager: DataMaskingManager = Depends(get_data_masking_manager),
 ):
@@ -264,7 +264,7 @@ async def get_dataset(
 
     if not (
         dataset.owner_id == current_user.id
-        or has_permission("read_all_datasets")(current_user)
+        or require_permission("read_all_datasets")(current_user)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
@@ -288,12 +288,12 @@ async def get_dataset(
 # Dataset Update/Delete
 # ------------------------
 @router.put("/{dataset_id}", response_model=DatasetResponse)
-@has_permission("update_dataset")
+@require_permission("update_dataset")
 async def update_dataset(
     dataset_id: int,
     dataset_update: DatasetUpdate,
     request: Request,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Update dataset information."""
@@ -307,7 +307,7 @@ async def update_dataset(
 
     if not (
         dataset.owner_id == current_user.id
-        or has_permission("update_all_datasets")(current_user)
+        or require_permission("update_all_datasets")(current_user)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
@@ -344,11 +344,11 @@ async def update_dataset(
 
 
 @router.delete("/{dataset_id}", status_code=status.HTTP_204_NO_CONTENT)
-@has_permission("delete_dataset")
+@require_permission("delete_dataset")
 async def delete_dataset(
     dataset_id: int,
     request: Request,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Soft delete a dataset."""
@@ -362,7 +362,7 @@ async def delete_dataset(
 
     if not (
         dataset.owner_id == current_user.id
-        or has_permission("delete_all_datasets")(current_user)
+        or require_permission("delete_all_datasets")(current_user)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
@@ -401,11 +401,11 @@ async def delete_dataset(
 # Dataset Analysis
 # ------------------------
 @router.get("/{dataset_id}/stats", response_model=DatasetStats)
-@has_permission("read_dataset_stats")
+@require_permission("read_dataset_stats")
 async def get_dataset_statistics(
     dataset_id: int,
     request: Request,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     encryption_manager: EncryptionManager = Depends(get_encryption_manager),
 ):
@@ -420,7 +420,7 @@ async def get_dataset_statistics(
 
     if not (
         dataset.owner_id == current_user.id
-        or has_permission("read_all_dataset_stats")(current_user)
+        or require_permission("read_all_dataset_stats")(current_user)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
@@ -453,12 +453,12 @@ async def get_dataset_statistics(
 
 
 @router.get("/{dataset_id}/preview")
-@has_permission("read_dataset_preview")
+@require_permission("read_dataset_preview")
 async def preview_dataset(
     dataset_id: int,
     rows: int = Query(10, ge=1, le=100),
     request: Request = None,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     encryption_manager: EncryptionManager = Depends(get_encryption_manager),
     data_masking_manager: DataMaskingManager = Depends(get_data_masking_manager),
@@ -474,7 +474,7 @@ async def preview_dataset(
 
     if not (
         dataset.owner_id == current_user.id
-        or has_permission("read_all_dataset_preview")(current_user)
+        or require_permission("read_all_dataset_preview")(current_user)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
@@ -511,12 +511,12 @@ async def preview_dataset(
 
 
 @router.get("/{dataset_id}/download")
-@has_permission("download_dataset")
+@require_permission("download_dataset")
 async def download_dataset(
     dataset_id: int,
     format: str = Query("csv", pattern="^(csv|json|parquet)$"),
     request: Request = None,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     encryption_manager: EncryptionManager = Depends(get_encryption_manager),
 ):
@@ -531,7 +531,7 @@ async def download_dataset(
 
     if not (
         dataset.owner_id == current_user.id
-        or has_permission("download_all_datasets")(current_user)
+        or require_permission("download_all_datasets")(current_user)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"

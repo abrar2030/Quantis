@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class DataMaskingService:
     """Service for data masking and tokenization"""
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.masking_key = self._get_or_create_masking_key()
         self.cipher_suite = Fernet(self.masking_key)
 
@@ -120,7 +120,7 @@ class DataMaskingService:
 class DataRetentionService:
     """Service for data retention and deletion policies"""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def get_retention_policy(self, data_type: str) -> Dict[str, Any]:
@@ -244,7 +244,7 @@ class DataRetentionService:
 class ConsentManagementService:
     """Service for managing user consent"""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def record_consent(
@@ -321,7 +321,7 @@ class ConsentManagementService:
 class PrivilegeManagementService:
     """Service for implementing principle of least privilege"""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def get_minimum_required_permissions(self, role: str, operation: str) -> List[str]:

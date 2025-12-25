@@ -158,7 +158,7 @@ class DatabaseManager:
 class CacheManager:
     """Redis cache management utilities"""
 
-    def __init__(self, redis_client: Redis) -> Any:
+    def __init__(self, redis_client: Redis) -> None:
         self.redis = redis_client
 
     async def get(self, key: str) -> Optional[str]:
@@ -229,7 +229,7 @@ class CacheManager:
 class TransactionManager:
     """Database transaction management"""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def __enter__(self) -> Any:
@@ -305,7 +305,7 @@ def health_check() -> dict:
 class EncryptionManager:
     """Manages encryption and decryption of sensitive data."""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def _get_fernet(self, key_name: str) -> Fernet:
@@ -368,7 +368,7 @@ class EncryptionManager:
 class DataRetentionManager:
     """Manages data retention and deletion based on policies."""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def apply_retention_policy(self, data_type: str, query: Any) -> Any:
@@ -413,11 +413,11 @@ class DataRetentionManager:
 class ConsentManager:
     """Manages user consent records."""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def record_consent(
-        self, user_id: int, consent_type: str, details: Dict[str, Any] = None
+        self, user_id: int, consent_type: str, details: Optional[Dict[str, Any]] = None
     ) -> ConsentRecord:
         """Records a new consent for a user."""
         if not settings.compliance.enable_consent_management:
@@ -462,7 +462,7 @@ class ConsentManager:
 class DataMaskingManager:
     """Applies data masking based on configured policies."""
 
-    def __init__(self, db: Session) -> Any:
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.masking_configs = self._load_masking_configs()
 

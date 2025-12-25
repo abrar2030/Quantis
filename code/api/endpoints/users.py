@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from ..auth import AuditLogger, get_current_active_user, has_permission
+from ..auth import AuditLogger, get_current_user, require_permission
 from ..config import Settings, get_settings
 from ..database import DataMaskingManager, get_data_masking_manager, get_db
 from ..models import Permission, Role, User
@@ -30,11 +30,11 @@ router = APIRouter()
 
 # User Endpoints
 @router.get("/", response_model=List[UserResponse])
-@has_permission("read_users")
+@require_permission("read_users")
 async def get_all_users(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     data_masking_manager: DataMaskingManager = Depends(get_data_masking_manager),
 ):
     """Retrieve all users (admin/privileged access only)"""
@@ -58,12 +58,12 @@ async def get_all_users(
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-@has_permission("read_user")
+@require_permission("read_user")
 async def get_user_by_id(
     user_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
     data_masking_manager: DataMaskingManager = Depends(get_data_masking_manager),
 ):
     """Retrieve a user by ID (admin/privileged access or self)"""
@@ -75,7 +75,7 @@ async def get_user_by_id(
 
     # Ensure user can only access their own data unless they have admin/read_users permission
     if not (
-        current_user.id == user_id or has_permission("read_all_users")(current_user)
+        current_user.id == user_id or require_permission("read_all_users")(current_user)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -98,13 +98,13 @@ async def get_user_by_id(
 
 
 @router.put("/{user_id}", response_model=UserResponse)
-@has_permission("update_user")
+@require_permission("update_user")
 async def update_user(
     user_id: int,
     user_update: UserUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Update a user's information (admin/privileged access or self)"""
     user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
@@ -115,7 +115,8 @@ async def update_user(
 
     # Ensure user can only update their own data unless they have admin/update_users permission
     if not (
-        current_user.id == user_id or has_permission("update_all_users")(current_user)
+        current_user.id == user_id
+        or require_permission("update_all_users")(current_user)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -142,12 +143,12 @@ async def update_user(
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-@has_permission("delete_user")
+@require_permission("delete_user")
 async def delete_user(
     user_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Soft delete a user (admin/privileged access only)"""
     user = db.query(User).filter(User.id == user_id, User.is_deleted == False).first()
@@ -157,7 +158,7 @@ async def delete_user(
         )
 
     # Prevent self-deletion for admin users
-    if current_user.id == user_id and has_permission("admin")(current_user):
+    if current_user.id == user_id and require_permission("admin")(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin users cannot delete their own account.",
@@ -182,12 +183,12 @@ async def delete_user(
 
 # Role Endpoints
 @router.post("/roles", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
-@has_permission("create_role")
+@require_permission("create_role")
 async def create_role(
     role_data: RoleCreate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Create a new role"""
     try:
@@ -249,11 +250,11 @@ async def create_role(
 
 
 @router.get("/roles", response_model=List[RoleResponse])
-@has_permission("read_roles")
+@require_permission("read_roles")
 async def get_all_roles(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Retrieve all roles"""
     roles = db.query(Role).all()
@@ -269,13 +270,13 @@ async def get_all_roles(
 
 
 @router.put("/roles/{role_id}", response_model=RoleResponse)
-@has_permission("update_role")
+@require_permission("update_role")
 async def update_role(
     role_id: int,
     role_update: RoleCreate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Update an existing role"""
     role = db.query(Role).filter(Role.id == role_id).first()
@@ -318,12 +319,12 @@ async def update_role(
 
 
 @router.delete("/roles/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
-@has_permission("delete_role")
+@require_permission("delete_role")
 async def delete_role(
     role_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Delete a role"""
     role = db.query(Role).filter(Role.id == role_id).first()
@@ -360,12 +361,12 @@ async def delete_role(
     response_model=PermissionResponse,
     status_code=status.HTTP_201_CREATED,
 )
-@has_permission("create_permission")
+@require_permission("create_permission")
 async def create_permission(
     permission_data: PermissionCreate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Create a new permission"""
     try:
@@ -402,11 +403,11 @@ async def create_permission(
 
 
 @router.get("/permissions", response_model=List[PermissionResponse])
-@has_permission("read_permissions")
+@require_permission("read_permissions")
 async def get_all_permissions(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Retrieve all permissions"""
     permissions = db.query(Permission).all()
@@ -422,12 +423,12 @@ async def get_all_permissions(
 
 
 @router.delete("/permissions/{permission_id}", status_code=status.HTTP_204_NO_CONTENT)
-@has_permission("delete_permission")
+@require_permission("delete_permission")
 async def delete_permission(
     permission_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_user),
 ):
     """Delete a permission"""
     permission = db.query(Permission).filter(Permission.id == permission_id).first()

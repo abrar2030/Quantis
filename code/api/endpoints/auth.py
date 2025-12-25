@@ -37,7 +37,7 @@ bearer_scheme = HTTPBearer(auto_error=False)
 class SecurityManager:
     """Centralized security management"""
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.pwd_context = pwd_context
         self.failed_attempts = {}
 
@@ -173,7 +173,7 @@ security_manager = SecurityManager()
 class RateLimiter:
     """Advanced rate limiting with Redis backend"""
 
-    def __init__(self, redis_client: redis.Redis) -> Any:
+    def __init__(self, redis_client: redis.Redis) -> None:
         self.redis = redis_client
 
     async def is_allowed(
@@ -680,3 +680,12 @@ def refresh_access_token(db: Session, refresh_token: str) -> Optional[Token]:
     session.last_activity = datetime.utcnow()
     db.commit()
     return create_tokens(user)
+
+
+# Router for authentication endpoints
+from fastapi import APIRouter
+
+router = APIRouter()
+
+# Auth endpoints would be defined here if needed
+# Currently auth functionality is provided through dependencies
