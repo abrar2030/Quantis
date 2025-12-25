@@ -43,7 +43,7 @@ def test_database_connection() -> Any:
     """Test database connection and basic operations"""
     logger.info("Testing database connection...")
     try:
-        from database_enhanced import DatabaseManager, SessionLocal, engine
+        from database import DatabaseManager, SessionLocal, engine
 
         db_manager = DatabaseManager()
         if db_manager.check_connection():
@@ -76,7 +76,7 @@ def test_authentication_system() -> Any:
     """Test authentication and security features"""
     logger.info("Testing authentication system...")
     try:
-        from auth_enhanced import security_manager
+        from auth import security_manager
 
         password = "TestPassword123!"
         hashed = security_manager.hash_password(password)
@@ -110,7 +110,7 @@ def test_data_models() -> Any:
     """Test database models and relationships"""
     logger.info("Testing data models...")
     try:
-        from database_enhanced import SessionLocal
+        from database import SessionLocal
         from .models import (
             Dataset,
             Model,
@@ -192,7 +192,7 @@ def test_pydantic_schemas() -> Any:
     """Test Pydantic schemas and validation"""
     logger.info("Testing Pydantic schemas...")
     try:
-        from schemas_enhanced import UserCreate
+        from schemas import UserCreate
 
         user_data = {
             "username": "testuser",
