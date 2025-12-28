@@ -14,7 +14,7 @@ set -e
 
 echo "Starting Quantis project setup..."
 
-PROJECT_DIR="/home/ubuntu/projects_extracted/Quantis"
+PROJECT_DIR="/Quantis"
 
 if [ ! -d "${PROJECT_DIR}" ]; then
   echo "Error: Project directory ${PROJECT_DIR} not found."
