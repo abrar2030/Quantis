@@ -1,5 +1,5 @@
 """
-Validation script for Quantis Enhanced Backend
+Validation script for Quantis Backend
 """
 
 import logging
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_imports() -> Any:
-    """Test that all enhanced modules can be imported"""
+    """Test that all modules can be imported"""
     logger.info("Testing module imports...")
     try:
         from config import get_settings
@@ -27,10 +27,10 @@ def test_imports() -> Any:
         logger.info(
             f"✓ Configuration loaded: {settings.app_name} v{settings.app_version}"
         )
-        logger.info("✓ Enhanced database models imported successfully")
-        logger.info("✓ Enhanced Pydantic schemas imported successfully")
-        logger.info("✓ Enhanced authentication system imported successfully")
-        logger.info("✓ Enhanced database management imported successfully")
+        logger.info("✓ Database models imported successfully")
+        logger.info("✓ Dydantic schemas imported successfully")
+        logger.info("✓ Authentication system imported successfully")
+        logger.info("✓ Database management imported successfully")
         logger.info("✓ Background task system imported successfully")
         return True
     except Exception as e:
@@ -289,7 +289,7 @@ def test_background_tasks() -> Any:
 def run_validation() -> Any:
     """Run all validation tests"""
     logger.info("=" * 60)
-    logger.info("QUANTIS ENHANCED BACKEND VALIDATION")
+    logger.info("QUANTIS BACKEND VALIDATION")
     logger.info("=" * 60)
     logger.info(f"Validation started at: {datetime.now()}")
     logger.info("")
@@ -328,7 +328,7 @@ def run_validation() -> Any:
     logger.info(f"Tests passed: {passed}/{total}")
     logger.info(f"Success rate: {passed / total * 100:.1f}%")
     if passed == total:
-        logger.info("🎉 ALL TESTS PASSED! Enhanced backend is ready.")
+        logger.info("🎉 ALL TESTS PASSED! Backend is ready.")
         return True
     else:
         logger.warning(

@@ -1,14 +1,14 @@
 #!/bin/bash
-# enhanced_linting.sh - Comprehensive linting script for Quantis project
+# linting.sh - Comprehensive linting script for Quantis project
 #
-# This script provides enhanced linting capabilities for all components of the Quantis project:
+# This script provides linting capabilities for all components of the Quantis project:
 # - Python code (flake8, pylint, mypy)
 # - JavaScript/TypeScript (ESLint, Prettier)
 # - Shell scripts (shellcheck)
 # - YAML files (yamllint)
 # - Markdown files (markdownlint)
 #
-# Usage: ./enhanced_linting.sh [options]
+# Usage: ./linting.sh [options]
 # Options:
 #   --all                Lint all components
 #   --python             Lint only Python code
@@ -45,9 +45,9 @@ REPORT_DIR="$PROJECT_ROOT/lint_reports"
 
 # Function to display help message
 show_help() {
-    echo -e "${BLUE}Enhanced Linting Script for Quantis Project${NC}"
+    echo -e "${BLUE}Linting Script for Quantis Project${NC}"
     echo ""
-    echo "Usage: ./enhanced_linting.sh [options]"
+    echo "Usage: ./linting.sh [options]"
     echo ""
     echo "Options:"
     echo "  --all                Lint all components"
@@ -474,7 +474,7 @@ while [ "$1" != "" ]; do
 done
 
 # Main execution
-echo -e "${BLUE}Starting Quantis enhanced linting process...${NC}"
+echo -e "${BLUE}Starting Quantis linting process...${NC}"
 
 # Check dependencies
 check_dependencies

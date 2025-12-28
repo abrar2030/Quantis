@@ -8,8 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 
-class EnhancedCORSMiddleware(BaseHTTPMiddleware):
-    """Enhanced CORS middleware with additional security features"""
+class CORSMiddleware(BaseHTTPMiddleware):
+    """CORS middleware with additional security features"""
 
     def __init__(
         self,

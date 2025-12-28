@@ -34,7 +34,7 @@ from ..services.model_service import ModelService
 router = APIRouter()
 
 
-# Enhanced Pydantic models
+# Pydantic models
 class BatchPredictionCreate(BaseModel):
     model_id: int
     input_data_list: List[List[float]]
@@ -66,7 +66,7 @@ class PredictionStats(BaseModel):
     predictions_by_day: dict
 
 
-# Enhanced prediction endpoints
+# Prediction endpoints
 @router.post("/predict", response_model=PredictionResponse)
 async def predict(
     request: PredictionCreate,
