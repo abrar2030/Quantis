@@ -74,7 +74,7 @@ The fastest way to get started with Quantis for development.
 ### Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/abrar2030/Quantis.git
+git clone https://github.com/quantsingularity/Quantis.git
 cd Quantis
 ```
 
@@ -114,7 +114,7 @@ For developers who want fine-grained control over the installation.
 ### Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/abrar2030/Quantis.git
+git clone https://github.com/quantsingularity/Quantis.git
 cd Quantis
 ```
 
@@ -219,7 +219,7 @@ docker-compose --version
 ### Step 2: Clone Repository
 
 ```bash
-git clone https://github.com/abrar2030/Quantis.git
+git clone https://github.com/quantsingularity/Quantis.git
 cd Quantis
 ```
 
@@ -283,7 +283,7 @@ helm version
 ### Step 2: Clone Repository
 
 ```bash
-git clone https://github.com/abrar2030/Quantis.git
+git clone https://github.com/quantsingularity/Quantis.git
 cd Quantis/infrastructure/kubernetes
 ```
 

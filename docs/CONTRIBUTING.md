@@ -40,7 +40,7 @@ Before contributing, ensure you have:
 
 ### Finding Issues to Work On
 
-- Browse [GitHub Issues](https://github.com/abrar2030/Quantis/issues)
+- Browse [GitHub Issues](https://github.com/quantsingularity/Quantis/issues)
 - Look for `good-first-issue` label for beginner-friendly tasks
 - Check `help-wanted` label for issues needing contributors
 - Comment on an issue to express interest before starting work
@@ -57,7 +57,7 @@ git clone https://github.com/YOUR_USERNAME/Quantis.git
 cd Quantis
 
 # Add upstream remote
-git remote add upstream https://github.com/abrar2030/Quantis.git
+git remote add upstream https://github.com/quantsingularity/Quantis.git
 ```
 
 ### 2. Create Development Environment

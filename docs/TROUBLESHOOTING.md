@@ -699,7 +699,7 @@ logger.error("prediction_failed", model_id=model_id, error=str(e))
 If you can't resolve an issue:
 
 1. **Check logs** first - most issues have clear error messages
-2. **Search GitHub Issues**: [github.com/abrar2030/Quantis/issues](https://github.com/abrar2030/Quantis/issues)
+2. **Search GitHub Issues**: [github.com/quantsingularity/Quantis/issues](https://github.com/quantsingularity/Quantis/issues)
 3. **Review Documentation**: Ensure you followed setup instructions correctly
 4. **Minimal Reproducible Example**: Create a simple test case
 5. **Open an Issue**: Provide:

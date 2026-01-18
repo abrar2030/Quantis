@@ -45,7 +45,7 @@ Welcome to the comprehensive documentation for **Quantis** - a quantitative trad
 
 ```bash
 # 1. Clone and navigate to the repository
-git clone https://github.com/abrar2030/Quantis.git && cd Quantis
+git clone https://github.com/quantsingularity/Quantis.git && cd Quantis
 
 # 2. Run the automated setup script
 ./scripts/setup_quantis_env.sh

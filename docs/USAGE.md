@@ -24,7 +24,7 @@ Comprehensive guide for using the Quantis platform, covering common workflows, A
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/abrar2030/Quantis.git && cd Quantis
+git clone https://github.com/quantsingularity/Quantis.git && cd Quantis
 ./scripts/setup_quantis_env.sh
 
 # 2. Start services

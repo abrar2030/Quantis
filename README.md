@@ -1,7 +1,7 @@
 # Quantis
 
-![CI/CD Status](https://img.shields.io/github/actions/workflow/status/abrar2030/Quantis/cicd.yml?branch=main&label=CI/CD&logo=github)
-[![Test Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)](https://github.com/abrar2030/Quantis/actions)
+![CI/CD Status](https://img.shields.io/github/actions/workflow/status/quantsingularity/Quantis/cicd.yml?branch=main&label=CI/CD&logo=github)
+[![Test Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)](https://github.com/quantsingularity/Quantis/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## 📈 Quantitative Trading & Investment Analytics Platform
@@ -110,7 +110,7 @@ The recommended way to set up the development environment is using the provided 
 
 | Step                    | Command                                                            | Description                                                     |
 | :---------------------- | :----------------------------------------------------------------- | :-------------------------------------------------------------- |
-| **1. Clone Repository** | `git clone https://github.com/abrar2030/Quantis.git && cd Quantis` | Download the source code and navigate to the project directory. |
+| **1. Clone Repository** | `git clone https://github.com/quantsingularity/Quantis.git && cd Quantis` | Download the source code and navigate to the project directory. |
 | **2. Run Setup Script** | `./setup_quantis_env.sh`                                           | Installs dependencies and configures the local environment.     |
 | **3. Start Services**   | `./run_quantis.sh dev`                                             | Starts all core services for development.                       |
 
