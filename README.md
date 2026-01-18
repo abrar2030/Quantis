@@ -108,11 +108,11 @@ To set up the platform, ensure you have the following installed:
 
 The recommended way to set up the development environment is using the provided scripts:
 
-| Step                    | Command                                                            | Description                                                     |
-| :---------------------- | :----------------------------------------------------------------- | :-------------------------------------------------------------- |
+| Step                    | Command                                                                   | Description                                                     |
+| :---------------------- | :------------------------------------------------------------------------ | :-------------------------------------------------------------- |
 | **1. Clone Repository** | `git clone https://github.com/quantsingularity/Quantis.git && cd Quantis` | Download the source code and navigate to the project directory. |
-| **2. Run Setup Script** | `./setup_quantis_env.sh`                                           | Installs dependencies and configures the local environment.     |
-| **3. Start Services**   | `./run_quantis.sh dev`                                             | Starts all core services for development.                       |
+| **2. Run Setup Script** | `./setup_quantis_env.sh`                                                  | Installs dependencies and configures the local environment.     |
+| **3. Start Services**   | `./run_quantis.sh dev`                                                    | Starts all core services for development.                       |
 
 **Access Points:**
 
